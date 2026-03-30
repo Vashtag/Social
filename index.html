@@ -611,7 +611,9 @@
     document.getElementById('g-round').textContent  = `Round ${g.round} / ${TOTAL_ROUNDS}`;
 
     // Word
-    document.getElementById('scrambled-word').textContent = scrambleWord(g.current.word).toUpperCase();
+    const scrambledEl = document.getElementById('scrambled-word');
+    scrambledEl.style.opacity = '1';
+    scrambledEl.textContent = scrambleWord(g.current.word).toUpperCase();
 
     // Hide answer reveal
     const revealEl = document.getElementById('answer-reveal');
@@ -670,6 +672,7 @@
   }
 
   function revealAnswer(correct) {
+    document.getElementById('scrambled-word').style.opacity = '0';
     const revealEl = document.getElementById('answer-reveal');
     revealEl.textContent = g.current.word.toUpperCase();
     revealEl.className = 'answer-reveal' + (correct ? '' : ' missed');
