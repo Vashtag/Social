@@ -247,6 +247,16 @@
     .hint-text.show { opacity: 1; }
     .hint-text.specific { color: var(--hint2); }
 
+    @keyframes hint-flash {
+      0%   { opacity: 0; transform: scale(0.95); }
+      25%  { opacity: 1; transform: scale(1.08); color: #fff; letter-spacing: 0.35em; }
+      55%  { opacity: 1; transform: scale(1.02); color: #fff; }
+      100% { opacity: 1; transform: scale(1);    color: var(--hint2); letter-spacing: 0.2em; }
+    }
+    .hint-text.flash {
+      animation: hint-flash 0.55s ease-out forwards;
+    }
+
     /* Buttons */
     .action-buttons {
       display: flex;
@@ -647,8 +657,8 @@
       hintEl.classList.remove('show');
       setTimeout(() => {
         hintEl.textContent = g.current.hint2;
-        hintEl.classList.add('show', 'specific');
-      }, 350);
+        hintEl.className = 'hint-text specific flash';
+      }, 300);
     }
 
     if (g.timeLeft <= 0) {
