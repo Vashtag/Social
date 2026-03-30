@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anatomy Unscramble</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --border: #242424;
+      --text: #f0ece4;
+      --muted: #555;
+      --hint1: #777;
+      --hint2: #c8c0b4;
+      --correct-bg: #0f2010;
+      --correct-border: #2a5c2a;
+      --correct-text: #74d874;
+      --warn: #d4a84b;
+      --danger: #c95454;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Screens ── */
+    .screen {
+      display: none;
+      min-height: 100dvh;
+      width: 100%;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .screen.active { display: flex; }
+
+    /* ── Setup ── */
+    #setup-screen { flex-direction: column; }
+
+    .setup-inner {
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2.5rem;
+    }
+
+    .logo {
+      text-align: center;
+    }
+    .logo-title {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text);
+    }
+    .logo-sub {
+      font-size: 0.7rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 0.4rem;
+    }
+
+    .fields {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .field-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      margin-bottom: 0.3rem;
+    }
+
+    input[type="text"] {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.9rem 1.1rem;
+      color: var(--text);
+      font-size: 1rem;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus { border-color: #444; }
+    input[type="text"]::placeholder { color: #3a3a3a; }
+
+    .btn-primary {
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      border-radius: 12px;
+      padding: 1rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      width: 100%;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-primary:active { transform: scale(0.98); }
+
+    /* ── Game ── */
+    #game-screen { flex-direction: column; align-items: stretch; padding: 0; }
+
+    .game-inner {
+      width: 100%;
+      max-width: 640px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      padding: 1.25rem 1.5rem 1.5rem;
+      gap: 0;
+    }
+
+    /* Scoreboard */
+    .scoreboard {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1rem 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .player-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.2rem;
+      min-width: 80px;
+    }
+    .player-col .name {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+    }
+    .player-col .pts {
+      font-size: 2.2rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .center-col {
+      text-align: center;
+    }
+    .round-badge {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+    }
+
+    /* Word area */
+    .word-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      padding: 2rem 0;
+    }
+
+    /* Timer ring */
+    .timer-wrap {
+      position: relative;
+      width: 96px;
+      height: 96px;
+      flex-shrink: 0;
+    }
+    .timer-wrap svg {
+      width: 96px;
+      height: 96px;
+      transform: rotate(-90deg);
+    }
+    .ring-bg {
+      fill: none;
+      stroke: var(--border);
+      stroke-width: 5;
+    }
+    .ring-fg {
+      fill: none;
+      stroke: var(--text);
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-dasharray: 271;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 0.9s linear, stroke 0.4s ease;
+    }
+    .timer-num {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.7rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    /* Scrambled word */
+    .scrambled {
+      font-size: clamp(2.2rem, 9vw, 4.2rem);
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-align: center;
+      line-height: 1.15;
+      word-break: break-word;
+    }
+
+    /* Hint */
+    .hint-area {
+      height: 1.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hint-text {
+      font-size: 0.8rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--hint1);
+      opacity: 0;
+      transition: opacity 0.4s, color 0.4s;
+    }
+    .hint-text.show { opacity: 1; }
+    .hint-text.specific { color: var(--hint2); }
+
+    /* Buttons */
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      flex-shrink: 0;
+    }
+
+    .btn-point {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.05rem 1rem;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+    }
+    .btn-point:hover { background: #1e1e1e; border-color: #333; }
+    .btn-point:active { transform: scale(0.985); }
+    .btn-point.correct {
+      background: var(--correct-bg);
+      border-color: var(--correct-border);
+      color: var(--correct-text);
+    }
+    .btn-point:disabled { opacity: 0.35; cursor: default; }
+
+    .btn-skip {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid #1e1e1e;
+      border-radius: 14px;
+      padding: 0.7rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .btn-skip:hover { color: #888; border-color: #333; }
+    .btn-skip:disabled { opacity: 0.2; cursor: default; }
+
+    /* ── Result ── */
+    #result-screen { flex-direction: column; }
+
+    .result-inner {
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2.5rem;
+      text-align: center;
+    }
+
+    .result-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+    .result-winner {
+      font-size: clamp(2.2rem, 8vw, 3.2rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .final-scores {
+      display: flex;
+      gap: 4rem;
+    }
+    .final-player {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .final-player .fname {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+    }
+    .final-player .fpts {
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .divider {
+      width: 1px;
+      height: 60px;
+      background: var(--border);
+      align-self: center;
+    }
+
+    /* Pulse on correct */
+    @keyframes correct-pulse {
+      0% { opacity: 0.12; }
+      50% { opacity: 0.22; }
+      100% { opacity: 0; }
+    }
+    .flash-overlay {
+      position: fixed;
+      inset: 0;
+      background: #4caf50;
+      pointer-events: none;
+      opacity: 0;
+      border-radius: 0;
+    }
+    .flash-overlay.go {
+      animation: correct-pulse 0.5s ease-out forwards;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Flash overlay -->
+<div class="flash-overlay" id="flash"></div>
+
+<!-- ── Setup Screen ── -->
+<div class="screen active" id="setup-screen">
+  <div class="setup-inner">
+    <div class="logo">
+      <div class="logo-title">Unscramble</div>
+      <div class="logo-sub">Anatomy Edition &nbsp;·&nbsp; KIN 100</div>
+    </div>
+
+    <div class="fields">
+      <div>
+        <div class="field-label">Player 1</div>
+        <input type="text" id="p1-input" placeholder="Enter name" maxlength="18" autocomplete="off" />
+      </div>
+      <div>
+        <div class="field-label">Player 2</div>
+        <input type="text" id="p2-input" placeholder="Enter name" maxlength="18" autocomplete="off" />
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="startGame()">Start Game</button>
+  </div>
+</div>
+
+<!-- ── Game Screen ── -->
+<div class="screen" id="game-screen">
+  <div class="game-inner">
+
+    <div class="scoreboard">
+      <div class="player-col">
+        <div class="name" id="g-p1-name">P1</div>
+        <div class="pts" id="g-p1-pts">0</div>
+      </div>
+      <div class="center-col">
+        <div class="round-badge" id="g-round">Round 1 / 3</div>
+      </div>
+      <div class="player-col">
+        <div class="name" id="g-p2-name">P2</div>
+        <div class="pts" id="g-p2-pts">0</div>
+      </div>
+    </div>
+
+    <div class="word-area">
+      <div class="timer-wrap">
+        <svg viewBox="0 0 96 96">
+          <circle class="ring-bg" cx="48" cy="48" r="43" />
+          <circle class="ring-fg" id="ring" cx="48" cy="48" r="43" />
+        </svg>
+        <div class="timer-num" id="timer-num">30</div>
+      </div>
+
+      <div class="scrambled" id="scrambled-word">—</div>
+
+      <div class="hint-area">
+        <div class="hint-text" id="hint">—</div>
+      </div>
+    </div>
+
+    <div class="action-buttons">
+      <button class="btn-point" id="btn-p1" onclick="award(1)">
+        <span id="btn-p1-label">P1 got it</span>
+      </button>
+      <button class="btn-point" id="btn-p2" onclick="award(2)">
+        <span id="btn-p2-label">P2 got it</span>
+      </button>
+      <button class="btn-skip" id="btn-skip" onclick="skip()">Skip</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Result Screen ── -->
+<div class="screen" id="result-screen">
+  <div class="result-inner">
+    <div>
+      <div class="result-label" id="res-label">Winner</div>
+      <div class="result-winner" id="res-winner">—</div>
+    </div>
+
+    <div class="final-scores">
+      <div class="final-player">
+        <div class="fname" id="res-p1-name">P1</div>
+        <div class="fpts" id="res-p1-pts">0</div>
+      </div>
+      <div class="divider"></div>
+      <div class="final-player">
+        <div class="fname" id="res-p2-name">P2</div>
+        <div class="fpts" id="res-p2-pts">0</div>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="resetGame()">Play Again</button>
+  </div>
+</div>
+
+<script>
+  // ── Word bank ──────────────────────────────────────────────
+  const WORDS = [
+    { word: "coracoid",           hint1: "Bone",      hint2: "Upper limb bone process" },
+    { word: "acromion",           hint1: "Bone",      hint2: "Scapula landmark" },
+    { word: "olecranon",          hint1: "Bone",      hint2: "Posterior elbow process" },
+    { word: "clavicle",           hint1: "Bone",      hint2: "Collar bone" },
+    { word: "humerus",            hint1: "Bone",      hint2: "Upper arm bone" },
+    { word: "trapezius",          hint1: "Muscle",    hint2: "Back and neck muscle" },
+    { word: "deltoid",            hint1: "Muscle",    hint2: "Shoulder muscle" },
+    { word: "pectoralis",         hint1: "Muscle",    hint2: "Chest muscle" },
+    { word: "gastrocnemius",      hint1: "Muscle",    hint2: "Calf muscle" },
+    { word: "quadriceps",         hint1: "Muscle",    hint2: "Anterior thigh group" },
+    { word: "patella",            hint1: "Bone",      hint2: "Knee cap" },
+    { word: "calcaneus",          hint1: "Bone",      hint2: "Heel bone" },
+    { word: "femoral",            hint1: "Artery",    hint2: "Thigh artery" },
+    { word: "brachial",           hint1: "Artery",    hint2: "Upper arm artery" },
+    { word: "sciatic",            hint1: "Nerve",     hint2: "Largest nerve in the body" },
+    { word: "ulnar",              hint1: "Nerve",     hint2: "Medial forearm nerve" },
+    { word: "tibialis",           hint1: "Muscle",    hint2: "Lower leg muscle" },
+    { word: "metatarsal",         hint1: "Bone",      hint2: "Foot bone" },
+    { word: "sustentaculum tali", hint1: "Bone",      hint2: "Shelf on the calcaneus" },
+    { word: "pes anserinus",      hint1: "Structure", hint2: "Medial knee tendon insertion" },
+    { word: "piriformis",         hint1: "Muscle",    hint2: "Deep hip external rotator" },
+    { word: "coracobrachialis",   hint1: "Muscle",    hint2: "Upper arm muscle" },
+    { word: "popliteus",          hint1: "Muscle",    hint2: "Posterior knee muscle" },
+    { word: "semitendinosus",     hint1: "Muscle",    hint2: "Posterior thigh hamstring" },
+    { word: "semimembranosus",    hint1: "Muscle",    hint2: "Posterior thigh hamstring" },
+  ];
+
+  const TOTAL_ROUNDS = 3;
+  const ROUND_TIME   = 30;
+  const CIRCUMFERENCE = 2 * Math.PI * 43; // ≈ 270.2
+
+  const g = {
+    p1: "Player 1", p2: "Player 2",
+    scores: [0, 0],
+    round: 0,
+    timeLeft: ROUND_TIME,
+    interval: null,
+    queue: [],
+    current: null,
+    active: false,
+  };
+
+  // ── Helpers ────────────────────────────────────────────────
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function scramblePart(word) {
+    const arr = word.split('');
+    // Keep shuffling until it's different (prevents trivial unscramble)
+    let attempts = 0;
+    do {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      attempts++;
+    } while (arr.join('') === word && attempts < 20 && word.length > 1);
+    return arr.join('');
+  }
+
+  function scrambleWord(word) {
+    return word.split(' ').map(scramblePart).join(' ');
+  }
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  // ── Game control ───────────────────────────────────────────
+  function startGame() {
+    g.p1 = document.getElementById('p1-input').value.trim() || 'Player 1';
+    g.p2 = document.getElementById('p2-input').value.trim() || 'Player 2';
+    g.scores = [0, 0];
+    g.round = 0;
+    g.queue = shuffle(WORDS).slice(0, TOTAL_ROUNDS);
+
+    document.getElementById('g-p1-name').textContent = g.p1;
+    document.getElementById('g-p2-name').textContent = g.p2;
+    document.getElementById('btn-p1-label').textContent = g.p1 + '  got it';
+    document.getElementById('btn-p2-label').textContent = g.p2 + '  got it';
+
+    showScreen('game-screen');
+    nextRound();
+  }
+
+  function nextRound() {
+    if (g.round >= TOTAL_ROUNDS) { showResults(); return; }
+
+    g.current  = g.queue[g.round];
+    g.round++;
+    g.timeLeft = ROUND_TIME;
+    g.active   = true;
+
+    // Scores + round
+    document.getElementById('g-p1-pts').textContent = g.scores[0];
+    document.getElementById('g-p2-pts').textContent = g.scores[1];
+    document.getElementById('g-round').textContent  = `Round ${g.round} / ${TOTAL_ROUNDS}`;
+
+    // Word
+    document.getElementById('scrambled-word').textContent = scrambleWord(g.current.word).toUpperCase();
+
+    // Hint — fade in broad hint immediately
+    const hintEl = document.getElementById('hint');
+    hintEl.className = 'hint-text';
+    hintEl.textContent = g.current.hint1;
+    requestAnimationFrame(() => requestAnimationFrame(() => hintEl.classList.add('show')));
+
+    // Timer ring reset
+    setRing(ROUND_TIME);
+
+    // Buttons reset
+    resetButtons();
+
+    clearInterval(g.interval);
+    g.interval = setInterval(tick, 1000);
+  }
+
+  function tick() {
+    g.timeLeft--;
+    setRing(g.timeLeft);
+    document.getElementById('timer-num').textContent = g.timeLeft;
+
+    // At 15s → swap to specific hint
+    if (g.timeLeft === 15) {
+      const hintEl = document.getElementById('hint');
+      hintEl.classList.remove('show');
+      setTimeout(() => {
+        hintEl.textContent = g.current.hint2;
+        hintEl.classList.add('show', 'specific');
+      }, 350);
+    }
+
+    if (g.timeLeft <= 0) {
+      clearInterval(g.interval);
+      g.active = false;
+      disableButtons();
+      playBuzzer();
+      setTimeout(nextRound, 1400);
+    }
+  }
+
+  function setRing(t) {
+    const ring = document.getElementById('ring');
+    const pct  = t / ROUND_TIME;
+    ring.style.strokeDashoffset = CIRCUMFERENCE * (1 - pct);
+
+    if (t > 15)     ring.style.stroke = 'var(--text)';
+    else if (t > 8) ring.style.stroke = 'var(--warn)';
+    else            ring.style.stroke = 'var(--danger)';
+  }
+
+  function award(player) {
+    if (!g.active) return;
+    clearInterval(g.interval);
+    g.active = false;
+    g.scores[player - 1]++;
+
+    const btn = document.getElementById(player === 1 ? 'btn-p1' : 'btn-p2');
+    btn.classList.add('correct');
+    disableButtons();
+
+    flashGreen();
+    playCorrect();
+    setTimeout(nextRound, 950);
+  }
+
+  function skip() {
+    if (!g.active) return;
+    clearInterval(g.interval);
+    g.active = false;
+    disableButtons();
+    setTimeout(nextRound, 450);
+  }
+
+  function disableButtons() {
+    ['btn-p1','btn-p2','btn-skip'].forEach(id => {
+      document.getElementById(id).disabled = true;
+    });
+  }
+
+  function resetButtons() {
+    ['btn-p1','btn-p2'].forEach(id => {
+      const b = document.getElementById(id);
+      b.className = 'btn-point';
+      b.disabled = false;
+    });
+    document.getElementById('btn-skip').disabled = false;
+  }
+
+  // ── Results ────────────────────────────────────────────────
+  function showResults() {
+    document.getElementById('res-p1-name').textContent = g.p1;
+    document.getElementById('res-p2-name').textContent = g.p2;
+    document.getElementById('res-p1-pts').textContent  = g.scores[0];
+    document.getElementById('res-p2-pts').textContent  = g.scores[1];
+
+    let label, winner;
+    if (g.scores[0] > g.scores[1])      { label = 'Winner'; winner = g.p1; }
+    else if (g.scores[1] > g.scores[0]) { label = 'Winner'; winner = g.p2; }
+    else                                 { label = "It's a"; winner = 'Tie'; }
+
+    document.getElementById('res-label').textContent  = label;
+    document.getElementById('res-winner').textContent = winner;
+    showScreen('result-screen');
+  }
+
+  function resetGame() {
+    document.getElementById('p1-input').value = '';
+    document.getElementById('p2-input').value = '';
+    showScreen('setup-screen');
+  }
+
+  // ── Flash ──────────────────────────────────────────────────
+  function flashGreen() {
+    const el = document.getElementById('flash');
+    el.classList.remove('go');
+    void el.offsetWidth; // reflow
+    el.classList.add('go');
+  }
+
+  // ── Audio ──────────────────────────────────────────────────
+  let audioCtx;
+  function getCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+
+  function playBuzzer() {
+    try {
+      const ctx = getCtx();
+      const now = ctx.currentTime;
+
+      // Low descending buzz
+      [0, 0.22, 0.44].forEach((delay, i) => {
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(200 - i * 30, now + delay);
+        osc.frequency.linearRampToValueAtTime(80, now + delay + 0.18);
+        gain.gain.setValueAtTime(0.35, now + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.22);
+        osc.start(now + delay);
+        osc.stop(now + delay + 0.25);
+      });
+    } catch(e) {}
+  }
+
+  function playCorrect() {
+    try {
+      const ctx = getCtx();
+      const now = ctx.currentTime;
+      const freqs = [523.25, 659.25, 783.99]; // C5 E5 G5
+
+      freqs.forEach((freq, i) => {
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        const t = now + i * 0.11;
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.22, t + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+        osc.start(t);
+        osc.stop(t + 0.3);
+      });
+    } catch(e) {}
+  }
+</script>
+</body>
+</html>
