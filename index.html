@@ -347,6 +347,38 @@
       align-self: center;
     }
 
+    /* Answer reveal */
+    .answer-reveal {
+      font-size: clamp(2.2rem, 9vw, 4.2rem);
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-align: center;
+      line-height: 1.15;
+      word-break: break-word;
+      color: var(--correct-text);
+      opacity: 0;
+      transform: scale(0.88);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      position: absolute;
+      width: 100%;
+      pointer-events: none;
+    }
+    .answer-reveal.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .answer-reveal.missed {
+      color: var(--danger);
+    }
+    .word-slot {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: clamp(2.8rem, 10vw, 5rem);
+      width: 100%;
+    }
+
     /* Pulse on correct */
     @keyframes correct-pulse {
       0% { opacity: 0.12; }
@@ -421,7 +453,10 @@
         <div class="timer-num" id="timer-num">30</div>
       </div>
 
-      <div class="scrambled" id="scrambled-word">—</div>
+      <div class="word-slot">
+        <div class="scrambled" id="scrambled-word">—</div>
+        <div class="answer-reveal" id="answer-reveal"></div>
+      </div>
 
       <div class="hint-area">
         <div class="hint-text" id="hint">—</div>
@@ -493,6 +528,8 @@
     { word: "popliteus",          hint1: "Muscle",    hint2: "Posterior knee muscle" },
     { word: "semitendinosus",     hint1: "Muscle",    hint2: "Posterior thigh hamstring" },
     { word: "semimembranosus",    hint1: "Muscle",    hint2: "Posterior thigh hamstring" },
+    { word: "xiphoid",            hint1: "Bone",      hint2: "Inferior tip of the sternum" },
+    { word: "acetabulum",         hint1: "Bone",      hint2: "Hip socket in the pelvis" },
   ];
 
   const TOTAL_ROUNDS = 3;
@@ -576,6 +613,11 @@
     // Word
     document.getElementById('scrambled-word').textContent = scrambleWord(g.current.word).toUpperCase();
 
+    // Hide answer reveal
+    const revealEl = document.getElementById('answer-reveal');
+    revealEl.classList.remove('show', 'missed');
+    revealEl.textContent = '';
+
     // Hint — fade in broad hint immediately
     const hintEl = document.getElementById('hint');
     hintEl.className = 'hint-text';
@@ -611,8 +653,9 @@
       clearInterval(g.interval);
       g.active = false;
       disableButtons();
+      revealAnswer(false);
       playBuzzer();
-      setTimeout(nextRound, 1400);
+      setTimeout(nextRound, 1800);
     }
   }
 
@@ -626,6 +669,13 @@
     else            ring.style.stroke = 'var(--danger)';
   }
 
+  function revealAnswer(correct) {
+    const revealEl = document.getElementById('answer-reveal');
+    revealEl.textContent = g.current.word.toUpperCase();
+    revealEl.className = 'answer-reveal' + (correct ? '' : ' missed');
+    requestAnimationFrame(() => requestAnimationFrame(() => revealEl.classList.add('show')));
+  }
+
   function award(player) {
     if (!g.active) return;
     clearInterval(g.interval);
@@ -636,9 +686,10 @@
     btn.classList.add('correct');
     disableButtons();
 
+    revealAnswer(true);
     flashGreen();
     playCorrect();
-    setTimeout(nextRound, 950);
+    setTimeout(nextRound, 1400);
   }
 
   function skip() {
@@ -646,7 +697,8 @@
     clearInterval(g.interval);
     g.active = false;
     disableButtons();
-    setTimeout(nextRound, 450);
+    revealAnswer(false);
+    setTimeout(nextRound, 1400);
   }
 
   function disableButtons() {
