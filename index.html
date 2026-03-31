@@ -865,6 +865,7 @@
       hintEl.textContent = g.current.hint1;
       hintEl.className = 'hint-text flash';
       hintEl.addEventListener('animationend', () => hintEl.classList.add('show'), { once: true });
+      playHintSound(false);
     }
 
     // At 10s remaining (20s elapsed) → swap to specific hint
@@ -875,6 +876,7 @@
         hintEl.textContent = g.current.hint2;
         hintEl.className = 'hint-text specific flash';
         hintEl.addEventListener('animationend', () => hintEl.classList.add('show'), { once: true });
+        playHintSound(true);
       }, 200);
     }
 
@@ -982,6 +984,68 @@
   function getCtx() {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     return audioCtx;
+  }
+
+  function playHintSound(specific) {
+    try {
+      const ctx = getCtx();
+      const now = ctx.currentTime;
+
+      if (!specific) {
+        // Hint 1 — playful upward "boing" with a wobble
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(640, now + 0.12);
+        osc.frequency.exponentialRampToValueAtTime(520, now + 0.22);
+        osc.frequency.exponentialRampToValueAtTime(580, now + 0.32);
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.28, now + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+        osc.start(now); osc.stop(now + 0.45);
+
+        // Little sparkle on top
+        const osc2  = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.connect(gain2); gain2.connect(ctx.destination);
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(1200, now + 0.1);
+        osc2.frequency.exponentialRampToValueAtTime(1800, now + 0.22);
+        gain2.gain.setValueAtTime(0, now + 0.1);
+        gain2.gain.linearRampToValueAtTime(0.12, now + 0.14);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+        osc2.start(now + 0.1); osc2.stop(now + 0.35);
+      } else {
+        // Hint 2 — more dramatic: ascending three-note fanfare
+        const notes = [440, 587, 880];
+        notes.forEach((freq, i) => {
+          const osc  = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + i * 0.1);
+          osc.frequency.exponentialRampToValueAtTime(freq * 1.08, now + i * 0.1 + 0.12);
+          gain.gain.setValueAtTime(0, now + i * 0.1);
+          gain.gain.linearRampToValueAtTime(0.22, now + i * 0.1 + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.22);
+          osc.start(now + i * 0.1);
+          osc.stop(now + i * 0.1 + 0.25);
+        });
+
+        // Shimmer tail
+        const shimmer  = ctx.createOscillator();
+        const sGain    = ctx.createGain();
+        shimmer.connect(sGain); sGain.connect(ctx.destination);
+        shimmer.type = 'sine';
+        shimmer.frequency.setValueAtTime(1760, now + 0.28);
+        shimmer.frequency.exponentialRampToValueAtTime(2200, now + 0.5);
+        sGain.gain.setValueAtTime(0.1, now + 0.28);
+        sGain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+        shimmer.start(now + 0.28); shimmer.stop(now + 0.6);
+      }
+    } catch(e) {}
   }
 
   function playBuzzer() {
