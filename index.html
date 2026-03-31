@@ -404,6 +404,70 @@
       width: 100%;
     }
 
+    /* Preview overlay */
+    .preview-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      padding: 2rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    .preview-overlay.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .preview-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .preview-words {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .preview-word {
+      font-size: clamp(1.6rem, 6vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      color: var(--text);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .preview-word.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .countdown-num {
+      font-size: 6rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: var(--text);
+      opacity: 0;
+      transform: scale(0.8);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .countdown-num.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .countdown-num.hide {
+      opacity: 0;
+      transform: scale(1.3);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
     /* Pulse on correct */
     @keyframes correct-pulse {
       0% { opacity: 0.12; }
@@ -470,6 +534,13 @@
 
 <!-- Flash overlay -->
 <div class="flash-overlay" id="flash"></div>
+
+<!-- Preview overlay -->
+<div class="preview-overlay" id="preview-overlay">
+  <div class="preview-label" id="preview-label">Answers this round</div>
+  <div class="preview-words" id="preview-words"></div>
+  <div class="countdown-num" id="countdown-num"></div>
+</div>
 
 <!-- Record button (always visible) -->
 <button class="record-btn" id="record-btn" onclick="toggleRecord()">
@@ -683,7 +754,66 @@
     document.getElementById('btn-p2-label').textContent = g.p2 + '  got it';
 
     showScreen('game-screen');
-    nextRound();
+    showPreview();
+  }
+
+  function showPreview() {
+    const overlay   = document.getElementById('preview-overlay');
+    const wordsEl   = document.getElementById('preview-words');
+    const labelEl   = document.getElementById('preview-label');
+    const countEl   = document.getElementById('countdown-num');
+
+    // Build word list
+    wordsEl.innerHTML = '';
+    countEl.className = 'countdown-num';
+    countEl.textContent = '';
+    labelEl.style.opacity = '1';
+
+    g.queue.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'preview-word';
+      div.textContent = item.word.toUpperCase();
+      wordsEl.appendChild(div);
+    });
+
+    // Show overlay
+    overlay.classList.add('visible');
+
+    // Stagger word appearances
+    const wordEls = wordsEl.querySelectorAll('.preview-word');
+    wordEls.forEach((el, i) => {
+      setTimeout(() => el.classList.add('show'), 150 + i * 200);
+    });
+
+    // After 2.5s fade out the words and label, then countdown
+    setTimeout(() => {
+      wordEls.forEach(el => { el.style.opacity = '0'; el.style.transform = 'translateY(-6px)'; });
+      labelEl.style.opacity = '0';
+
+      setTimeout(() => startCountdown(overlay), 400);
+    }, 2500);
+  }
+
+  function startCountdown(overlay) {
+    const countEl = document.getElementById('countdown-num');
+    const nums = [3, 2, 1];
+    let i = 0;
+
+    function showNum() {
+      if (i >= nums.length) {
+        overlay.classList.remove('visible');
+        setTimeout(nextRound, 300);
+        return;
+      }
+      countEl.textContent = nums[i];
+      countEl.className = 'countdown-num show';
+      setTimeout(() => {
+        countEl.className = 'countdown-num hide';
+        setTimeout(() => { i++; showNum(); }, 220);
+      }, 700);
+    }
+
+    showNum();
   }
 
   function nextRound() {
