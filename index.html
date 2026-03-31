@@ -421,12 +421,61 @@
     .flash-overlay.go {
       animation: correct-pulse 0.5s ease-out forwards;
     }
+    /* Record button */
+    .record-btn {
+      position: fixed;
+      bottom: 1.25rem;
+      right: 1.25rem;
+      z-index: 100;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 0.55rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+    .record-btn:hover { border-color: #444; color: var(--text); }
+    .record-btn.recording {
+      border-color: var(--danger);
+      color: var(--danger);
+      background: #1a0a0a;
+    }
+    .record-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .record-btn.recording .record-dot {
+      background: var(--danger);
+      animation: rec-pulse 1.1s ease-in-out infinite;
+    }
+    @keyframes rec-pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.2; }
+    }
   </style>
 </head>
 <body>
 
 <!-- Flash overlay -->
 <div class="flash-overlay" id="flash"></div>
+
+<!-- Record button (always visible) -->
+<button class="record-btn" id="record-btn" onclick="toggleRecord()">
+  <div class="record-dot"></div>
+  <span id="record-label">Record</span>
+</button>
 
 <!-- ── Setup Screen ── -->
 <div class="screen active" id="setup-screen">
@@ -831,6 +880,70 @@
         osc.stop(t + 0.3);
       });
     } catch(e) {}
+  }
+
+  // ── Screen recording ───────────────────────────────────────
+  let mediaRecorder = null;
+  let recordChunks  = [];
+
+  async function toggleRecord() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { frameRate: 30 },
+        audio: true,
+      });
+
+      recordChunks  = [];
+      mediaRecorder = new MediaRecorder(stream, { mimeType: getSupportedMime() });
+
+      mediaRecorder.ondataavailable = e => {
+        if (e.data.size > 0) recordChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        // Stop all tracks so the browser indicator goes away
+        stream.getTracks().forEach(t => t.stop());
+
+        const blob = new Blob(recordChunks, { type: mediaRecorder.mimeType });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        const ext  = mediaRecorder.mimeType.includes('mp4') ? 'mp4' : 'webm';
+        a.href     = url;
+        a.download = `anatomy-unscramble-${Date.now()}.${ext}`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        setRecordUI(false);
+        mediaRecorder = null;
+      };
+
+      // If user closes the share dialog natively, treat as stop
+      stream.getVideoTracks()[0].onended = () => {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+      };
+
+      mediaRecorder.start();
+      setRecordUI(true);
+    } catch (e) {
+      // User cancelled the dialog — do nothing
+    }
+  }
+
+  function setRecordUI(recording) {
+    const btn   = document.getElementById('record-btn');
+    const label = document.getElementById('record-label');
+    btn.classList.toggle('recording', recording);
+    label.textContent = recording ? 'Stop' : 'Record';
+  }
+
+  function getSupportedMime() {
+    const types = ['video/mp4', 'video/webm;codecs=vp9', 'video/webm'];
+    return types.find(t => MediaRecorder.isTypeSupported(t)) || '';
   }
 </script>
 </body>
