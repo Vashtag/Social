@@ -468,6 +468,57 @@
       transition: opacity 0.2s ease, transform 0.2s ease;
     }
 
+    /* Round transition */
+    .round-transition {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 190;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+    .round-transition.visible { opacity: 1; pointer-events: all; }
+    .round-transition-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--muted);
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.3s ease 0.15s, transform 0.3s ease 0.15s;
+    }
+    .round-transition.visible .round-transition-label {
+      opacity: 1; transform: translateY(0);
+    }
+    .round-transition-num {
+      font-size: clamp(5rem, 20vw, 9rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: var(--text);
+      line-height: 1;
+      opacity: 0;
+      transform: scale(0.75);
+      transition: opacity 0.3s ease 0.1s, transform 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.1s;
+    }
+    .round-transition.visible .round-transition-num {
+      opacity: 1; transform: scale(1);
+    }
+
+    /* Confetti canvas */
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 300;
+      display: none;
+    }
+
     /* Pulse on correct */
     @keyframes correct-pulse {
       0% { opacity: 0.12; }
@@ -541,6 +592,15 @@
   <div class="preview-words" id="preview-words"></div>
   <div class="countdown-num" id="countdown-num"></div>
 </div>
+
+<!-- Round transition overlay -->
+<div class="round-transition" id="round-transition">
+  <div class="round-transition-label" id="rt-label">Round</div>
+  <div class="round-transition-num" id="rt-num">2</div>
+</div>
+
+<!-- Confetti canvas -->
+<canvas id="confetti-canvas"></canvas>
 
 <!-- Record button (always visible) -->
 <button class="record-btn" id="record-btn" onclick="toggleRecord()">
@@ -886,7 +946,7 @@
       disableButtons();
       revealAnswer(false);
       playBuzzer();
-      setTimeout(nextRound, 1800);
+      setTimeout(afterRound, 1800);
     }
   }
 
@@ -919,9 +979,10 @@
     disableButtons();
 
     revealAnswer(true);
+    burstConfetti();
     flashGreen();
     playCorrect();
-    setTimeout(nextRound, 1400);
+    setTimeout(afterRound, 1400);
   }
 
   function skip() {
@@ -930,7 +991,90 @@
     g.active = false;
     disableButtons();
     revealAnswer(false);
-    setTimeout(nextRound, 1400);
+    setTimeout(afterRound, 1400);
+  }
+
+  function afterRound() {
+    if (g.round >= TOTAL_ROUNDS) { showResults(); return; }
+    const isFinal = g.round === TOTAL_ROUNDS - 1;
+    showRoundTransition(g.round + 1, isFinal, nextRound);
+  }
+
+  function showRoundTransition(num, isFinal, callback) {
+    const overlay = document.getElementById('round-transition');
+    const label   = document.getElementById('rt-label');
+    const numEl   = document.getElementById('rt-num');
+
+    label.textContent = isFinal ? 'Final' : 'Round';
+    numEl.textContent = isFinal ? 'Round' : num;
+    overlay.classList.add('visible');
+
+    setTimeout(() => {
+      overlay.classList.remove('visible');
+      setTimeout(callback, 350);
+    }, 1400);
+  }
+
+  function burstConfetti() {
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx    = canvas.getContext('2d');
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    canvas.style.display = 'block';
+
+    const colors = ['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#c77dff','#ff9f43','#ff6348','#fff'];
+    const pieces = Array.from({ length: 140 }, () => ({
+      x:        Math.random() * canvas.width,
+      y:        -12,
+      r:        Math.random() * 5 + 3,
+      w:        Math.random() * 12 + 5,
+      h:        Math.random() * 6 + 3,
+      color:    colors[Math.floor(Math.random() * colors.length)],
+      vx:       (Math.random() - 0.5) * 7,
+      vy:       Math.random() * 5 + 2,
+      spin:     (Math.random() - 0.5) * 10,
+      angle:    Math.random() * 360,
+      shape:    Math.random() > 0.4 ? 'rect' : 'circle',
+    }));
+
+    const totalFrames = 110;
+    let frame = 0;
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const alpha = Math.max(0, 1 - frame / totalFrames);
+
+      pieces.forEach(p => {
+        p.x     += p.vx;
+        p.y     += p.vy;
+        p.vy    += 0.12;
+        p.angle += p.spin;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.angle * Math.PI / 180);
+        ctx.fillStyle = p.color;
+        if (p.shape === 'rect') {
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        } else {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      });
+
+      frame++;
+      if (frame < totalFrames) {
+        requestAnimationFrame(draw);
+      } else {
+        canvas.style.display = 'none';
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    requestAnimationFrame(draw);
   }
 
   function disableButtons() {
