@@ -632,11 +632,10 @@
     revealEl.classList.remove('show', 'missed');
     revealEl.textContent = '';
 
-    // Hint — fade in broad hint immediately
+    // Hint — hidden for first 10 seconds
     const hintEl = document.getElementById('hint');
     hintEl.className = 'hint-text';
-    hintEl.textContent = g.current.hint1;
-    requestAnimationFrame(() => requestAnimationFrame(() => hintEl.classList.add('show')));
+    hintEl.textContent = '';
 
     // Timer ring reset
     setRing(ROUND_TIME);
@@ -653,14 +652,23 @@
     setRing(g.timeLeft);
     document.getElementById('timer-num').textContent = g.timeLeft;
 
-    // At 15s → swap to specific hint
-    if (g.timeLeft === 15) {
+    // At 20s remaining (10s elapsed) → show vague hint
+    if (g.timeLeft === 20) {
       const hintEl = document.getElementById('hint');
-      hintEl.classList.remove('show');
+      hintEl.textContent = g.current.hint1;
+      hintEl.className = 'hint-text flash';
+      hintEl.addEventListener('animationend', () => hintEl.classList.add('show'), { once: true });
+    }
+
+    // At 10s remaining (20s elapsed) → swap to specific hint
+    if (g.timeLeft === 10) {
+      const hintEl = document.getElementById('hint');
+      hintEl.className = 'hint-text';
       setTimeout(() => {
         hintEl.textContent = g.current.hint2;
         hintEl.className = 'hint-text specific flash';
-      }, 300);
+        hintEl.addEventListener('animationend', () => hintEl.classList.add('show'), { once: true });
+      }, 200);
     }
 
     if (g.timeLeft <= 0) {
