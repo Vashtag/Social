@@ -241,7 +241,7 @@
       font-size: 0.78rem;
       letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: var(--hint1);
+      color: var(--text);
       opacity: 0;
       padding: 0.4rem 1.1rem;
       border-radius: 100px;
@@ -250,43 +250,26 @@
       z-index: 0;
     }
     .hint-text.show { opacity: 1; }
-    .hint-text.specific { color: var(--hint2); }
+    .hint-text.specific { color: var(--text); }
 
-    /* Animated rainbow border — only visible when shown */
-    .hint-text.show::before {
-      content: '';
-      position: absolute;
-      inset: -2px;
-      border-radius: 100px;
-      background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff, #c77dff, #ff6b6b);
-      background-size: 300% 100%;
-      animation: border-scroll 2.5s linear infinite;
-      z-index: -1;
+    /* Soft colour-shifting glow under the text */
+    @keyframes hint-glow {
+      0%   { text-shadow: 0 2px 10px rgba(150, 200, 255, 0.5); }
+      33%  { text-shadow: 0 2px 12px rgba(200, 150, 255, 0.5); }
+      66%  { text-shadow: 0 2px 12px rgba(255, 200, 120, 0.5); }
+      100% { text-shadow: 0 2px 10px rgba(150, 200, 255, 0.5); }
     }
 
-    @keyframes border-scroll {
-      0%   { background-position: 0% 0; }
-      100% { background-position: 300% 0; }
-    }
-
-    /* Appear animation — smooth pop with a brief glow */
+    /* Appear animation */
     @keyframes hint-appear {
       0%   { opacity: 0; transform: scale(0.88); }
-      55%  { opacity: 1; transform: scale(1.06); text-shadow: 0 0 12px rgba(255,255,255,0.7); }
-      75%  { transform: scale(0.98); text-shadow: none; }
+      55%  { opacity: 1; transform: scale(1.04); }
       100% { opacity: 1; transform: scale(1); }
     }
 
-    /* Sparkle shimmer after appearing */
-    @keyframes hint-sparkle {
-      0%, 100% { text-shadow: none; }
-      33%  { text-shadow: 0 0 8px rgba(255, 210, 100, 0.8); }
-      66%  { text-shadow: 0 0 10px rgba(150, 200, 255, 0.8); }
-    }
-
     .hint-text.flash {
-      animation: hint-appear 0.45s ease-out forwards,
-                 hint-sparkle 1.4s ease-in-out 0.4s 2;
+      animation: hint-appear 0.4s ease-out forwards,
+                 hint-glow 3s ease-in-out 0.4s infinite;
     }
 
     /* Buttons */
