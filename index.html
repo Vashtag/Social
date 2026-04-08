@@ -617,18 +617,6 @@
     }
     .intro-sub.show { opacity: 1; transform: translateY(0); }
 
-    .intro-continue {
-      position: relative;
-      z-index: 1;
-      font-size: 0.65rem;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.25);
-      opacity: 0;
-      transition: opacity 0.5s ease 0.3s;
-      margin-top: 0.5rem;
-    }
-    .intro-continue.show { opacity: 1; }
 
     .record-btn {
       background: var(--surface);
@@ -688,7 +676,6 @@
   </div>
   <div class="intro-word-wrap" id="intro-word-wrap"></div>
   <div class="intro-sub" id="intro-sub">Anatomy Edition</div>
-  <div class="intro-continue" id="intro-continue">Press Enter or tap to continue</div>
 </div>
 
 <!-- Preview overlay -->
@@ -1263,12 +1250,9 @@
     const overlay  = document.getElementById('intro-overlay');
     const wordWrap = document.getElementById('intro-word-wrap');
     const sub      = document.getElementById('intro-sub');
-    const cont     = document.getElementById('intro-continue');
-
     introReady = false;
     wordWrap.innerHTML = '';
     sub.classList.remove('show');
-    cont.classList.remove('show');
     overlay.classList.add('visible');
     document.getElementById('intro-backdrop').classList.add('visible');
 
@@ -1286,10 +1270,7 @@
 
     const revealDelay = word.length * 90 + 350;
     setTimeout(() => sub.classList.add('show'), revealDelay);
-    setTimeout(() => {
-      cont.classList.add('show');
-      introReady = true;
-    }, revealDelay + 600);
+    setTimeout(() => { introReady = true; }, revealDelay + 600);
   }
 
   function hideIntro() {
