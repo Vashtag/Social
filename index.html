@@ -1340,12 +1340,20 @@
 
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { frameRate: 30 },
+        video: {
+          frameRate: { ideal: 60, max: 60 },
+          width:     { ideal: 1920 },
+          height:    { ideal: 1080 },
+        },
         audio: true,
       });
 
       recordChunks  = [];
-      mediaRecorder = new MediaRecorder(stream, { mimeType: getSupportedMime() });
+      mediaRecorder = new MediaRecorder(stream, {
+        mimeType:        getSupportedMime(),
+        videoBitsPerSecond: 16_000_000,  // 16 Mbps
+        audioBitsPerSecond:    192_000,  // 192 kbps
+      });
 
       mediaRecorder.ondataavailable = e => {
         if (e.data.size > 0) recordChunks.push(e.data);
@@ -1388,7 +1396,13 @@
   }
 
   function getSupportedMime() {
-    const types = ['video/mp4', 'video/webm;codecs=vp9', 'video/webm'];
+    const types = [
+      'video/mp4;codecs=avc1',          // H.264 MP4 (best compat)
+      'video/webm;codecs=vp9',          // VP9 WebM (high quality)
+      'video/webm;codecs=h264',         // H.264 WebM
+      'video/mp4',
+      'video/webm',
+    ];
     return types.find(t => MediaRecorder.isTypeSupported(t)) || '';
   }
 </script>
