@@ -589,7 +589,7 @@
       opacity: 0;
     }
     .intro-letter.animate {
-      animation: letter-full 2.6s ease-out forwards;
+      animation: letter-full 1.1s ease-out forwards;
     }
     @keyframes letter-full {
       0%   { opacity: 0; transform: translateY(-70px) scale(0.4) rotate(-8deg); }
@@ -1263,13 +1263,13 @@
       el.textContent = char;
       el.style.color = INTRO_COLORS[i % INTRO_COLORS.length];
       el.style.textShadow = `0 0 40px ${INTRO_COLORS[i % INTRO_COLORS.length]}88`;
-      el.style.animationDelay = `${i * 0.09}s`;
+      el.style.animationDelay = `${i * 0.07}s`;
       wordWrap.appendChild(el);
       requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('animate')));
     });
 
     // After all letters have landed, do scramble → unscramble
-    const allLanded = word.length * 90 + 2700;
+    const allLanded = word.length * 70 + 1200;
     setTimeout(() => scrambleAndReturn(sub), allLanded);
   }
 
