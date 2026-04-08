@@ -1268,9 +1268,57 @@
       requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('animate')));
     });
 
-    const revealDelay = word.length * 90 + 350;
-    setTimeout(() => sub.classList.add('show'), revealDelay);
-    setTimeout(() => { introReady = true; }, revealDelay + 600);
+    // After all letters have landed, do scramble → unscramble
+    const allLanded = word.length * 90 + 2700;
+    setTimeout(() => scrambleAndReturn(sub), allLanded);
+  }
+
+  function scrambleAndReturn(sub) {
+    const els = Array.from(document.querySelectorAll('.intro-letter'));
+
+    // Freeze letters in place (cancel drop-in animation)
+    els.forEach(el => {
+      el.style.animation = 'none';
+      el.style.opacity   = '1';
+      el.style.transform = 'none';
+    });
+
+    // Subtitle fades out during scramble
+    sub.classList.remove('show');
+
+    requestAnimationFrame(() => {
+      // Capture current positions
+      const rects = els.map(el => el.getBoundingClientRect());
+
+      // Build a shuffled permutation (guarantee it's different from identity)
+      const order = els.map((_, i) => i);
+      do {
+        for (let i = order.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [order[i], order[j]] = [order[j], order[i]];
+        }
+      } while (order.every((v, i) => v === i));
+
+      // Scramble — each letter jumps to a different letter's position
+      els.forEach((el, i) => {
+        const dx  = rects[order[i]].left - rects[i].left;
+        const rot = (Math.random() - 0.5) * 30;
+        el.style.transition = `transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1)`;
+        el.style.transform  = `translateX(${dx}px) rotate(${rot}deg)`;
+      });
+
+      // Unscramble back after a beat
+      setTimeout(() => {
+        els.forEach(el => {
+          el.style.transition = `transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)`;
+          el.style.transform  = 'translateX(0) rotate(0deg)';
+        });
+
+        // Subtitle fades back in, then ready
+        setTimeout(() => sub.classList.add('show'), 300);
+        setTimeout(() => { introReady = true; }, 900);
+      }, 900);
+    });
   }
 
   function hideIntro() {
