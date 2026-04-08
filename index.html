@@ -491,6 +491,113 @@
       bottom: 1.25rem;
       right: 1.25rem;
       z-index: 100;
+    }
+
+    /* Intro button */
+    .intro-btn {
+      position: fixed;
+      bottom: 1.25rem;
+      left: 1.25rem;
+      z-index: 100;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 0.55rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .intro-btn:hover { border-color: #444; color: var(--text); }
+
+    /* Intro overlay */
+    .intro-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.2rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      cursor: pointer;
+      overflow: hidden;
+    }
+    .intro-overlay.visible { opacity: 1; pointer-events: all; }
+
+    .intro-bg-gradient {
+      position: absolute;
+      inset: 0;
+      background: #080808;
+      z-index: 0;
+    }
+
+    .intro-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      animation: orb-drift 4s ease-in-out infinite alternate;
+    }
+    @keyframes orb-drift {
+      0%   { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(30px, -20px) scale(1.15); }
+    }
+
+    .intro-word-wrap {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .intro-letter {
+      display: inline-block;
+      font-size: clamp(3.5rem, 13vw, 8.5rem);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.01em;
+      opacity: 0;
+      transform: translateY(-70px) scale(0.4) rotate(-8deg);
+    }
+    .intro-letter.land {
+      animation: letter-land 0.55s cubic-bezier(0.34, 1.6, 0.64, 1) forwards;
+    }
+    @keyframes letter-land {
+      0%   { opacity: 0; transform: translateY(-70px) scale(0.4) rotate(-8deg); }
+      100% { opacity: 1; transform: translateY(0)    scale(1)   rotate(0deg);  }
+    }
+    .intro-letter.wave {
+      animation: letter-wave 1.8s ease-in-out infinite;
+    }
+    @keyframes letter-wave {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-14px); }
+    }
+
+    .intro-sub {
+      position: relative;
+      z-index: 1;
+      font-size: clamp(0.7rem, 2.5vw, 0.95rem);
+      letter-spacing: 0.45em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      font-weight: 500;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .intro-sub.show { opacity: 1; transform: translateY(0); }
+
+    .record-btn {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 100px;
@@ -535,12 +642,27 @@
 <!-- Flash overlay -->
 <div class="flash-overlay" id="flash"></div>
 
+<!-- Intro overlay -->
+<div class="intro-overlay" id="intro-overlay" onclick="hideIntro()">
+  <div class="intro-bg-gradient">
+    <div class="intro-orb" style="width:420px;height:420px;background:#7c3aed;opacity:0.35;top:-80px;left:-100px;animation-delay:0s;"></div>
+    <div class="intro-orb" style="width:360px;height:360px;background:#db2777;opacity:0.3;bottom:-60px;right:-80px;animation-delay:-1.5s;"></div>
+    <div class="intro-orb" style="width:280px;height:280px;background:#0ea5e9;opacity:0.25;bottom:20%;left:30%;animation-delay:-0.8s;animation-duration:5s;"></div>
+    <div class="intro-orb" style="width:200px;height:200px;background:#f59e0b;opacity:0.2;top:15%;right:20%;animation-delay:-2s;animation-duration:3.5s;"></div>
+  </div>
+  <div class="intro-word-wrap" id="intro-word-wrap"></div>
+  <div class="intro-sub" id="intro-sub">Anatomy Edition</div>
+</div>
+
 <!-- Preview overlay -->
 <div class="preview-overlay" id="preview-overlay">
   <div class="preview-label" id="preview-label">Answers this round</div>
   <div class="preview-words" id="preview-words"></div>
   <div class="countdown-num" id="countdown-num"></div>
 </div>
+
+<!-- Intro button (always visible) -->
+<button class="intro-btn" onclick="playIntro()">✦ Intro</button>
 
 <!-- Record button (always visible) -->
 <button class="record-btn" id="record-btn" onclick="toggleRecord()">
@@ -1094,6 +1216,58 @@
         osc.stop(t + 0.3);
       });
     } catch(e) {}
+  }
+
+  // ── Intro animation ───────────────────────────────────────
+  const INTRO_COLORS = ['#ff6b6b','#ff9f43','#ffd93d','#6bcb77','#4d96ff','#c77dff','#ff6b6b','#ff9f43','#ffd93d','#6bcb77'];
+  let introTimeout = null;
+
+  function playIntro() {
+    const overlay  = document.getElementById('intro-overlay');
+    const wordWrap = document.getElementById('intro-word-wrap');
+    const sub      = document.getElementById('intro-sub');
+
+    // Reset
+    wordWrap.innerHTML = '';
+    sub.classList.remove('show');
+    overlay.classList.add('visible');
+
+    // Build letters
+    const word = 'UNSCRAMBLE';
+    word.split('').forEach((char, i) => {
+      const el = document.createElement('span');
+      el.className = 'intro-letter';
+      el.textContent = char;
+      el.style.color = INTRO_COLORS[i % INTRO_COLORS.length];
+      el.style.textShadow = `0 0 40px ${INTRO_COLORS[i % INTRO_COLORS.length]}88`;
+      wordWrap.appendChild(el);
+
+      // Stagger land animation
+      setTimeout(() => {
+        el.classList.add('land');
+        // After landing, add continuous wave with per-letter delay
+        setTimeout(() => {
+          el.classList.remove('land');
+          el.style.opacity = '1';
+          el.style.transform = 'none';
+          el.classList.add('wave');
+          el.style.animationDelay = `${i * 0.08}s`;
+        }, 560);
+      }, i * 90);
+    });
+
+    // Subtitle appears after all letters land
+    setTimeout(() => sub.classList.add('show'), word.length * 90 + 400);
+
+    // Auto-dismiss after 3.8s
+    clearTimeout(introTimeout);
+    introTimeout = setTimeout(hideIntro, 3800);
+  }
+
+  function hideIntro() {
+    clearTimeout(introTimeout);
+    const overlay = document.getElementById('intro-overlay');
+    overlay.classList.remove('visible');
   }
 
   // ── Screen recording ───────────────────────────────────────
