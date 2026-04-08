@@ -566,21 +566,20 @@
       line-height: 1;
       letter-spacing: -0.01em;
       opacity: 0;
-      transform: translateY(-70px) scale(0.4) rotate(-8deg);
     }
-    .intro-letter.land {
-      animation: letter-land 0.55s cubic-bezier(0.34, 1.6, 0.64, 1) forwards;
+    .intro-letter.animate {
+      animation: letter-full 2.6s ease-out forwards;
     }
-    @keyframes letter-land {
+    @keyframes letter-full {
       0%   { opacity: 0; transform: translateY(-70px) scale(0.4) rotate(-8deg); }
-      100% { opacity: 1; transform: translateY(0)    scale(1)   rotate(0deg);  }
-    }
-    .intro-letter.wave {
-      animation: letter-wave 1.8s ease-in-out infinite;
-    }
-    @keyframes letter-wave {
-      0%, 100% { transform: translateY(0); }
-      50%      { transform: translateY(-14px); }
+      20%  { opacity: 1; transform: translateY(6px)  scale(1.1)  rotate(1deg);  }
+      30%  { transform: translateY(-5px) scale(0.97); }
+      38%  { transform: translateY(0)    scale(1);    }
+      52%  { transform: translateY(-13px); }
+      66%  { transform: translateY(0);     }
+      78%  { transform: translateY(-9px);  }
+      90%  { transform: translateY(0);     }
+      100% { opacity: 1; transform: translateY(0); }
     }
 
     .intro-sub {
@@ -1232,7 +1231,7 @@
     sub.classList.remove('show');
     overlay.classList.add('visible');
 
-    // Build letters
+    // Build letters — single animation, no class swapping
     const word = 'UNSCRAMBLE';
     word.split('').forEach((char, i) => {
       const el = document.createElement('span');
@@ -1240,24 +1239,14 @@
       el.textContent = char;
       el.style.color = INTRO_COLORS[i % INTRO_COLORS.length];
       el.style.textShadow = `0 0 40px ${INTRO_COLORS[i % INTRO_COLORS.length]}88`;
+      el.style.animationDelay = `${i * 0.09}s`;
       wordWrap.appendChild(el);
-
-      // Stagger land animation
-      setTimeout(() => {
-        el.classList.add('land');
-        // After landing, add continuous wave with per-letter delay
-        setTimeout(() => {
-          el.classList.remove('land');
-          el.style.opacity = '1';
-          el.style.transform = 'none';
-          el.classList.add('wave');
-          el.style.animationDelay = `${i * 0.08}s`;
-        }, 560);
-      }, i * 90);
+      // rAF ensures delay is applied before class triggers animation
+      requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('animate')));
     });
 
-    // Subtitle appears after all letters land
-    setTimeout(() => sub.classList.add('show'), word.length * 90 + 400);
+    // Subtitle appears after all letters have dropped in
+    setTimeout(() => sub.classList.add('show'), word.length * 90 + 350);
 
     // Auto-dismiss after 3.8s
     clearTimeout(introTimeout);
