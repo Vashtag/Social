@@ -556,15 +556,18 @@
       position: relative;
       z-index: 1;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 0.05em;
     }
     .intro-letter {
-      display: inline-block;
-      font-size: clamp(3.5rem, 13vw, 8.5rem);
+      display: block;
+      font-size: clamp(2rem, 9vw, 3.4rem);
       font-weight: 900;
       line-height: 1;
-      letter-spacing: -0.01em;
+      letter-spacing: 0.05em;
+      text-align: center;
       opacity: 0;
     }
     .intro-letter.animate {
@@ -595,6 +598,19 @@
       transition: opacity 0.5s ease, transform 0.5s ease;
     }
     .intro-sub.show { opacity: 1; transform: translateY(0); }
+
+    .intro-continue {
+      position: relative;
+      z-index: 1;
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.25);
+      opacity: 0;
+      transition: opacity 0.5s ease 0.3s;
+      margin-top: 0.5rem;
+    }
+    .intro-continue.show { opacity: 1; }
 
     .record-btn {
       background: var(--surface);
@@ -642,7 +658,7 @@
 <div class="flash-overlay" id="flash"></div>
 
 <!-- Intro overlay -->
-<div class="intro-overlay" id="intro-overlay" onclick="hideIntro()">
+<div class="intro-overlay" id="intro-overlay">
   <div class="intro-bg-gradient">
     <div class="intro-orb" style="width:420px;height:420px;background:#7c3aed;opacity:0.35;top:-80px;left:-100px;animation-delay:0s;"></div>
     <div class="intro-orb" style="width:360px;height:360px;background:#db2777;opacity:0.3;bottom:-60px;right:-80px;animation-delay:-1.5s;"></div>
@@ -651,6 +667,7 @@
   </div>
   <div class="intro-word-wrap" id="intro-word-wrap"></div>
   <div class="intro-sub" id="intro-sub">Anatomy Edition</div>
+  <div class="intro-continue" id="intro-continue">Press Enter or tap to continue</div>
 </div>
 
 <!-- Preview overlay -->
@@ -1219,19 +1236,20 @@
 
   // ── Intro animation ───────────────────────────────────────
   const INTRO_COLORS = ['#ff6b6b','#ff9f43','#ffd93d','#6bcb77','#4d96ff','#c77dff','#ff6b6b','#ff9f43','#ffd93d','#6bcb77'];
-  let introTimeout = null;
+  let introReady = false;
 
   function playIntro() {
     const overlay  = document.getElementById('intro-overlay');
     const wordWrap = document.getElementById('intro-word-wrap');
     const sub      = document.getElementById('intro-sub');
+    const cont     = document.getElementById('intro-continue');
 
-    // Reset
+    introReady = false;
     wordWrap.innerHTML = '';
     sub.classList.remove('show');
+    cont.classList.remove('show');
     overlay.classList.add('visible');
 
-    // Build letters — single animation, no class swapping
     const word = 'UNSCRAMBLE';
     word.split('').forEach((char, i) => {
       const el = document.createElement('span');
@@ -1241,23 +1259,29 @@
       el.style.textShadow = `0 0 40px ${INTRO_COLORS[i % INTRO_COLORS.length]}88`;
       el.style.animationDelay = `${i * 0.09}s`;
       wordWrap.appendChild(el);
-      // rAF ensures delay is applied before class triggers animation
       requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('animate')));
     });
 
-    // Subtitle appears after all letters have dropped in
-    setTimeout(() => sub.classList.add('show'), word.length * 90 + 350);
-
-    // Auto-dismiss after 3.8s
-    clearTimeout(introTimeout);
-    introTimeout = setTimeout(hideIntro, 3800);
+    const revealDelay = word.length * 90 + 350;
+    setTimeout(() => sub.classList.add('show'), revealDelay);
+    setTimeout(() => {
+      cont.classList.add('show');
+      introReady = true;
+    }, revealDelay + 600);
   }
 
   function hideIntro() {
-    clearTimeout(introTimeout);
-    const overlay = document.getElementById('intro-overlay');
-    overlay.classList.remove('visible');
+    if (!introReady) return;
+    document.getElementById('intro-overlay').classList.remove('visible');
   }
+
+  // Enter key dismisses
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') hideIntro();
+  });
+
+  // Tap dismisses (mobile)
+  document.getElementById('intro-overlay').addEventListener('click', hideIntro);
 
   // ── Screen recording ───────────────────────────────────────
   let mediaRecorder = null;
