@@ -47,7 +47,7 @@
     #game-screen, #result-screen { background: var(--bg); }
 
     /* ── Setup ── */
-    #setup-screen { flex-direction: column; background: transparent; }
+    #setup-screen { flex-direction: column; background: var(--bg); }
 
     .setup-inner {
       width: 100%;
@@ -56,12 +56,6 @@
       flex-direction: column;
       align-items: center;
       gap: 1.8rem;
-      background: rgba(13,13,13,0.72);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 24px;
-      padding: 2.5rem 2rem;
     }
 
     .logo {
@@ -690,83 +684,6 @@
     }
 
 
-    /* Intro overlay — always-on background behind setup screen */
-    .intro-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 1.2rem;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.6s ease;
-      overflow: hidden;
-    }
-    .intro-overlay.visible { opacity: 1; }
-
-    .intro-bg-gradient {
-      position: absolute;
-      inset: 0;
-      background: #080808;
-      z-index: 0;
-    }
-
-    .intro-orb {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(80px);
-      animation: orb-drift 4s ease-in-out infinite alternate;
-    }
-    @keyframes orb-drift {
-      0%   { transform: translate(0, 0) scale(1); }
-      100% { transform: translate(30px, -20px) scale(1.15); }
-    }
-
-    .intro-word-wrap {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: center;
-      flex-wrap: nowrap;
-      gap: 0;
-    }
-    .intro-letter {
-      display: inline-block;
-      /* font sized to fit 10 chars across ~9/16 of viewport height */
-      font-size: clamp(1.8rem, min(8vw, 4.5vh), 5rem);
-      font-weight: 900;
-      line-height: 1;
-      letter-spacing: -0.01em;
-      opacity: 0;
-    }
-    .intro-letter.animate {
-      animation: letter-appear 0.25s ease-out forwards;
-    }
-    @keyframes letter-appear {
-      0%   { opacity: 0; transform: scale(0.85); }
-      100% { opacity: 1; transform: scale(1); }
-    }
-
-    .intro-sub {
-      position: relative;
-      z-index: 1;
-      font-size: clamp(0.7rem, 2.5vw, 0.95rem);
-      letter-spacing: 0.45em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.45);
-      font-weight: 500;
-      opacity: 0;
-      transform: translateY(10px);
-      transition: opacity 0.5s ease, transform 0.5s ease;
-    }
-    .intro-sub.show { opacity: 1; transform: translateY(0); }
-
-
     .record-btn {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -805,25 +722,50 @@
       0%, 100% { opacity: 1; }
       50%       { opacity: 0.2; }
     }
+
+    /* Photo preview (after capture) */
+    .photo-preview {
+      position: fixed;
+      inset: 0;
+      z-index: 700;
+      background: #000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .photo-preview.visible { display: flex; }
+    #photo-img {
+      max-width: 100%;
+      max-height: 72vh;
+      object-fit: contain;
+    }
+    .photo-preview-ui {
+      padding: 1rem 2rem 2rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+      max-width: 420px;
+    }
+    .photo-preview-hint {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.05em;
+    }
+    .photo-preview-actions {
+      display: flex;
+      gap: 0.75rem;
+      width: 100%;
+    }
   </style>
 </head>
 <body>
 
 <!-- Flash overlay -->
 <div class="flash-overlay" id="flash"></div>
-
-<!-- Intro overlay -->
-<div class="intro-overlay" id="intro-overlay">
-  <div class="intro-bg-gradient">
-    <div class="intro-orb" style="width:420px;height:420px;background:#7c3aed;opacity:0.35;top:-80px;left:-100px;animation-delay:0s;"></div>
-    <div class="intro-orb" style="width:360px;height:360px;background:#db2777;opacity:0.3;bottom:-60px;right:-80px;animation-delay:-1.5s;"></div>
-    <div class="intro-orb" style="width:280px;height:280px;background:#0ea5e9;opacity:0.25;bottom:20%;left:30%;animation-delay:-0.8s;animation-duration:5s;"></div>
-    <div class="intro-orb" style="width:200px;height:200px;background:#f59e0b;opacity:0.2;top:15%;right:20%;animation-delay:-2s;animation-duration:3.5s;"></div>
-  </div>
-  <div class="intro-word-wrap" id="intro-word-wrap"></div>
-  <div class="intro-sub" id="intro-sub">Anatomy Edition</div>
-</div>
-
 
 <!-- Fade-to-black overlay -->
 <div id="fade-overlay"></div>
@@ -962,8 +904,20 @@
   <div class="photo-overlay-ui">
     <div class="photo-results" id="photo-results-overlay"></div>
     <div class="photo-actions">
-      <button class="btn-capture" onclick="capturePhoto()">Save Photo</button>
+      <button class="btn-capture" onclick="capturePhoto()">Take Photo</button>
       <button class="btn-close-photo" onclick="closePhoto()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Photo preview (shown after capture) -->
+<div class="photo-preview" id="photo-preview">
+  <img id="photo-img" src="" alt="Result photo" />
+  <div class="photo-preview-ui">
+    <p class="photo-preview-hint">On iPhone: hold the image → Save to Photos &nbsp;·&nbsp; On Android: tap Download</p>
+    <div class="photo-preview-actions">
+      <a id="photo-download-link" class="btn-capture" style="text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;">Download</a>
+      <button class="btn-close-photo" onclick="closePhotoPreview()">Close</button>
     </div>
   </div>
 </div>
@@ -1137,7 +1091,6 @@
       document.getElementById('btn-p1-label').textContent = solo ? 'Got it' : g.p1 + '  got it';
       document.getElementById('btn-p2-label').textContent = g.p2 + '  got it';
 
-      hideIntro();
       showScreen('game-screen');
       nextRound();
 
@@ -1339,7 +1292,6 @@
       document.getElementById('name-fields').style.display = 'none';
       document.getElementById('btn-start').style.display   = 'none';
       showScreen('setup-screen');
-      playIntro();
 
       fo.classList.remove('fading');
     }, 500);
@@ -1357,8 +1309,15 @@
   let audioCtx;
   function getCtx() {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
     return audioCtx;
   }
+
+  // Unlock audio on first user tap (required by iOS Safari)
+  document.addEventListener('touchstart', () => {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }, { once: true });
 
   function playHintSound(specific) {
     try {
@@ -1465,89 +1424,6 @@
     } catch(e) {}
   }
 
-  // ── Intro animation ───────────────────────────────────────
-  const INTRO_COLORS = ['#ff6b6b','#ff9f43','#ffd93d','#6bcb77','#4d96ff','#c77dff','#ff6b6b','#ff9f43','#ffd93d','#6bcb77'];
-  let introLooping = false;
-
-  function playIntro() {
-    const overlay  = document.getElementById('intro-overlay');
-    const wordWrap = document.getElementById('intro-word-wrap');
-    const sub      = document.getElementById('intro-sub');
-    introLooping = true;
-    wordWrap.innerHTML = '';
-    sub.classList.remove('show');
-    overlay.classList.add('visible');
-
-    const word = 'UNSCRAMBLE';
-    word.split('').forEach((char, i) => {
-      const el = document.createElement('span');
-      el.className = 'intro-letter';
-      el.textContent = char;
-      el.style.color = INTRO_COLORS[i % INTRO_COLORS.length];
-      el.style.textShadow = `0 0 40px ${INTRO_COLORS[i % INTRO_COLORS.length]}88`;
-      el.style.animationDelay = `${i * 0.06}s`;
-      wordWrap.appendChild(el);
-      requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('animate')));
-    });
-
-    // After all letters have appeared, scramble
-    const allAppeared = word.length * 60 + 350;
-    setTimeout(() => scrambleAndReturn(sub), allAppeared);
-  }
-
-  function scrambleAndReturn(sub) {
-    const els = Array.from(document.querySelectorAll('.intro-letter'));
-
-    // Freeze letters in place (cancel drop-in animation)
-    els.forEach(el => {
-      el.style.animation = 'none';
-      el.style.opacity   = '1';
-      el.style.transform = 'none';
-    });
-
-    // Subtitle fades out during scramble
-    sub.classList.remove('show');
-
-    requestAnimationFrame(() => {
-      // Capture current positions
-      const rects = els.map(el => el.getBoundingClientRect());
-
-      // Build a shuffled permutation (guarantee it's different from identity)
-      const order = els.map((_, i) => i);
-      do {
-        for (let i = order.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [order[i], order[j]] = [order[j], order[i]];
-        }
-      } while (order.every((v, i) => v === i));
-
-      // Scramble — each letter jumps to a different letter's position
-      els.forEach((el, i) => {
-        const dx  = rects[order[i]].left - rects[i].left;
-        const rot = (Math.random() - 0.5) * 30;
-        el.style.transition = `transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1)`;
-        el.style.transform  = `translateX(${dx}px) rotate(${rot}deg)`;
-      });
-
-      // Unscramble back after a beat
-      setTimeout(() => {
-        els.forEach(el => {
-          el.style.transition = `transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)`;
-          el.style.transform  = 'translateX(0) rotate(0deg)';
-        });
-
-        // Subtitle fades back in, then loop again
-        setTimeout(() => sub.classList.add('show'), 300);
-        setTimeout(() => { if (introLooping) scrambleAndReturn(sub); }, 3000);
-      }, 900);
-    });
-  }
-
-  function hideIntro() {
-    introLooping = false;
-    document.getElementById('intro-overlay').classList.remove('visible');
-  }
-
   // ── Photo with results ─────────────────────────────────────
   let _photoStream = null;
 
@@ -1640,10 +1516,20 @@
       ctx.fillText(`avg. ${avgT}s per answer`, cx, vh * 0.95);
     }
 
-    const a = document.createElement('a');
-    a.href = canvas.toDataURL('image/png');
-    a.download = `unscramble-result-${Date.now()}.png`;
-    a.click();
+    // Show preview instead of auto-downloading
+    const dataUrl = canvas.toDataURL('image/png');
+    const img  = document.getElementById('photo-img');
+    const link = document.getElementById('photo-download-link');
+    img.src       = dataUrl;
+    link.href     = dataUrl;
+    link.download = `unscramble-result-${Date.now()}.png`;
+    closePhoto();
+    document.getElementById('photo-preview').classList.add('visible');
+  }
+
+  function closePhotoPreview() {
+    document.getElementById('photo-preview').classList.remove('visible');
+    document.getElementById('photo-img').src = '';
   }
 
   // ── Screen recording ───────────────────────────────────────
@@ -1724,8 +1610,6 @@
     return types.find(t => MediaRecorder.isTypeSupported(t)) || '';
   }
 
-  // Auto-play intro on load (it's the home screen background)
-  window.addEventListener('load', () => playIntro());
 </script>
 </body>
 </html>
