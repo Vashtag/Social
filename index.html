@@ -38,11 +38,16 @@
       align-items: center;
       justify-content: center;
       padding: 1.5rem;
+      position: relative;
+      z-index: 2;
     }
     .screen.active { display: flex; }
 
+    /* Game + result screens need solid bg to cover the intro underneath */
+    #game-screen, #result-screen { background: var(--bg); }
+
     /* ── Setup ── */
-    #setup-screen { flex-direction: column; }
+    #setup-screen { flex-direction: column; background: transparent; }
 
     .setup-inner {
       width: 100%;
@@ -50,7 +55,13 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2.5rem;
+      gap: 1.8rem;
+      background: rgba(13,13,13,0.72);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 24px;
+      padding: 2.5rem 2rem;
     }
 
     .logo {
@@ -173,6 +184,18 @@
     .btn-primary:hover { opacity: 0.88; }
     .btn-primary:active { transform: scale(0.98); }
 
+    /* Fade-to-black overlay for screen transitions */
+    #fade-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 400;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+    #fade-overlay.fading { opacity: 1; pointer-events: all; }
+
     /* ── Game ── */
     #game-screen { flex-direction: column; align-items: stretch; padding: 0; }
 
@@ -185,6 +208,25 @@
       flex-direction: column;
       padding: 1.25rem 1.5rem 1.5rem;
       gap: 0;
+    }
+
+    /* ── Wide layout (desktop) ── */
+    @media (min-width: 700px) {
+      .game-inner {
+        max-width: 1100px;
+        padding: 1.5rem 3rem 2rem;
+      }
+      .action-buttons {
+        flex-direction: row;
+        align-items: stretch;
+      }
+      #btn-p1   { order: 1; flex: 1; }
+      #btn-skip { order: 2; flex: 0 0 auto; padding: 0.7rem 2.5rem; align-self: center; }
+      #btn-p2   { order: 3; flex: 1; }
+      .scrambled {
+        font-size: clamp(3rem, 6vw, 6rem);
+      }
+      .word-area { gap: 1.5rem; }
     }
 
     /* Scoreboard */
@@ -647,34 +689,12 @@
       z-index: 100;
     }
 
-    /* Intro button */
-    .intro-btn {
-      position: fixed;
-      bottom: 1.25rem;
-      left: 1.25rem;
-      z-index: 100;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 100px;
-      padding: 0.55rem 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      cursor: pointer;
-      font-size: 0.7rem;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted);
-      transition: border-color 0.2s, color 0.2s;
-    }
-    .intro-btn:hover { border-color: #444; color: var(--text); }
 
-    /* Intro overlay — full screen horizontal */
+    /* Intro overlay — always-on background behind setup screen */
     .intro-overlay {
       position: fixed;
       inset: 0;
-      z-index: 500;
+      z-index: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -682,10 +702,10 @@
       gap: 1.2rem;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.4s ease;
+      transition: opacity 0.6s ease;
       overflow: hidden;
     }
-    .intro-overlay.visible { opacity: 1; pointer-events: all; }
+    .intro-overlay.visible { opacity: 1; }
 
     .intro-bg-gradient {
       position: absolute;
@@ -805,8 +825,8 @@
 </div>
 
 
-<!-- Intro button (always visible) -->
-<button class="intro-btn" onclick="playIntro()">✦ Intro</button>
+<!-- Fade-to-black overlay -->
+<div id="fade-overlay"></div>
 
 <!-- Record button (always visible) -->
 <button class="record-btn" id="record-btn" onclick="toggleRecord()">
@@ -1091,30 +1111,38 @@
 
   // ── Game control ───────────────────────────────────────────
   function startGame() {
-    const solo = g.mode === 1;
-    g.p1 = solo ? 'Player' : (document.getElementById('p1-input').value.trim() || 'Player 1');
-    g.p2 = solo ? '' : (document.getElementById('p2-input').value.trim() || 'Player 2');
-    g.scores = [0, 0];
-    g.round  = 0;
-    g.times  = [];
-    g.queue  = g.totalRounds === Infinity
-      ? shuffle(WORDS)
-      : shuffle(WORDS).slice(0, g.totalRounds);
+    const fo = document.getElementById('fade-overlay');
+    fo.classList.add('fading');
 
-    // Scoreboard
-    document.getElementById('g-p1-name').textContent = g.p1;
-    document.getElementById('g-p2-name').textContent = g.p2;
-    document.getElementById('g-round').textContent = g.totalRounds === Infinity ? 'Round 1' : `Round 1 / ${g.totalRounds}`;
+    setTimeout(() => {
+      const solo = g.mode === 1;
+      g.p1 = solo ? 'Player' : (document.getElementById('p1-input').value.trim() || 'Player 1');
+      g.p2 = solo ? '' : (document.getElementById('p2-input').value.trim() || 'Player 2');
+      g.scores = [0, 0];
+      g.round  = 0;
+      g.times  = [];
+      g.queue  = g.totalRounds === Infinity
+        ? shuffle(WORDS)
+        : shuffle(WORDS).slice(0, g.totalRounds);
 
-    // Show/hide p2 column and button
-    const p2Col = document.getElementById('g-p2-name').closest('.player-col');
-    p2Col.style.visibility = solo ? 'hidden' : 'visible';
-    document.getElementById('btn-p2').style.display = solo ? 'none' : '';
-    document.getElementById('btn-p1-label').textContent = solo ? 'Got it' : g.p1 + '  got it';
-    document.getElementById('btn-p2-label').textContent = g.p2 + '  got it';
+      // Scoreboard
+      document.getElementById('g-p1-name').textContent = g.p1;
+      document.getElementById('g-p2-name').textContent = g.p2;
+      document.getElementById('g-round').textContent = g.totalRounds === Infinity ? 'Round 1' : `Round 1 / ${g.totalRounds}`;
 
-    showScreen('game-screen');
-    nextRound();
+      // Show/hide p2 column and button
+      const p2Col = document.getElementById('g-p2-name').closest('.player-col');
+      p2Col.style.visibility = solo ? 'hidden' : 'visible';
+      document.getElementById('btn-p2').style.display = solo ? 'none' : '';
+      document.getElementById('btn-p1-label').textContent = solo ? 'Got it' : g.p1 + '  got it';
+      document.getElementById('btn-p2-label').textContent = g.p2 + '  got it';
+
+      hideIntro();
+      showScreen('game-screen');
+      nextRound();
+
+      fo.classList.remove('fading');
+    }, 500);
   }
 
   function nextRound() {
@@ -1299,14 +1327,22 @@
   }
 
   function resetGame() {
-    document.getElementById('p1-input').value = '';
-    document.getElementById('p2-input').value = '';
-    document.getElementById('btn-solo').classList.remove('selected');
-    document.getElementById('btn-vs').classList.remove('selected');
-    document.getElementById('round-selector').classList.remove('show');
-    document.getElementById('name-fields').style.display = 'none';
-    document.getElementById('btn-start').style.display   = 'none';
-    showScreen('setup-screen');
+    const fo = document.getElementById('fade-overlay');
+    fo.classList.add('fading');
+
+    setTimeout(() => {
+      document.getElementById('p1-input').value = '';
+      document.getElementById('p2-input').value = '';
+      document.getElementById('btn-solo').classList.remove('selected');
+      document.getElementById('btn-vs').classList.remove('selected');
+      document.getElementById('round-selector').classList.remove('show');
+      document.getElementById('name-fields').style.display = 'none';
+      document.getElementById('btn-start').style.display   = 'none';
+      showScreen('setup-screen');
+      playIntro();
+
+      fo.classList.remove('fading');
+    }, 500);
   }
 
   // ── Flash ──────────────────────────────────────────────────
@@ -1431,13 +1467,13 @@
 
   // ── Intro animation ───────────────────────────────────────
   const INTRO_COLORS = ['#ff6b6b','#ff9f43','#ffd93d','#6bcb77','#4d96ff','#c77dff','#ff6b6b','#ff9f43','#ffd93d','#6bcb77'];
-  let introReady = false;
+  let introLooping = false;
 
   function playIntro() {
     const overlay  = document.getElementById('intro-overlay');
     const wordWrap = document.getElementById('intro-word-wrap');
     const sub      = document.getElementById('intro-sub');
-    introReady = false;
+    introLooping = true;
     wordWrap.innerHTML = '';
     sub.classList.remove('show');
     overlay.classList.add('visible');
@@ -1500,22 +1536,17 @@
           el.style.transform  = 'translateX(0) rotate(0deg)';
         });
 
-        // Subtitle fades back in, then auto-dismiss after 5s total
+        // Subtitle fades back in, then loop again
         setTimeout(() => sub.classList.add('show'), 300);
-        setTimeout(() => { introReady = true; hideIntro(); }, 2000);
+        setTimeout(() => { if (introLooping) scrambleAndReturn(sub); }, 3000);
       }, 900);
     });
   }
 
-  let _introTimer = null;
   function hideIntro() {
-    clearTimeout(_introTimer);
+    introLooping = false;
     document.getElementById('intro-overlay').classList.remove('visible');
   }
-
-  // Enter key or tap dismisses early
-  document.addEventListener('keydown', e => { if (e.key === 'Enter') hideIntro(); });
-  document.getElementById('intro-overlay').addEventListener('click', hideIntro);
 
   // ── Photo with results ─────────────────────────────────────
   let _photoStream = null;
@@ -1615,9 +1646,6 @@
     a.click();
   }
 
-  // Tap dismisses (mobile)
-  document.getElementById('intro-overlay').addEventListener('click', hideIntro);
-
   // ── Screen recording ───────────────────────────────────────
   let mediaRecorder = null;
   let recordChunks  = [];
@@ -1695,6 +1723,9 @@
     ];
     return types.find(t => MediaRecorder.isTypeSupported(t)) || '';
   }
+
+  // Auto-play intro on load (it's the home screen background)
+  window.addEventListener('load', () => playIntro());
 </script>
 </body>
 </html>
