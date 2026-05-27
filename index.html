@@ -791,54 +791,106 @@
       width: 100%;
     }
 
-    /* ── App Select ── */
-    #app-select-screen { flex-direction: column; background: transparent; }
+    /* ── Settings button ── */
+    .setup-inner { position: relative; }
 
-    .app-select-inner {
-      width: 100%;
-      max-width: 380px;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      gap: 1rem;
-      background: rgba(13,13,13,0.72);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 24px;
-      padding: 2.5rem 2rem;
-    }
-
-    .app-btn {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      background: var(--surface);
-      color: var(--text);
+    .btn-settings {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: transparent;
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 1.4rem 1.5rem;
+      border-radius: 9px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.05rem;
+      padding: 0.38rem 0.5rem;
+      line-height: 1;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .btn-settings:hover { color: var(--text); border-color: #444; }
+
+    /* ── Settings modal ── */
+    .settings-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+    }
+    .settings-modal.open { display: block; }
+    .settings-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+    }
+    .settings-sheet {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #111;
+      border-radius: 20px 20px 0 0;
+      border-top: 1px solid var(--border);
+      padding: 1.5rem 1.5rem 2.5rem;
+      transform: translateY(100%);
+      transition: transform 0.32s cubic-bezier(0.34,1.1,0.64,1);
+    }
+    .settings-modal.open .settings-sheet { transform: translateY(0); }
+    .settings-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+    .settings-title { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; }
+    .settings-close {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 0.78rem;
+      transition: color 0.15s;
+    }
+    .settings-close:hover { color: var(--text); }
+    .settings-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem 1.25rem;
       cursor: pointer;
       text-align: left;
       transition: all 0.15s;
     }
-    .app-btn:hover { border-color: #444; background: #1e1e1e; }
-    .app-btn:active { transform: scale(0.98); }
-    .app-btn-title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.01em; }
-    .app-btn-sub { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.15em; margin-top: 0.15rem; }
+    .settings-item:hover { border-color: #444; background: #1e1e1e; }
+    .settings-item:active { transform: scale(0.98); }
+    .settings-item-icon { font-size: 1.4rem; }
+    .settings-item-text { flex: 1; }
+    .settings-item-title { font-size: 1rem; font-weight: 700; color: var(--text); }
+    .settings-item-sub { font-size: 0.68rem; color: var(--muted); margin-top: 0.15rem; text-transform: uppercase; letter-spacing: 0.1em; }
+    .settings-item-arrow { color: var(--muted); font-size: 1.4rem; line-height: 1; }
 
     /* ── Raffle ── */
     #raffle-screen { flex-direction: column; align-items: stretch; background: var(--bg); padding: 0; }
 
     .raffle-inner {
       width: 100%;
-      max-width: 900px;
+      max-width: 540px;
       margin: 0 auto;
       min-height: 100dvh;
       display: flex;
       flex-direction: column;
       padding: 1.25rem 1.5rem 2rem;
-      gap: 1.25rem;
+      gap: 1rem;
     }
 
     .raffle-header {
@@ -864,28 +916,9 @@
     .btn-back:hover { color: var(--text); border-color: #444; }
 
     .raffle-screen-title {
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       font-weight: 800;
       letter-spacing: -0.02em;
-    }
-
-    .raffle-layout {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-      flex: 1;
-    }
-
-    @media (min-width: 700px) {
-      .raffle-layout { flex-direction: row; align-items: flex-start; }
-      .raffle-names-col { flex: 0 0 260px; }
-      .raffle-wheel-col { flex: 1; align-self: center; }
-    }
-
-    .raffle-names-col {
-      display: flex;
-      flex-direction: column;
-      gap: 0.65rem;
     }
 
     .raffle-section-label {
@@ -919,8 +952,8 @@
       display: flex;
       flex-direction: column;
       gap: 0.4rem;
-      max-height: 260px;
       overflow-y: auto;
+      flex: 1;
     }
 
     .raffle-item {
@@ -931,6 +964,7 @@
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 0.6rem 0.85rem;
+      flex-shrink: 0;
     }
     .raffle-item-dot {
       width: 10px;
@@ -962,41 +996,29 @@
       font-size: 0.8rem;
       color: var(--muted);
       text-align: center;
-      padding: 1.2rem;
+      padding: 1.4rem;
       border: 1px dashed var(--border);
       border-radius: 10px;
     }
 
-    .raffle-wheel-col {
+    /* Wheel view */
+    .raffle-wheel-center {
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       gap: 1.25rem;
+      width: 100%;
     }
 
     .wheel-wrapper {
-      position: relative;
       width: 100%;
-      max-width: 360px;
-    }
-
-    .wheel-pointer {
-      position: absolute;
-      top: -4px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0;
-      height: 0;
-      border-left: 11px solid transparent;
-      border-right: 11px solid transparent;
-      border-top: 26px solid var(--text);
-      z-index: 10;
-      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.8));
+      max-width: 380px;
     }
 
     #wheel-canvas {
       width: 100%;
-      border-radius: 50%;
       display: block;
     }
 
@@ -1007,7 +1029,7 @@
       border: 1px solid var(--correct-border);
       border-radius: 16px;
       width: 100%;
-      max-width: 360px;
+      max-width: 380px;
     }
     @keyframes winner-pop {
       from { opacity: 0; transform: scale(0.7); }
@@ -1061,27 +1083,10 @@
   <span id="record-label">Record</span>
 </button>
 
-<!-- ── App Select Screen ── -->
-<div class="screen active" id="app-select-screen">
-  <div class="app-select-inner">
-    <div class="logo">
-      <div class="logo-title">Game Select</div>
-      <div class="logo-sub">Choose a mode</div>
-    </div>
-    <button class="app-btn" onclick="selectApp('unscramble')">
-      <div class="app-btn-title">Unscramble</div>
-      <div class="app-btn-sub">Anatomy · KIN 100</div>
-    </button>
-    <button class="app-btn" onclick="selectApp('raffle')">
-      <div class="app-btn-title">Raffle Wheel</div>
-      <div class="app-btn-sub">Spin to pick a winner</div>
-    </button>
-  </div>
-</div>
-
 <!-- ── Setup Screen ── -->
-<div class="screen" id="setup-screen">
+<div class="screen active" id="setup-screen">
   <div class="setup-inner">
+    <button class="btn-settings" onclick="openSettings()" title="Settings">⚙</button>
     <div class="logo">
       <div class="logo-title">Unscramble</div>
       <div class="logo-sub">Anatomy Edition &nbsp;·&nbsp; KIN 100</div>
@@ -1227,38 +1232,60 @@
 
 <!-- ── Raffle Screen ── -->
 <div class="screen" id="raffle-screen">
-  <div class="raffle-inner">
+
+  <!-- View 1: Names input -->
+  <div class="raffle-inner" id="raffle-names-view">
     <div class="raffle-header">
-      <button class="btn-back" onclick="selectApp(null)">← Back</button>
+      <button class="btn-back" onclick="closeRaffle()">← Back</button>
       <div class="raffle-screen-title">Raffle</div>
     </div>
-
-    <div class="raffle-layout">
-      <!-- Names column -->
-      <div class="raffle-names-col">
-        <div class="raffle-section-label">Add Names / Items</div>
-        <div class="raffle-input-row">
-          <input type="text" id="raffle-input" placeholder="Enter a name or item" maxlength="30" autocomplete="off" />
-          <button class="btn-add" onclick="addRaffleItem()">Add</button>
-        </div>
-        <div class="raffle-list" id="raffle-list">
-          <div class="raffle-empty">Add at least 2 names to spin</div>
-        </div>
-      </div>
-
-      <!-- Wheel column -->
-      <div class="raffle-wheel-col">
-        <div class="wheel-wrapper">
-          <div class="wheel-pointer"></div>
-          <canvas id="wheel-canvas"></canvas>
-        </div>
-        <div class="raffle-winner" id="raffle-winner" style="display:none;">
-          <div class="raffle-winner-label">🎉 Winner</div>
-          <div class="raffle-winner-name" id="raffle-winner-name"></div>
-        </div>
-        <button class="btn-primary" id="btn-spin" onclick="spinWheel()" style="max-width:360px;display:none;">Spin the Wheel!</button>
-      </div>
+    <div class="raffle-section-label">Names / Items</div>
+    <div class="raffle-input-row">
+      <input type="text" id="raffle-input" placeholder="Enter a name or item" maxlength="30" autocomplete="off" />
+      <button class="btn-add" onclick="addRaffleItem()">Add</button>
     </div>
+    <div class="raffle-list" id="raffle-list">
+      <div class="raffle-empty">Add at least 2 names to spin</div>
+    </div>
+    <button class="btn-primary" id="btn-go-spin" onclick="goToWheelView()" style="display:none;margin-top:auto;">Spin the Wheel →</button>
+  </div>
+
+  <!-- View 2: Spinning wheel -->
+  <div class="raffle-inner" id="raffle-wheel-view" style="display:none;">
+    <div class="raffle-header">
+      <button class="btn-back" onclick="goToNamesView()">← Edit Names</button>
+      <div class="raffle-screen-title">Raffle Wheel</div>
+    </div>
+    <div class="raffle-wheel-center">
+      <div class="wheel-wrapper">
+        <canvas id="wheel-canvas"></canvas>
+      </div>
+      <div class="raffle-winner" id="raffle-winner" style="display:none;">
+        <div class="raffle-winner-label">🎉 Winner</div>
+        <div class="raffle-winner-name" id="raffle-winner-name"></div>
+      </div>
+      <button class="btn-primary" id="btn-spin" onclick="spinWheel()" style="max-width:380px;">Spin the Wheel!</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Settings modal -->
+<div class="settings-modal" id="settings-modal">
+  <div class="settings-backdrop" onclick="closeSettings()"></div>
+  <div class="settings-sheet">
+    <div class="settings-header">
+      <div class="settings-title">Settings</div>
+      <button class="settings-close" onclick="closeSettings()">✕</button>
+    </div>
+    <button class="settings-item" onclick="openRaffle()">
+      <div class="settings-item-icon">🎰</div>
+      <div class="settings-item-text">
+        <div class="settings-item-title">Raffle Wheel</div>
+        <div class="settings-item-sub">Spin to pick a winner</div>
+      </div>
+      <div class="settings-item-arrow">›</div>
+    </button>
   </div>
 </div>
 
@@ -1634,7 +1661,7 @@
       document.getElementById('round-selector').classList.remove('show');
       document.getElementById('name-fields').style.display = 'none';
       document.getElementById('btn-start').style.display   = 'none';
-      showScreen('app-select-screen');
+      showScreen('setup-screen');
 
       fo.classList.remove('fading');
     }, 500);
@@ -1953,37 +1980,54 @@
     return types.find(t => MediaRecorder.isTypeSupported(t)) || '';
   }
 
-  // ── App Select ──────────────────────────────────────────────
-  function selectApp(mode) {
-    stopConfetti();
+  // ── Settings ────────────────────────────────────────────────
+  function openSettings() {
+    document.getElementById('settings-modal').classList.add('open');
+  }
+  function closeSettings() {
+    document.getElementById('settings-modal').classList.remove('open');
+  }
+  function openRaffle() {
+    closeSettings();
     const fo = document.getElementById('fade-overlay');
     fo.classList.add('fading');
     setTimeout(() => {
-      if (mode === 'unscramble') {
-        showScreen('setup-screen');
-      } else if (mode === 'raffle') {
-        showScreen('raffle-screen');
-        setTimeout(initRaffleScreen, 60);
-      } else {
-        showScreen('app-select-screen');
-      }
+      showScreen('raffle-screen');
+      document.getElementById('raffle-names-view').style.display = 'flex';
+      document.getElementById('raffle-wheel-view').style.display = 'none';
       fo.classList.remove('fading');
-    }, 400);
+    }, 350);
+  }
+  function closeRaffle() {
+    stopConfetti();
+    const fo = document.getElementById('fade-overlay');
+    fo.classList.add('fading');
+    setTimeout(() => { showScreen('setup-screen'); fo.classList.remove('fading'); }, 350);
   }
 
-  function initRaffleScreen() {
-    resizeWheelCanvas();
-    drawWheel(raffle.currentAngle);
+  // ── Raffle: view switching ───────────────────────────────────
+  function goToWheelView() {
+    if (raffle.items.length < 2) return;
+    document.getElementById('raffle-names-view').style.display = 'none';
+    document.getElementById('raffle-wheel-view').style.display = 'flex';
+    document.getElementById('raffle-winner').style.display = 'none';
+    document.getElementById('btn-spin').textContent = 'Spin the Wheel!';
+    setTimeout(() => { resizeWheelCanvas(); drawWheel(raffle.currentAngle); }, 60);
+  }
+  function goToNamesView() {
+    stopConfetti();
+    document.getElementById('raffle-wheel-view').style.display = 'none';
+    document.getElementById('raffle-names-view').style.display = 'flex';
   }
 
   window.addEventListener('resize', () => {
-    if (document.getElementById('raffle-screen').classList.contains('active')) {
+    if (document.getElementById('raffle-wheel-view').style.display !== 'none') {
       resizeWheelCanvas();
       drawWheel(raffle.currentAngle);
     }
   });
 
-  // ── Raffle ──────────────────────────────────────────────────
+  // ── Raffle: state & data ─────────────────────────────────────
   const SEGMENT_COLORS = [
     '#7c3aed','#db2777','#0ea5e9','#f59e0b',
     '#10b981','#ef4444','#8b5cf6','#f97316',
@@ -1994,6 +2038,13 @@
     items: [],
     spinning: false,
     currentAngle: 0,
+  };
+
+  // Flapper physics state
+  const flapper = {
+    angle: 0,
+    velocity: 0,
+    prevWheelAngle: 0,
   };
 
   function escHtml(s) {
@@ -2008,13 +2059,11 @@
     input.value = '';
     input.focus();
     renderRaffleList();
-    drawWheel(raffle.currentAngle);
   }
 
   function removeRaffleItem(i) {
     raffle.items.splice(i, 1);
     renderRaffleList();
-    drawWheel(raffle.currentAngle);
   }
 
   function renderRaffleList() {
@@ -2030,17 +2079,110 @@
         </div>
       `).join('');
     }
-    document.getElementById('btn-spin').style.display = raffle.items.length >= 2 ? 'block' : 'none';
+    const canSpin = raffle.items.length >= 2;
+    document.getElementById('btn-go-spin').style.display = canSpin ? 'block' : 'none';
   }
 
   function resizeWheelCanvas() {
     const canvas = document.getElementById('wheel-canvas');
     if (!canvas) return;
-    const size = Math.min(canvas.parentElement.clientWidth, 360);
+    const size = Math.min(canvas.parentElement.clientWidth, 380);
     canvas.width  = size;
     canvas.height = size;
   }
 
+  // ── Flapper physics ──────────────────────────────────────────
+  function tickFlapper(wheelAngle) {
+    const n = raffle.items.length;
+    if (n >= 2) {
+      const arc   = (2 * Math.PI) / n;
+      const delta = wheelAngle - flapper.prevWheelAngle;
+      if (delta > 0.0005) {
+        const prevPos = ((flapper.prevWheelAngle % arc) + arc) % arc;
+        const currPos = ((wheelAngle % arc) + arc) % arc;
+        const fullArcs = Math.floor(delta / arc);
+        const partialCross = (currPos < prevPos) ? 1 : 0;
+        const crossings = fullArcs + partialCross;
+        if (crossings > 0) {
+          const impulse = Math.min(0.62, 0.12 + delta * 1.8);
+          flapper.velocity += impulse * Math.min(crossings, 2);
+        }
+      }
+    }
+    flapper.prevWheelAngle = wheelAngle;
+    flapper.velocity -= 0.16 * flapper.angle; // spring
+    flapper.velocity *= 0.78;                 // damping
+    flapper.angle    += flapper.velocity;
+    if (flapper.angle > 0.62)  { flapper.angle = 0.62;  flapper.velocity *= -0.22; }
+    if (flapper.angle < -0.18) { flapper.angle = -0.18; flapper.velocity *= -0.22; }
+  }
+
+  function settleFlapper() {
+    if (Math.abs(flapper.angle) < 0.003 && Math.abs(flapper.velocity) < 0.002) {
+      flapper.angle = 0; flapper.velocity = 0;
+      drawWheel(raffle.currentAngle);
+      return;
+    }
+    flapper.velocity -= 0.16 * flapper.angle;
+    flapper.velocity *= 0.78;
+    flapper.angle    += flapper.velocity;
+    drawWheel(raffle.currentAngle);
+    requestAnimationFrame(settleFlapper);
+  }
+
+  function drawFlapper(ctx, cx, cy, r) {
+    const pivX = cx;
+    const pivY = cy - r + 10;
+    const len  = r * 0.22;
+    const w1   = Math.min(11, r * 0.052); // base width
+    const w2   = 3.5;                     // tip width
+
+    ctx.save();
+    ctx.translate(pivX, pivY);
+    ctx.rotate(flapper.angle);
+
+    ctx.shadowColor    = 'rgba(0,0,0,0.7)';
+    ctx.shadowBlur     = 10;
+    ctx.shadowOffsetX  = 1.5;
+    ctx.shadowOffsetY  = 4;
+
+    // Tapered body with slight curve
+    ctx.beginPath();
+    ctx.moveTo(-w1 / 2, 0);
+    ctx.bezierCurveTo(-w1 / 2, len * 0.3, -w2 / 2, len * 0.65, -w2 / 2, len);
+    ctx.lineTo(w2 / 2, len);
+    ctx.bezierCurveTo(w2 / 2, len * 0.65, w1 / 2, len * 0.3, w1 / 2, 0);
+    ctx.closePath();
+
+    const grad = ctx.createLinearGradient(-w1 / 2, 0, w1 / 2, 0);
+    grad.addColorStop(0,    '#666');
+    grad.addColorStop(0.3,  '#d8d4cc');
+    grad.addColorStop(0.55, '#f0ece4');
+    grad.addColorStop(1,    '#999');
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+
+    // Mounting pin
+    ctx.beginPath();
+    ctx.arc(0, 0, 5.5, 0, 2 * Math.PI);
+    const pinGrad = ctx.createRadialGradient(-1, -1, 1, 0, 0, 5.5);
+    pinGrad.addColorStop(0, '#bbb');
+    pinGrad.addColorStop(1, '#3a3a3a');
+    ctx.fillStyle = pinGrad;
+    ctx.fill();
+    ctx.strokeStyle = '#666';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  // ── Wheel drawing ────────────────────────────────────────────
   function drawWheel(rotation) {
     const canvas = document.getElementById('wheel-canvas');
     if (!canvas || canvas.width === 0) return;
@@ -2066,6 +2208,7 @@
       ctx.font = `${sz * 0.045}px -apple-system,sans-serif`;
       ctx.fillText('Add names to', cx, cy - sz * 0.04);
       ctx.fillText('see the wheel', cx, cy + sz * 0.05);
+      drawFlapper(ctx, cx, cy, r);
       return;
     }
 
@@ -2096,7 +2239,7 @@
       ctx.restore();
     }
 
-    // Center circle
+    // Center hub
     ctx.beginPath();
     ctx.arc(cx, cy, 16, 0, 2 * Math.PI);
     ctx.fillStyle = '#0d0d0d';
@@ -2104,8 +2247,12 @@
     ctx.strokeStyle = '#333';
     ctx.lineWidth = 2;
     ctx.stroke();
+
+    // Flapper on top
+    drawFlapper(ctx, cx, cy, r);
   }
 
+  // ── Spin ─────────────────────────────────────────────────────
   function spinWheel() {
     if (raffle.spinning || raffle.items.length < 2) return;
     raffle.spinning = true;
@@ -2115,14 +2262,10 @@
 
     const n   = raffle.items.length;
     const arc = (2 * Math.PI) / n;
-
     const winnerIndex = Math.floor(Math.random() * n);
 
-    // Target: segment winnerIndex midpoint at top (-π/2 canvas angle)
-    // At rotation R: segment i midpoint canvas angle = R + (i+0.5)*arc - π/2
-    // For midpoint at top (-π/2): R = -(winnerIndex+0.5)*arc
     const targetNorm  = ((-(winnerIndex + 0.5) * arc) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
-    const currentNorm = ((raffle.currentAngle    % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+    const currentNorm = ((raffle.currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
     let delta = targetNorm - currentNorm;
     if (delta <= 0) delta += 2 * Math.PI;
     delta += (5 + Math.floor(Math.random() * 4)) * 2 * Math.PI;
@@ -2136,15 +2279,19 @@
 
     function animate(now) {
       const t = Math.min((now - startTime) / duration, 1);
-      raffle.currentAngle = startAngle + (finalAngle - startAngle) * easeOut(t);
+      const newAngle = startAngle + (finalAngle - startAngle) * easeOut(t);
+      tickFlapper(newAngle);
+      raffle.currentAngle = newAngle;
       drawWheel(raffle.currentAngle);
       if (t < 1) {
         requestAnimationFrame(animate);
       } else {
         raffle.currentAngle = finalAngle;
+        flapper.prevWheelAngle = finalAngle;
         raffle.spinning = false;
         document.getElementById('btn-spin').disabled = false;
         showRaffleWinner(winnerIndex);
+        settleFlapper();
       }
     }
 
@@ -2159,10 +2306,11 @@
     box.style.display   = 'block';
     void box.offsetWidth;
     box.style.animation = 'winner-pop 0.35s cubic-bezier(0.34,1.56,0.64,1)';
+    document.getElementById('btn-spin').textContent = 'Spin Again!';
     launchConfetti();
   }
 
-  // ── Confetti ───────────────────────────────────────────────
+  // ── Confetti ─────────────────────────────────────────────────
   let confettiAnimId = null;
 
   function launchConfetti() {
@@ -2170,8 +2318,7 @@
     canvas.width  = window.innerWidth;
     canvas.height = window.innerHeight;
     canvas.style.display = 'block';
-
-    const ctx       = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d');
     const particles = [];
 
     for (let i = 0; i < 200; i++) {
@@ -2196,12 +2343,8 @@
       frame++;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       let anyAlive = false;
-
       for (const p of particles) {
-        p.x   += p.vx;
-        p.y   += p.vy;
-        p.vy  += 0.07;
-        p.rot += p.rotV;
+        p.x += p.vx; p.y += p.vy; p.vy += 0.07; p.rot += p.rotV;
         if (frame > 100) p.opacity -= 0.008;
         if (p.opacity > 0 && p.y < canvas.height + 20) {
           anyAlive = true;
@@ -2214,12 +2357,7 @@
           ctx.restore();
         }
       }
-
-      if (anyAlive) {
-        confettiAnimId = requestAnimationFrame(step);
-      } else {
-        stopConfetti();
-      }
+      if (anyAlive) { confettiAnimId = requestAnimationFrame(step); } else { stopConfetti(); }
     }
 
     confettiAnimId = requestAnimationFrame(step);
@@ -2234,7 +2372,6 @@
     canvas.style.display = 'none';
   }
 
-  // Enter key for raffle input
   document.getElementById('raffle-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') addRaffleItem();
   });
