@@ -790,6 +790,251 @@
       gap: 0.75rem;
       width: 100%;
     }
+
+    /* ── App Select ── */
+    #app-select-screen { flex-direction: column; background: transparent; }
+
+    .app-select-inner {
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1rem;
+      background: rgba(13,13,13,0.72);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 24px;
+      padding: 2.5rem 2rem;
+    }
+
+    .app-btn {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.4rem 1.5rem;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s;
+    }
+    .app-btn:hover { border-color: #444; background: #1e1e1e; }
+    .app-btn:active { transform: scale(0.98); }
+    .app-btn-title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.01em; }
+    .app-btn-sub { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.15em; margin-top: 0.15rem; }
+
+    /* ── Raffle ── */
+    #raffle-screen { flex-direction: column; align-items: stretch; background: var(--bg); padding: 0; }
+
+    .raffle-inner {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      padding: 1.25rem 1.5rem 2rem;
+      gap: 1.25rem;
+    }
+
+    .raffle-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-shrink: 0;
+    }
+
+    .btn-back {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.5rem 0.9rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .btn-back:hover { color: var(--text); border-color: #444; }
+
+    .raffle-screen-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .raffle-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      flex: 1;
+    }
+
+    @media (min-width: 700px) {
+      .raffle-layout { flex-direction: row; align-items: flex-start; }
+      .raffle-names-col { flex: 0 0 260px; }
+      .raffle-wheel-col { flex: 1; align-self: center; }
+    }
+
+    .raffle-names-col {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .raffle-section-label {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.22em;
+      color: var(--muted);
+    }
+
+    .raffle-input-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .raffle-input-row input { flex: 1; }
+
+    .btn-add {
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      border-radius: 12px;
+      padding: 0 1.2rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+    }
+    .btn-add:hover { opacity: 0.88; }
+
+    .raffle-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    .raffle-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.6rem 0.85rem;
+    }
+    .raffle-item-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .raffle-item-name {
+      flex: 1;
+      font-size: 0.9rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .raffle-item-remove {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      padding: 0;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+    .raffle-item-remove:hover { color: var(--danger); }
+
+    .raffle-empty {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-align: center;
+      padding: 1.2rem;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+    }
+
+    .raffle-wheel-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .wheel-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 360px;
+    }
+
+    .wheel-pointer {
+      position: absolute;
+      top: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 11px solid transparent;
+      border-right: 11px solid transparent;
+      border-top: 26px solid var(--text);
+      z-index: 10;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.8));
+    }
+
+    #wheel-canvas {
+      width: 100%;
+      border-radius: 50%;
+      display: block;
+    }
+
+    .raffle-winner {
+      text-align: center;
+      padding: 1rem 1.5rem;
+      background: var(--correct-bg);
+      border: 1px solid var(--correct-border);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 360px;
+    }
+    @keyframes winner-pop {
+      from { opacity: 0; transform: scale(0.7); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    .raffle-winner-label {
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.3rem;
+    }
+    .raffle-winner-name {
+      font-size: clamp(1.6rem, 6vw, 2.4rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--correct-text);
+    }
+
+    /* Confetti */
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 450;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -816,8 +1061,26 @@
   <span id="record-label">Record</span>
 </button>
 
+<!-- ── App Select Screen ── -->
+<div class="screen active" id="app-select-screen">
+  <div class="app-select-inner">
+    <div class="logo">
+      <div class="logo-title">Game Select</div>
+      <div class="logo-sub">Choose a mode</div>
+    </div>
+    <button class="app-btn" onclick="selectApp('unscramble')">
+      <div class="app-btn-title">Unscramble</div>
+      <div class="app-btn-sub">Anatomy · KIN 100</div>
+    </button>
+    <button class="app-btn" onclick="selectApp('raffle')">
+      <div class="app-btn-title">Raffle Wheel</div>
+      <div class="app-btn-sub">Spin to pick a winner</div>
+    </button>
+  </div>
+</div>
+
 <!-- ── Setup Screen ── -->
-<div class="screen active" id="setup-screen">
+<div class="screen" id="setup-screen">
   <div class="setup-inner">
     <div class="logo">
       <div class="logo-title">Unscramble</div>
@@ -961,6 +1224,46 @@
     </div>
   </div>
 </div>
+
+<!-- ── Raffle Screen ── -->
+<div class="screen" id="raffle-screen">
+  <div class="raffle-inner">
+    <div class="raffle-header">
+      <button class="btn-back" onclick="selectApp(null)">← Back</button>
+      <div class="raffle-screen-title">Raffle</div>
+    </div>
+
+    <div class="raffle-layout">
+      <!-- Names column -->
+      <div class="raffle-names-col">
+        <div class="raffle-section-label">Add Names / Items</div>
+        <div class="raffle-input-row">
+          <input type="text" id="raffle-input" placeholder="Enter a name or item" maxlength="30" autocomplete="off" />
+          <button class="btn-add" onclick="addRaffleItem()">Add</button>
+        </div>
+        <div class="raffle-list" id="raffle-list">
+          <div class="raffle-empty">Add at least 2 names to spin</div>
+        </div>
+      </div>
+
+      <!-- Wheel column -->
+      <div class="raffle-wheel-col">
+        <div class="wheel-wrapper">
+          <div class="wheel-pointer"></div>
+          <canvas id="wheel-canvas"></canvas>
+        </div>
+        <div class="raffle-winner" id="raffle-winner" style="display:none;">
+          <div class="raffle-winner-label">🎉 Winner</div>
+          <div class="raffle-winner-name" id="raffle-winner-name"></div>
+        </div>
+        <button class="btn-primary" id="btn-spin" onclick="spinWheel()" style="max-width:360px;display:none;">Spin the Wheel!</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confetti canvas -->
+<canvas id="confetti-canvas"></canvas>
 
 <script>
   // ── Word bank ──────────────────────────────────────────────
@@ -1331,7 +1634,7 @@
       document.getElementById('round-selector').classList.remove('show');
       document.getElementById('name-fields').style.display = 'none';
       document.getElementById('btn-start').style.display   = 'none';
-      showScreen('setup-screen');
+      showScreen('app-select-screen');
 
       fo.classList.remove('fading');
     }, 500);
@@ -1649,6 +1952,292 @@
     ];
     return types.find(t => MediaRecorder.isTypeSupported(t)) || '';
   }
+
+  // ── App Select ──────────────────────────────────────────────
+  function selectApp(mode) {
+    stopConfetti();
+    const fo = document.getElementById('fade-overlay');
+    fo.classList.add('fading');
+    setTimeout(() => {
+      if (mode === 'unscramble') {
+        showScreen('setup-screen');
+      } else if (mode === 'raffle') {
+        showScreen('raffle-screen');
+        setTimeout(initRaffleScreen, 60);
+      } else {
+        showScreen('app-select-screen');
+      }
+      fo.classList.remove('fading');
+    }, 400);
+  }
+
+  function initRaffleScreen() {
+    resizeWheelCanvas();
+    drawWheel(raffle.currentAngle);
+  }
+
+  window.addEventListener('resize', () => {
+    if (document.getElementById('raffle-screen').classList.contains('active')) {
+      resizeWheelCanvas();
+      drawWheel(raffle.currentAngle);
+    }
+  });
+
+  // ── Raffle ──────────────────────────────────────────────────
+  const SEGMENT_COLORS = [
+    '#7c3aed','#db2777','#0ea5e9','#f59e0b',
+    '#10b981','#ef4444','#8b5cf6','#f97316',
+    '#06b6d4','#84cc16','#ec4899','#6366f1',
+  ];
+
+  const raffle = {
+    items: [],
+    spinning: false,
+    currentAngle: 0,
+  };
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function addRaffleItem() {
+    const input = document.getElementById('raffle-input');
+    const val = input.value.trim();
+    if (!val) return;
+    raffle.items.push(val);
+    input.value = '';
+    input.focus();
+    renderRaffleList();
+    drawWheel(raffle.currentAngle);
+  }
+
+  function removeRaffleItem(i) {
+    raffle.items.splice(i, 1);
+    renderRaffleList();
+    drawWheel(raffle.currentAngle);
+  }
+
+  function renderRaffleList() {
+    const list = document.getElementById('raffle-list');
+    if (raffle.items.length === 0) {
+      list.innerHTML = '<div class="raffle-empty">Add at least 2 names to spin</div>';
+    } else {
+      list.innerHTML = raffle.items.map((item, i) => `
+        <div class="raffle-item">
+          <div class="raffle-item-dot" style="background:${SEGMENT_COLORS[i % SEGMENT_COLORS.length]}"></div>
+          <span class="raffle-item-name">${escHtml(item)}</span>
+          <button class="raffle-item-remove" onclick="removeRaffleItem(${i})" title="Remove">✕</button>
+        </div>
+      `).join('');
+    }
+    document.getElementById('btn-spin').style.display = raffle.items.length >= 2 ? 'block' : 'none';
+  }
+
+  function resizeWheelCanvas() {
+    const canvas = document.getElementById('wheel-canvas');
+    if (!canvas) return;
+    const size = Math.min(canvas.parentElement.clientWidth, 360);
+    canvas.width  = size;
+    canvas.height = size;
+  }
+
+  function drawWheel(rotation) {
+    const canvas = document.getElementById('wheel-canvas');
+    if (!canvas || canvas.width === 0) return;
+    const ctx = canvas.getContext('2d');
+    const n   = raffle.items.length;
+    const sz  = canvas.width;
+    const cx  = sz / 2;
+    const cy  = sz / 2;
+    const r   = sz / 2 - 4;
+
+    ctx.clearRect(0, 0, sz, sz);
+
+    if (n === 0) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fill();
+      ctx.strokeStyle = '#2a2a2a';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = '#555';
+      ctx.textAlign = 'center';
+      ctx.font = `${sz * 0.045}px -apple-system,sans-serif`;
+      ctx.fillText('Add names to', cx, cy - sz * 0.04);
+      ctx.fillText('see the wheel', cx, cy + sz * 0.05);
+      return;
+    }
+
+    const arc = (2 * Math.PI) / n;
+
+    for (let i = 0; i < n; i++) {
+      const startAngle = rotation + i * arc - Math.PI / 2;
+      const endAngle   = startAngle + arc;
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, startAngle, endAngle);
+      ctx.closePath();
+      ctx.fillStyle = SEGMENT_COLORS[i % SEGMENT_COLORS.length];
+      ctx.fill();
+      ctx.strokeStyle = '#0d0d0d';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(startAngle + arc / 2);
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#fff';
+      const fontSize = Math.max(9, Math.min(15, r * 0.13));
+      ctx.font = `700 ${fontSize}px -apple-system,sans-serif`;
+      ctx.fillText(raffle.items[i], r - 14, fontSize * 0.38, r * 0.7);
+      ctx.restore();
+    }
+
+    // Center circle
+    ctx.beginPath();
+    ctx.arc(cx, cy, 16, 0, 2 * Math.PI);
+    ctx.fillStyle = '#0d0d0d';
+    ctx.fill();
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  function spinWheel() {
+    if (raffle.spinning || raffle.items.length < 2) return;
+    raffle.spinning = true;
+    document.getElementById('btn-spin').disabled = true;
+    document.getElementById('raffle-winner').style.display = 'none';
+    stopConfetti();
+
+    const n   = raffle.items.length;
+    const arc = (2 * Math.PI) / n;
+
+    const winnerIndex = Math.floor(Math.random() * n);
+
+    // Target: segment winnerIndex midpoint at top (-π/2 canvas angle)
+    // At rotation R: segment i midpoint canvas angle = R + (i+0.5)*arc - π/2
+    // For midpoint at top (-π/2): R = -(winnerIndex+0.5)*arc
+    const targetNorm  = ((-(winnerIndex + 0.5) * arc) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+    const currentNorm = ((raffle.currentAngle    % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+    let delta = targetNorm - currentNorm;
+    if (delta <= 0) delta += 2 * Math.PI;
+    delta += (5 + Math.floor(Math.random() * 4)) * 2 * Math.PI;
+
+    const startAngle = raffle.currentAngle;
+    const finalAngle = startAngle + delta;
+    const duration   = 5000 + Math.random() * 1500;
+    const startTime  = performance.now();
+
+    function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
+
+    function animate(now) {
+      const t = Math.min((now - startTime) / duration, 1);
+      raffle.currentAngle = startAngle + (finalAngle - startAngle) * easeOut(t);
+      drawWheel(raffle.currentAngle);
+      if (t < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        raffle.currentAngle = finalAngle;
+        raffle.spinning = false;
+        document.getElementById('btn-spin').disabled = false;
+        showRaffleWinner(winnerIndex);
+      }
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+  function showRaffleWinner(index) {
+    const box    = document.getElementById('raffle-winner');
+    const nameEl = document.getElementById('raffle-winner-name');
+    nameEl.textContent = raffle.items[index];
+    box.style.animation = 'none';
+    box.style.display   = 'block';
+    void box.offsetWidth;
+    box.style.animation = 'winner-pop 0.35s cubic-bezier(0.34,1.56,0.64,1)';
+    launchConfetti();
+  }
+
+  // ── Confetti ───────────────────────────────────────────────
+  let confettiAnimId = null;
+
+  function launchConfetti() {
+    const canvas  = document.getElementById('confetti-canvas');
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    canvas.style.display = 'block';
+
+    const ctx       = canvas.getContext('2d');
+    const particles = [];
+
+    for (let i = 0; i < 200; i++) {
+      particles.push({
+        x:       Math.random() * canvas.width,
+        y:       i < 80 ? Math.random() * canvas.height * 0.5 : -10 - Math.random() * 250,
+        w:       7 + Math.random() * 9,
+        h:       4 + Math.random() * 6,
+        color:   SEGMENT_COLORS[Math.floor(Math.random() * SEGMENT_COLORS.length)],
+        rot:     Math.random() * 360,
+        rotV:    (Math.random() - 0.5) * 14,
+        vx:      (Math.random() - 0.5) * 3.5,
+        vy:      0.8 + Math.random() * 3.5,
+        opacity: 1,
+      });
+    }
+
+    let frame = 0;
+    cancelAnimationFrame(confettiAnimId);
+
+    function step() {
+      frame++;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let anyAlive = false;
+
+      for (const p of particles) {
+        p.x   += p.vx;
+        p.y   += p.vy;
+        p.vy  += 0.07;
+        p.rot += p.rotV;
+        if (frame > 100) p.opacity -= 0.008;
+        if (p.opacity > 0 && p.y < canvas.height + 20) {
+          anyAlive = true;
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, p.opacity);
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot * Math.PI / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        }
+      }
+
+      if (anyAlive) {
+        confettiAnimId = requestAnimationFrame(step);
+      } else {
+        stopConfetti();
+      }
+    }
+
+    confettiAnimId = requestAnimationFrame(step);
+  }
+
+  function stopConfetti() {
+    cancelAnimationFrame(confettiAnimId);
+    confettiAnimId = null;
+    const canvas = document.getElementById('confetti-canvas');
+    if (!canvas) return;
+    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+    canvas.style.display = 'none';
+  }
+
+  // Enter key for raffle input
+  document.getElementById('raffle-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addRaffleItem();
+  });
 
 </script>
 </body>
