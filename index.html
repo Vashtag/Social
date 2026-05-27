@@ -2135,8 +2135,7 @@
     const pivX = cx;
     const pivY = cy - r + 10;
     const len  = r * 0.22;
-    const w1   = Math.min(11, r * 0.052); // base width
-    const w2   = 3.5;                     // tip width
+    const w1   = Math.min(22, r * 0.11);  // base width of triangle
 
     ctx.save();
     ctx.translate(pivX, pivY);
@@ -2147,12 +2146,11 @@
     ctx.shadowOffsetX  = 1.5;
     ctx.shadowOffsetY  = 4;
 
-    // Tapered body with slight curve
+    // Triangle: flat base at pivot, tip pointing down into wheel
     ctx.beginPath();
     ctx.moveTo(-w1 / 2, 0);
-    ctx.bezierCurveTo(-w1 / 2, len * 0.3, -w2 / 2, len * 0.65, -w2 / 2, len);
-    ctx.lineTo(w2 / 2, len);
-    ctx.bezierCurveTo(w2 / 2, len * 0.65, w1 / 2, len * 0.3, w1 / 2, 0);
+    ctx.lineTo(w1 / 2, 0);
+    ctx.lineTo(0, len);
     ctx.closePath();
 
     const grad = ctx.createLinearGradient(-w1 / 2, 0, w1 / 2, 0);
@@ -2164,8 +2162,8 @@
     ctx.fill();
 
     ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
-    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-    ctx.lineWidth = 0.5;
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+    ctx.lineWidth = 1;
     ctx.stroke();
 
     // Mounting pin
