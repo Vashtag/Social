@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Connections</title>
-  <meta name="description" content="Group the sixteen words into four secret sets. A daily Connections puzzle." />
+  <title>Anatomy Connections</title>
+  <meta name="description" content="Group the sixteen anatomy terms into four secret sets. A new puzzle every day." />
 
   <!-- Social share preview -->
-  <meta property="og:title" content="Connections" />
-  <meta property="og:description" content="Find the four hidden groups of four. How few mistakes can you make?" />
+  <meta property="og:title" content="Anatomy Connections" />
+  <meta property="og:description" content="Find the four hidden groups of four. A new anatomy puzzle every day — how few mistakes can you make?" />
   <meta property="og:type" content="website" />
 
   <style>
@@ -63,7 +63,7 @@
       justify-content: space-between;
       padding: 0.25rem 0.1rem 1.1rem;
       border-bottom: 1px solid var(--border);
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
     }
     .brand { display: flex; flex-direction: column; gap: 0.25rem; }
     .brand-title {
@@ -91,43 +91,19 @@
     }
     .back-link:hover { color: var(--text); border-color: #3a3a3a; }
 
-    /* ── Puzzle picker ── */
-    .picker {
+    .daystrip {
       display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      margin-bottom: 1.25rem;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 1rem;
     }
-    .picker-label {
+    .day-label {
       font-size: 0.62rem;
       letter-spacing: 0.2em;
       text-transform: uppercase;
       color: var(--muted);
-      margin-right: auto;
     }
-    .puzzle-tag {
-      font-size: 0.62rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--text);
-      font-weight: 700;
-    }
-    .nav-btn {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text);
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
-      font-size: 1rem;
-      cursor: pointer;
-      display: grid;
-      place-items: center;
-      transition: all 0.15s;
-      line-height: 1;
-    }
-    .nav-btn:hover { border-color: #3a3a3a; }
-    .nav-btn:disabled { opacity: 0.3; cursor: default; }
+    .day-num { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text); font-weight: 700; }
 
     .prompt {
       text-align: center;
@@ -191,12 +167,13 @@
       transition: transform 0.08s ease, background 0.15s, border-color 0.15s, color 0.15s;
     }
     .tile-word {
-      font-size: clamp(0.68rem, 3.4vw, 1rem);
+      font-size: clamp(0.6rem, 3vw, 0.95rem);
       font-weight: 700;
       letter-spacing: 0.01em;
       text-transform: uppercase;
       line-height: 1.05;
       word-break: break-word;
+      hyphens: auto;
     }
     .tile:hover { border-color: #3d3d3d; }
     .tile.selected {
@@ -324,16 +301,14 @@
     <header>
       <div class="brand">
         <div class="brand-title">Connections</div>
-        <div class="brand-sub">Find the groups</div>
+        <div class="brand-sub">Anatomy Edition</div>
       </div>
       <a class="back-link" href="../">← Games</a>
     </header>
 
-    <div class="picker">
-      <span class="picker-label">Puzzle</span>
-      <button class="nav-btn" id="prev" aria-label="Previous puzzle">‹</button>
-      <span class="puzzle-tag" id="puzzle-tag">1 / 1</span>
-      <button class="nav-btn" id="next" aria-label="Next puzzle">›</button>
+    <div class="daystrip">
+      <span class="day-label" id="day-date">Puzzle of the day</span>
+      <span class="day-num" id="day-num"></span>
     </div>
 
     <div class="prompt">Create four groups of four!</div>
@@ -358,7 +333,7 @@
       <div class="share-grid" id="share-grid"></div>
       <div class="end-actions">
         <button class="btn btn-submit" id="share">Share result</button>
-        <button class="btn" id="next-puzzle">Next puzzle</button>
+        <a class="btn" id="home-link" href="../" style="display:grid;place-items:center;text-decoration:none;">More games</a>
       </div>
     </div>
 
@@ -369,54 +344,66 @@
 
   <script>
   /* ==========================================================================
-     PUZZLES
-     Each puzzle has four groups. Order the groups from easiest (0) to hardest
-     (3): 0 = yellow, 1 = green, 2 = blue, 3 = purple (NYT convention).
+     PUZZLES — anatomy themed.
+     Each puzzle has four groups. Order groups from easiest (0) to hardest (3):
+     0 = yellow, 1 = green, 2 = blue, 3 = purple (NYT convention).
+     A new puzzle is served each day, rotating through this list.
      ========================================================================== */
   const PUZZLES = [
     {
-      name: "Puzzle 1",
       groups: [
-        { title: "Kinds of tea", words: ["GREEN", "CHAI", "OOLONG", "MINT"] },
-        { title: "___ ball", words: ["BASE", "MEAT", "EYE", "SNOW"] },
-        { title: "Card game terms", words: ["DEAL", "BLUFF", "FOLD", "SUIT"] },
-        { title: "Apple ___", words: ["PIE", "SAUCE", "JACK", "TREE"] },
+        { title: "Bones of the leg", words: ["FEMUR", "TIBIA", "FIBULA", "PATELLA"] },
+        { title: "Lobes of the brain", words: ["FRONTAL", "PARIETAL", "TEMPORAL", "OCCIPITAL"] },
+        { title: "Heart valves", words: ["MITRAL", "AORTIC", "TRICUSPID", "PULMONARY"] },
+        { title: "Bones of the middle ear", words: ["HAMMER", "ANVIL", "STIRRUP", "DRUM"] },
       ],
     },
     {
-      name: "Puzzle 2",
       groups: [
-        { title: "Shades of blue", words: ["NAVY", "TEAL", "ROYAL", "SKY"] },
-        { title: "Board games", words: ["RISK", "SORRY", "CLUE", "LIFE"] },
-        { title: "Coffee orders", words: ["FLAT", "LONG", "BLACK", "SHORT"] },
-        { title: "Star ___", words: ["FISH", "DUST", "GAZE", "LIGHT"] },
+        { title: "Abdominal organs", words: ["LIVER", "SPLEEN", "KIDNEY", "PANCREAS"] },
+        { title: "Parts of the eye", words: ["RETINA", "CORNEA", "IRIS", "LENS"] },
+        { title: "Types of blood vessel", words: ["ARTERY", "VEIN", "CAPILLARY", "VENULE"] },
+        { title: "Parts of a tooth", words: ["ENAMEL", "DENTIN", "PULP", "CROWN"] },
       ],
     },
     {
-      name: "Puzzle 3",
       groups: [
-        { title: "Units of time", words: ["SECOND", "MINUTE", "HOUR", "MONTH"] },
-        { title: "Chess pieces", words: ["KING", "QUEEN", "BISHOP", "KNIGHT"] },
-        { title: "Playing card royalty", words: ["ACE", "JACK", "JOKER", "DECK"] },
-        { title: "Elton John songs", words: ["ROCKET", "DANIEL", "TINY", "CROCODILE"] },
+        { title: "Endocrine glands", words: ["THYROID", "PITUITARY", "ADRENAL", "PINEAL"] },
+        { title: "Parts of a neuron", words: ["AXON", "DENDRITE", "SOMA", "SYNAPSE"] },
+        { title: "Brain structures", words: ["CEREBELLUM", "CORTEX", "THALAMUS", "MEDULLA"] },
+        { title: "The senses", words: ["SIGHT", "TASTE", "SMELL", "TOUCH"] },
       ],
     },
     {
-      name: "Puzzle 4",
       groups: [
-        { title: "Pizza toppings", words: ["OLIVE", "BASIL", "ONION", "PEPPER"] },
-        { title: "Famous Georges", words: ["ORWELL", "CLOONEY", "LUCAS", "MICHAEL"] },
-        { title: "___ pepper", words: ["BELL", "CHILI", "GHOST", "BLACK"] },
-        { title: "Herbs", words: ["SAGE", "THYME", "DILL", "MINT"] },
+        { title: "Major muscles", words: ["BICEPS", "TRICEPS", "DELTOID", "QUADRICEPS"] },
+        { title: "Regions of the spine", words: ["CERVICAL", "THORACIC", "LUMBAR", "SACRAL"] },
+        { title: "Types of joint", words: ["HINGE", "PIVOT", "BALL", "SADDLE"] },
+        { title: "Body parts, everyday words", words: ["TEMPLE", "PALM", "SOLE", "ARCH"] },
       ],
     },
     {
-      name: "Puzzle 5",
       groups: [
-        { title: "Fast things", words: ["CHEETAH", "BULLET", "FLASH", "ROCKET"] },
-        { title: "Poker hands", words: ["FLUSH", "STRAIGHT", "PAIR", "HIGH"] },
-        { title: "Water ___", words: ["FALL", "MELON", "MARK", "PROOF"] },
-        { title: "Types of bridge", words: ["SUSPENSION", "DRAW", "LONDON", "ARCH"] },
+        { title: "Parts of the heart", words: ["ATRIUM", "VENTRICLE", "SEPTUM", "VALVE"] },
+        { title: "Respiratory system", words: ["TRACHEA", "BRONCHI", "ALVEOLI", "LARYNX"] },
+        { title: "Digestive tract", words: ["ESOPHAGUS", "STOMACH", "COLON", "RECTUM"] },
+        { title: "Parts of the throat", words: ["PHARYNX", "EPIGLOTTIS", "TONSIL", "UVULA"] },
+      ],
+    },
+    {
+      groups: [
+        { title: "The fingers", words: ["THUMB", "INDEX", "RING", "PINKY"] },
+        { title: "Types of tooth", words: ["INCISOR", "CANINE", "MOLAR", "PREMOLAR"] },
+        { title: "Facial bones", words: ["MANDIBLE", "MAXILLA", "NASAL", "ZYGOMATIC"] },
+        { title: "Parts of a fingernail", words: ["CUTICLE", "LUNULA", "PLATE", "BED"] },
+      ],
+    },
+    {
+      groups: [
+        { title: "Regions of the leg", words: ["THIGH", "SHIN", "CALF", "ANKLE"] },
+        { title: "Parts of the arm", words: ["SHOULDER", "ELBOW", "WRIST", "FOREARM"] },
+        { title: "Body cavities", words: ["THORAX", "ABDOMEN", "PELVIS", "CRANIUM"] },
+        { title: "Immune system organs", words: ["SPLEEN", "THYMUS", "TONSILS", "MARROW"] },
       ],
     },
   ];
@@ -429,8 +416,17 @@
   const promptEl = document.querySelector(".prompt");
   const MAX_MISTAKES = 4;
 
-  let puzzleIndex = 0;
-  let state; // per-puzzle state
+  // ── Puzzle of the day ──────────────────────────────────────────────────────
+  // Deterministic per calendar day: everyone gets the same puzzle on the same
+  // date, and it changes at local midnight.
+  const now = new Date();
+  const dayNumber = Math.floor(
+    (Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000
+  );
+  const puzzleIndex = ((dayNumber % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  const dateKey = now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate();
+
+  let state;
 
   function shuffleArr(a) {
     const arr = a.slice();
@@ -441,13 +437,10 @@
     return arr;
   }
 
-  function storageKey(i) { return "connections-v1-" + i; }
+  function storageKey() { return "anatomy-connections-v1-" + dateKey; }
 
-  function loadPuzzle(i) {
-    puzzleIndex = (i + PUZZLES.length) % PUZZLES.length;
+  function initState() {
     const puzzle = PUZZLES[puzzleIndex];
-
-    // Build word -> group index map
     const wordGroup = {};
     puzzle.groups.forEach((g, gi) => g.words.forEach((w) => (wordGroup[w] = gi)));
     const allWords = puzzle.groups.flatMap((g) => g.words);
@@ -457,32 +450,38 @@
       wordGroup,
       order: shuffleArr(allWords),
       selected: [],
-      solved: [],          // array of group indexes solved
+      solved: [],
       mistakes: 0,
-      guesses: [],         // array of arrays of group-index colours, for share grid
+      guesses: [],
       finished: false,
     };
 
-    // Restore completed result (share grid) if this puzzle was already finished
+    // Restore a finished result for today (so refreshing shows the share grid)
     try {
-      const saved = JSON.parse(localStorage.getItem(storageKey(puzzleIndex)) || "null");
+      const saved = JSON.parse(localStorage.getItem(storageKey()) || "null");
       if (saved && saved.finished) {
         state.solved = saved.solved;
         state.mistakes = saved.mistakes;
         state.guesses = saved.guesses;
         state.finished = true;
-        // put remaining unsolved words after solved
       }
     } catch (e) {}
 
-    $("puzzle-tag").textContent = (puzzleIndex + 1) + " / " + PUZZLES.length;
+    // Human-readable date label
+    try {
+      $("day-date").textContent = now.toLocaleDateString(undefined, {
+        weekday: "long", month: "long", day: "numeric",
+      });
+    } catch (e) {}
+    $("day-num").textContent = "No. " + (puzzleIndex + 1);
+
     render();
   }
 
   function persist() {
     if (state.finished) {
       localStorage.setItem(
-        storageKey(puzzleIndex),
+        storageKey(),
         JSON.stringify({
           finished: true,
           solved: state.solved,
@@ -549,7 +548,6 @@
     const idx = state.selected.indexOf(w);
     if (idx >= 0) state.selected.splice(idx, 1);
     else if (state.selected.length < 4) state.selected.push(w);
-    // re-render only selection classes
     [...gridEl.children].forEach((t) =>
       t.classList.toggle("selected", state.selected.includes(t.dataset.word))
     );
@@ -564,7 +562,6 @@
     if (state.selected.length !== 4 || state.finished) return;
     const picks = state.selected.slice();
 
-    // little jump animation
     tilesFor(picks).forEach((t, i) => {
       t.classList.add("jump");
       t.style.animationDelay = i * 0.08 + "s";
@@ -589,8 +586,7 @@
       return;
     }
 
-    // wrong guess
-    // count how many share the majority group -> "one away" hint
+    // wrong guess — detect "one away"
     const counts = {};
     groups.forEach((g) => (counts[g] = (counts[g] || 0) + 1));
     const maxSame = Math.max(...Object.values(counts));
@@ -612,7 +608,6 @@
   function finish(won) {
     state.finished = true;
     if (!won) {
-      // reveal remaining groups
       const remaining = [0, 1, 2, 3].filter((gi) => !state.solved.includes(gi));
       state.solved = state.solved.concat(remaining);
     }
@@ -638,14 +633,14 @@
     $("end-title").textContent = won ? "Solved it!" : "Out of guesses";
     $("end-sub").textContent = won
       ? "Nice work — " + state.mistakes + (state.mistakes === 1 ? " mistake" : " mistakes")
-      : "Better luck on the next one";
+      : "Come back tomorrow for a new puzzle";
     $("share-grid").textContent = shareGridText();
   }
 
   function buildShareText() {
     const won = state.mistakes < MAX_MISTAKES;
     const header =
-      "Connections " + (puzzleIndex + 1) +
+      "Anatomy Connections No. " + (puzzleIndex + 1) +
       (won ? " — solved with " + state.mistakes + "/4 mistakes" : " — did not solve");
     return (
       header + "\n" +
@@ -676,18 +671,12 @@
     toastTimer = setTimeout(() => t.classList.remove("show"), 1600);
   }
 
-  function resetControlsVisibility() {
-    $("controls").style.display = "flex";
-    promptEl.textContent = "Create four groups of four!";
-  }
-
   /* ── Events ── */
   $("submit").addEventListener("click", submit);
   $("shuffle").addEventListener("click", () => {
     const solvedWords = new Set(state.solved.flatMap((gi) => state.puzzle.groups[gi].words));
     const remaining = state.order.filter((w) => !solvedWords.has(w));
     const shuffled = shuffleArr(remaining);
-    // rebuild order keeping solved words wherever, remaining reordered
     let k = 0;
     state.order = state.order.map((w) => (solvedWords.has(w) ? w : shuffled[k++]));
     render();
@@ -696,15 +685,9 @@
     state.selected = [];
     render();
   });
-  $("prev").addEventListener("click", () => { resetControlsVisibility(); loadPuzzle(puzzleIndex - 1); });
-  $("next").addEventListener("click", () => { resetControlsVisibility(); loadPuzzle(puzzleIndex + 1); });
-  $("next-puzzle").addEventListener("click", () => { resetControlsVisibility(); loadPuzzle(puzzleIndex + 1); });
   $("share").addEventListener("click", share);
 
-  // Deep link: /Connections/?p=2 opens puzzle 2
-  const params = new URLSearchParams(location.search);
-  const startP = parseInt(params.get("p"), 10);
-  loadPuzzle(Number.isFinite(startP) ? startP - 1 : 0);
+  initState();
   </script>
 </body>
 </html>
