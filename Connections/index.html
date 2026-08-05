@@ -286,6 +286,100 @@
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+    .text-share {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      cursor: pointer;
+      padding: 0.2rem;
+    }
+    .text-share:hover { color: var(--text); }
+
+    /* ── Selfie camera + preview ── */
+    .cam-modal, .cam-preview {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: #000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .cam-modal.show, .cam-preview.show { display: flex; }
+
+    #cam-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* mirror like a real selfie cam */
+    }
+    .cam-ui {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 1.1rem;
+      padding: 1.5rem 1.25rem calc(2.2rem + env(safe-area-inset-bottom));
+    }
+    .cam-hint {
+      max-width: 320px;
+      text-align: center;
+      color: rgba(255,255,255,0.82);
+      font-size: 0.78rem;
+      line-height: 1.4;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.6);
+    }
+    .cam-shutter {
+      width: 74px;
+      height: 74px;
+      border-radius: 50%;
+      background: #fff;
+      border: 5px solid rgba(255,255,255,0.45);
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .cam-shutter:active { transform: scale(0.92); }
+    .cam-close {
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: #fff;
+      border-radius: 999px;
+      padding: 0.55rem 1.4rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .cam-preview {
+      gap: 1rem;
+      padding: 1.25rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom));
+      justify-content: center;
+    }
+    #cam-img {
+      max-width: 100%;
+      max-height: 68vh;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .cam-preview-actions {
+      display: flex;
+      gap: 0.6rem;
+      width: 100%;
+      max-width: 420px;
+    }
+    .cam-preview-actions .btn { flex: 1; display: grid; place-items: center; text-decoration: none; }
+
     footer {
       margin-top: 1.75rem;
       text-align: center;
@@ -332,9 +426,40 @@
       <div class="end-sub" id="end-sub"></div>
       <div class="share-grid" id="share-grid"></div>
       <div class="end-actions">
-        <button class="btn btn-submit" id="share">Share result</button>
+        <button class="btn btn-submit" id="share">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;margin-right:0.4rem;">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>Share result
+        </button>
         <a class="btn" id="home-link" href="../" style="display:grid;place-items:center;text-decoration:none;">More games</a>
       </div>
+      <button class="text-share" id="copy-text">or copy text result</button>
+    </div>
+
+    <!-- Selfie camera -->
+    <div class="cam-modal" id="cam-modal">
+      <video id="cam-video" autoplay playsinline muted></video>
+      <div class="cam-ui">
+        <div class="cam-hint">Line up your selfie — your result gets added to the photo.</div>
+        <button class="cam-shutter" id="cam-shutter" aria-label="Take photo"></button>
+        <button class="cam-close" id="cam-close">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Composited result preview -->
+    <div class="cam-preview" id="cam-preview">
+      <img id="cam-img" alt="Your Connections result" />
+      <div class="cam-preview-actions">
+        <button class="btn btn-submit" id="cam-share-img">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;margin-right:0.35rem;">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+          </svg>Share to story
+        </button>
+        <a class="btn" id="cam-download" download>Save photo</a>
+      </div>
+      <button class="cam-close" id="cam-preview-close">Done</button>
+      <div class="cam-hint" id="cam-preview-hint">Tap “Share to story”, then pick Instagram → Stories.</div>
     </div>
 
     <footer>vashtag · social games</footer>
@@ -351,59 +476,66 @@
      ========================================================================== */
   const PUZZLES = [
     {
+      // Trap: BALL & SADDLE read as joint types; JAW reads as a facial bone.
       groups: [
         { title: "Bones of the leg", words: ["FEMUR", "TIBIA", "FIBULA", "PATELLA"] },
-        { title: "Lobes of the brain", words: ["FRONTAL", "PARIETAL", "TEMPORAL", "OCCIPITAL"] },
-        { title: "Heart valves", words: ["MITRAL", "AORTIC", "TRICUSPID", "PULMONARY"] },
-        { title: "Bones of the middle ear", words: ["HAMMER", "ANVIL", "STIRRUP", "DRUM"] },
+        { title: "Types of joint", words: ["HINGE", "PIVOT", "GLIDING", "SADDLE"] },
+        { title: "Parts of the foot", words: ["HEEL", "ARCH", "BALL", "SOLE"] },
+        { title: "___ bone", words: ["FUNNY", "WISH", "JAW", "BACK"] },
       ],
     },
     {
+      // Trap: STOMACH tempts the idiom set; every purple word is also an organ.
       groups: [
-        { title: "Abdominal organs", words: ["LIVER", "SPLEEN", "KIDNEY", "PANCREAS"] },
-        { title: "Parts of the eye", words: ["RETINA", "CORNEA", "IRIS", "LENS"] },
-        { title: "Types of blood vessel", words: ["ARTERY", "VEIN", "CAPILLARY", "VENULE"] },
-        { title: "Parts of a tooth", words: ["ENAMEL", "DENTIN", "PULP", "CROWN"] },
-      ],
-    },
-    {
-      groups: [
+        { title: "Digestive organs", words: ["STOMACH", "LIVER", "INTESTINE", "PANCREAS"] },
         { title: "Endocrine glands", words: ["THYROID", "PITUITARY", "ADRENAL", "PINEAL"] },
-        { title: "Parts of a neuron", words: ["AXON", "DENDRITE", "SOMA", "SYNAPSE"] },
-        { title: "Brain structures", words: ["CEREBELLUM", "CORTEX", "THALAMUS", "MEDULLA"] },
-        { title: "The senses", words: ["SIGHT", "TASTE", "SMELL", "TOUCH"] },
+        { title: "Blood components", words: ["PLASMA", "PLATELET", "ANTIBODY", "HEMOGLOBIN"] },
+        { title: "To have ___ (courage)", words: ["GUTS", "NERVE", "HEART", "SPINE"] },
       ],
     },
     {
+      // Trap: LOBE tempts the brain lobes; JAW & CHEEK tempt the facial bones.
       groups: [
-        { title: "Major muscles", words: ["BICEPS", "TRICEPS", "DELTOID", "QUADRICEPS"] },
-        { title: "Regions of the spine", words: ["CERVICAL", "THORACIC", "LUMBAR", "SACRAL"] },
-        { title: "Types of joint", words: ["HINGE", "PIVOT", "BALL", "SADDLE"] },
-        { title: "Body parts, everyday words", words: ["TEMPLE", "PALM", "SOLE", "ARCH"] },
+        { title: "Facial features", words: ["NOSE", "CHIN", "CHEEK", "JAW"] },
+        { title: "Lobes of the brain", words: ["FRONTAL", "PARIETAL", "TEMPORAL", "OCCIPITAL"] },
+        { title: "Facial bones", words: ["MANDIBLE", "MAXILLA", "ZYGOMATIC", "VOMER"] },
+        { title: "Parts of the ear", words: ["LOBE", "DRUM", "CANAL", "HELIX"] },
       ],
     },
     {
+      // Trap: CROWN, GUM & BRIDGE tempt the tooth set; CANINE looks like a tooth.
       groups: [
-        { title: "Parts of the heart", words: ["ATRIUM", "VENTRICLE", "SEPTUM", "VALVE"] },
-        { title: "Respiratory system", words: ["TRACHEA", "BRONCHI", "ALVEOLI", "LARYNX"] },
+        { title: "Respiratory system", words: ["TRACHEA", "BRONCHI", "ALVEOLI", "DIAPHRAGM"] },
         { title: "Digestive tract", words: ["ESOPHAGUS", "STOMACH", "COLON", "RECTUM"] },
-        { title: "Parts of the throat", words: ["PHARYNX", "EPIGLOTTIS", "TONSIL", "UVULA"] },
-      ],
-    },
-    {
-      groups: [
-        { title: "The fingers", words: ["THUMB", "INDEX", "RING", "PINKY"] },
         { title: "Types of tooth", words: ["INCISOR", "CANINE", "MOLAR", "PREMOLAR"] },
-        { title: "Facial bones", words: ["MANDIBLE", "MAXILLA", "NASAL", "ZYGOMATIC"] },
-        { title: "Parts of a fingernail", words: ["CUTICLE", "LUNULA", "PLATE", "BED"] },
+        { title: "Dental terms hiding in plain sight", words: ["PALATE", "CROWN", "GUM", "BRIDGE"] },
       ],
     },
     {
+      // Trap: RADIAL & ULNAR nerves echo the arm bones; WRIST spans two sets.
       groups: [
-        { title: "Regions of the leg", words: ["THIGH", "SHIN", "CALF", "ANKLE"] },
-        { title: "Parts of the arm", words: ["SHOULDER", "ELBOW", "WRIST", "FOREARM"] },
-        { title: "Body cavities", words: ["THORAX", "ABDOMEN", "PELVIS", "CRANIUM"] },
-        { title: "Immune system organs", words: ["SPLEEN", "THYMUS", "TONSILS", "MARROW"] },
+        { title: "Regions of the arm", words: ["SHOULDER", "ELBOW", "WRIST", "FOREARM"] },
+        { title: "Bones of the hand & wrist", words: ["CARPAL", "METACARPAL", "PHALANX", "SCAPHOID"] },
+        { title: "Nerves of the arm", words: ["RADIAL", "ULNAR", "MEDIAN", "AXILLARY"] },
+        { title: "The fingers", words: ["INDEX", "RING", "MIDDLE", "PINKY"] },
+      ],
+    },
+    {
+      // Trap: PANCREAS is also a digestive organ; the membranes are the deep cut.
+      groups: [
+        { title: "Abdominal organs", words: ["LIVER", "SPLEEN", "KIDNEY", "GALLBLADDER"] },
+        { title: "Regions of the spine", words: ["CERVICAL", "THORACIC", "LUMBAR", "SACRAL"] },
+        { title: "Endocrine glands", words: ["THYROID", "PITUITARY", "ADRENAL", "PANCREAS"] },
+        { title: "Serous membranes", words: ["PLEURA", "PERITONEUM", "PERICARDIUM", "MENINGES"] },
+      ],
+    },
+    {
+      // Trap: SMELL sits with the senses, not the tastes; BALANCE is a real sense.
+      groups: [
+        { title: "The senses", words: ["VISION", "HEARING", "BALANCE", "SMELL"] },
+        { title: "Parts of a neuron", words: ["AXON", "DENDRITE", "SOMA", "MYELIN"] },
+        { title: "Brain structures", words: ["CEREBELLUM", "THALAMUS", "HIPPOCAMPUS", "AMYGDALA"] },
+        { title: "The basic tastes", words: ["SWEET", "SOUR", "SALTY", "UMAMI"] },
       ],
     },
   ];
@@ -649,7 +781,7 @@
     );
   }
 
-  async function share() {
+  async function shareText() {
     const text = buildShareText();
     if (navigator.share) {
       try { await navigator.share({ text }); return; } catch (e) {}
@@ -660,6 +792,148 @@
     } catch (e) {
       toast("Copy failed");
     }
+  }
+
+  /* ── Selfie + share to story ─────────────────────────────────────────────
+     Take a front-camera selfie, composite the result onto it (portrait 9:16
+     so it fits an Instagram Story), then hand it to the OS share sheet as an
+     image file. Falls back to copying the text result if there's no camera. */
+  const CAT_COLORS = ["#b59f3b", "#4a934a", "#4a7fd6", "#9a5fd0"];
+  let _camStream = null;
+  let _lastBlob = null;
+
+  function stopCam() {
+    if (_camStream) { _camStream.getTracks().forEach((t) => t.stop()); _camStream = null; }
+  }
+
+  async function openCam() {
+    const video = $("cam-video");
+    try {
+      _camStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 1080 }, height: { ideal: 1920 } },
+        audio: false,
+      });
+      video.srcObject = _camStream;
+      $("cam-modal").classList.add("show");
+    } catch (e) {
+      // No camera / permission denied / insecure context → text share instead
+      toast("Camera unavailable — copying text");
+      shareText();
+    }
+  }
+
+  function closeCam() {
+    $("cam-modal").classList.remove("show");
+    stopCam();
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function capture() {
+    const video = $("cam-video");
+    const W = 1080, H = 1920;
+    const canvas = document.createElement("canvas");
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext("2d");
+
+    // Cover-fit the (mirrored) selfie into the whole frame
+    const vw = video.videoWidth || 1080;
+    const vh = video.videoHeight || 1920;
+    const scale = Math.max(W / vw, H / vh);
+    const dw = vw * scale, dh = vh * scale;
+    const dx = (W - dw) / 2, dy = (H - dh) / 2;
+    ctx.save();
+    ctx.translate(W, 0); ctx.scale(-1, 1);
+    ctx.drawImage(video, dx, dy, dw, dh);
+    ctx.restore();
+
+    // Bottom scrim for legibility
+    const grad = ctx.createLinearGradient(0, H * 0.4, 0, H);
+    grad.addColorStop(0, "rgba(0,0,0,0)");
+    grad.addColorStop(0.45, "rgba(0,0,0,0.72)");
+    grad.addColorStop(1, "rgba(13,13,13,0.96)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, H * 0.4, W, H * 0.6);
+
+    const cx = W / 2;
+    const won = state.mistakes < MAX_MISTAKES;
+
+    // Result emoji-style grid (rounded colour squares)
+    const rows = state.guesses.length || 1;
+    const sq = Math.round(W * 0.055);
+    const gap = Math.round(W * 0.016);
+    const gridW = 4 * sq + 3 * gap;
+    const gridH = rows * sq + (rows - 1) * gap;
+    const gridBottom = H * 0.885;
+    const gy = gridBottom - gridH;
+    const gx0 = cx - gridW / 2;
+    state.guesses.forEach((row, r) => {
+      row.forEach((gi, c) => {
+        const x = gx0 + c * (sq + gap);
+        const y = gy + r * (sq + gap);
+        roundRect(ctx, x, y, sq, sq, sq * 0.24);
+        ctx.fillStyle = CAT_COLORS[gi];
+        ctx.fill();
+      });
+    });
+
+    // Text above the grid
+    ctx.textAlign = "center";
+    ctx.fillStyle = "rgba(240,236,228,0.6)";
+    ctx.font = "600 " + Math.round(W * 0.033) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText("A N A T O M Y   C O N N E C T I O N S", cx, gy - W * 0.155);
+
+    ctx.fillStyle = "#f0ece4";
+    ctx.font = "800 " + Math.round(W * 0.1) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText(won ? "SOLVED" : "SO CLOSE", cx, gy - W * 0.06);
+
+    ctx.fillStyle = "rgba(240,236,228,0.65)";
+    ctx.font = "600 " + Math.round(W * 0.036) + "px -apple-system,'Segoe UI',sans-serif";
+    const sub = won
+      ? "No. " + (puzzleIndex + 1) + "  ·  " + state.mistakes + (state.mistakes === 1 ? " mistake" : " mistakes")
+      : "No. " + (puzzleIndex + 1) + "  ·  out of guesses";
+    ctx.fillText(sub, cx, gy - W * 0.02);
+
+    // URL footer
+    ctx.fillStyle = "rgba(240,236,228,0.5)";
+    ctx.font = "600 " + Math.round(W * 0.03) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText((location.host + location.pathname).replace(/\/$/, ""), cx, H * 0.95);
+
+    // Emit
+    const dataUrl = canvas.toDataURL("image/png");
+    $("cam-img").src = dataUrl;
+    const dl = $("cam-download");
+    dl.href = dataUrl;
+    dl.download = "anatomy-connections-" + (puzzleIndex + 1) + ".png";
+    canvas.toBlob((b) => { _lastBlob = b; }, "image/png");
+
+    closeCam();
+    $("cam-preview").classList.add("show");
+  }
+
+  async function shareImage() {
+    if (_lastBlob && navigator.canShare) {
+      const file = new File([_lastBlob], "anatomy-connections.png", { type: "image/png" });
+      if (navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ files: [file], title: "Anatomy Connections" }); return; }
+        catch (e) { if (e && e.name === "AbortError") return; }
+      }
+    }
+    // Fallback: save the image
+    toast("Opening save…");
+    $("cam-download").click();
+  }
+
+  function closePreview() {
+    $("cam-preview").classList.remove("show");
   }
 
   let toastTimer;
@@ -685,7 +959,12 @@
     state.selected = [];
     render();
   });
-  $("share").addEventListener("click", share);
+  $("share").addEventListener("click", openCam);
+  $("copy-text").addEventListener("click", shareText);
+  $("cam-shutter").addEventListener("click", capture);
+  $("cam-close").addEventListener("click", closeCam);
+  $("cam-share-img").addEventListener("click", shareImage);
+  $("cam-preview-close").addEventListener("click", closePreview);
 
   initState();
   </script>
