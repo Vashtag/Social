@@ -591,6 +591,8 @@
       mistakes: 0,
       guesses: [],
       finished: false,
+      startTime: null, // set on first move
+      elapsed: 0,      // seconds, set at finish
     };
 
     // Restore a finished result for today (so refreshing shows the share grid)
@@ -600,6 +602,7 @@
         state.solved = saved.solved;
         state.mistakes = saved.mistakes;
         state.guesses = saved.guesses;
+        state.elapsed = saved.elapsed || 0;
         state.finished = true;
       }
     } catch (e) {}
@@ -624,6 +627,7 @@
           solved: state.solved,
           mistakes: state.mistakes,
           guesses: state.guesses,
+          elapsed: state.elapsed,
         })
       );
     }
@@ -702,6 +706,7 @@
 
   function toggle(w) {
     if (state.finished) return;
+    if (!state.startTime) state.startTime = Date.now(); // start the clock on first move
     const idx = state.selected.indexOf(w);
     if (idx >= 0) state.selected.splice(idx, 1);
     else if (state.selected.length < 4) state.selected.push(w);
@@ -764,6 +769,9 @@
 
   function finish(won) {
     state.finished = true;
+    state.elapsed = state.startTime
+      ? Math.round((Date.now() - state.startTime) / 1000)
+      : state.elapsed;
     if (!won) {
       const remaining = [0, 1, 2, 3].filter((gi) => !state.solved.includes(gi));
       state.solved = state.solved.concat(remaining);
@@ -771,6 +779,16 @@
     state.selected = [];
     persist();
     render();
+  }
+
+  // Seconds → "M:SS" (or "H:MM:SS" for the very patient)
+  function formatTime(sec) {
+    sec = Math.max(0, Math.round(sec || 0));
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    const pad = (n) => (n < 10 ? "0" + n : "" + n);
+    return h ? h + ":" + pad(m) + ":" + pad(s) : m + ":" + pad(s);
   }
 
   function shareGridText() {
@@ -787,18 +805,26 @@
     promptEl.textContent = "";
 
     const won = state.mistakes < MAX_MISTAKES;
+    const timeStr = state.elapsed ? formatTime(state.elapsed) : null;
     $("end-title").textContent = won ? "Solved it!" : "Out of guesses";
-    $("end-sub").textContent = won
-      ? "Nice work — " + state.mistakes + (state.mistakes === 1 ? " mistake" : " mistakes")
-      : "Come back tomorrow for a new puzzle";
+    if (won) {
+      const mm = state.mistakes + (state.mistakes === 1 ? " mistake" : " mistakes");
+      $("end-sub").textContent = timeStr ? "Time " + timeStr + "  ·  " + mm : "Nice work — " + mm;
+    } else {
+      $("end-sub").textContent = timeStr
+        ? "Time " + timeStr + "  ·  come back tomorrow"
+        : "Come back tomorrow for a new puzzle";
+    }
     $("share-grid").textContent = shareGridText();
   }
 
   function buildShareText() {
     const won = state.mistakes < MAX_MISTAKES;
+    const timeStr = state.elapsed ? formatTime(state.elapsed) : null;
     const header =
       "Anatomy Connections No. " + puzzleNumber +
-      (won ? " — solved with " + state.mistakes + "/4 mistakes" : " — did not solve");
+      (won ? " — solved with " + state.mistakes + "/4 mistakes" : " — did not solve") +
+      (timeStr ? " in " + timeStr : "");
     return (
       header + "\n" +
       shareGridText() +
@@ -934,9 +960,12 @@
 
     ctx.fillStyle = "rgba(240,236,228,0.65)";
     ctx.font = "600 " + Math.round(W * 0.036) + "px -apple-system,'Segoe UI',sans-serif";
-    const sub = won
-      ? "No. " + puzzleNumber + "  ·  " + state.mistakes + (state.mistakes === 1 ? " mistake" : " mistakes")
-      : "No. " + puzzleNumber + "  ·  out of guesses";
+    const timeStr = state.elapsed ? formatTime(state.elapsed) : null;
+    let sub = "No. " + puzzleNumber;
+    if (timeStr) sub += "  ·  " + timeStr;
+    sub += won
+      ? "  ·  " + state.mistakes + (state.mistakes === 1 ? " mistake" : " mistakes")
+      : "  ·  out of guesses";
     ctx.fillText(sub, cx, panelTop + 226);
 
     // QR code footer — bottom-centered card that links to the game
