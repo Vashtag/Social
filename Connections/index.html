@@ -555,7 +555,12 @@
   const dayNumber = Math.floor(
     (Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000
   );
-  const puzzleIndex = ((dayNumber % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  // Launch day → puzzle No. 1. The number counts up daily from here (NYT-style),
+  // while the puzzle content rotates through the list.
+  const EPOCH_DAY = Math.floor(Date.UTC(2026, 7, 5) / 86400000); // 2026-08-05
+  const dayIndex = Math.max(0, dayNumber - EPOCH_DAY);
+  const puzzleNumber = dayIndex + 1;
+  const puzzleIndex = dayIndex % PUZZLES.length;
   const dateKey = now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate();
 
   let state;
@@ -605,7 +610,7 @@
         weekday: "long", month: "long", day: "numeric",
       });
     } catch (e) {}
-    $("day-num").textContent = "No. " + (puzzleIndex + 1);
+    $("day-num").textContent = "No. " + puzzleNumber;
 
     render();
   }
@@ -772,7 +777,7 @@
   function buildShareText() {
     const won = state.mistakes < MAX_MISTAKES;
     const header =
-      "Anatomy Connections No. " + (puzzleIndex + 1) +
+      "Anatomy Connections No. " + puzzleNumber +
       (won ? " — solved with " + state.mistakes + "/4 mistakes" : " — did not solve");
     return (
       header + "\n" +
@@ -898,8 +903,8 @@
     ctx.fillStyle = "rgba(240,236,228,0.65)";
     ctx.font = "600 " + Math.round(W * 0.036) + "px -apple-system,'Segoe UI',sans-serif";
     const sub = won
-      ? "No. " + (puzzleIndex + 1) + "  ·  " + state.mistakes + (state.mistakes === 1 ? " mistake" : " mistakes")
-      : "No. " + (puzzleIndex + 1) + "  ·  out of guesses";
+      ? "No. " + puzzleNumber + "  ·  " + state.mistakes + (state.mistakes === 1 ? " mistake" : " mistakes")
+      : "No. " + puzzleNumber + "  ·  out of guesses";
     ctx.fillText(sub, cx, gy - W * 0.02);
 
     // URL footer
@@ -912,7 +917,7 @@
     $("cam-img").src = dataUrl;
     const dl = $("cam-download");
     dl.href = dataUrl;
-    dl.download = "anatomy-connections-" + (puzzleIndex + 1) + ".png";
+    dl.download = "anatomy-connections-" + puzzleNumber + ".png";
     canvas.toBlob((b) => { _lastBlob = b; }, "image/png");
 
     closeCam();
