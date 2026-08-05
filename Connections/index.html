@@ -336,28 +336,67 @@
       cursor: pointer;
       font-size: 0.85rem;
     }
-    .stats-number {
-      font-size: clamp(3.5rem, 18vw, 6rem);
-      font-weight: 800;
-      line-height: 0.9;
-      letter-spacing: -0.06em;
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
     }
-    .stats-label {
+    .stats-grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .stat {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.7rem 0.4rem;
+      text-align: center;
+    }
+    .stat-num {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    .stat-cap {
       color: var(--muted);
-      font-size: 0.72rem;
+      font-size: 0.56rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-top: 0.35rem;
+    }
+    .stats-dist { margin-top: 1.1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+    .stats-dist-title {
+      color: var(--muted);
+      font-size: 0.6rem;
       letter-spacing: 0.16em;
       text-transform: uppercase;
-      margin-top: 0.6rem;
+      margin-bottom: 0.6rem;
     }
-    .stats-people {
-      margin-top: 1.25rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--border);
+    .dist-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.35rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .dist-key { width: 1ch; color: var(--muted); }
+    .dist-bar-wrap { flex: 1; background: var(--surface-2); border-radius: 6px; overflow: hidden; }
+    .dist-bar {
+      background: var(--cat-green);
+      color: #0d0d0d;
+      min-width: 1.6rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 6px;
+      text-align: right;
+      font-size: 0.68rem;
+      transition: width 0.4s ease;
+    }
+    .stats-empty {
       color: var(--muted);
-      font-size: 0.85rem;
-      line-height: 1.5;
+      font-size: 0.8rem;
+      text-align: center;
+      padding: 0.4rem 0 0.1rem;
     }
-    .stats-people strong { color: var(--text); }
 
     .text-share {
       background: none;
@@ -542,12 +581,24 @@
   <div class="stats-modal" id="stats-modal" aria-hidden="true">
     <div class="stats-card" role="dialog" aria-modal="true" aria-labelledby="stats-title">
       <div class="stats-top">
-        <div class="stats-title" id="stats-title">Completion Stats</div>
+        <div class="stats-title" id="stats-title">Your Stats</div>
         <button class="stats-close" id="stats-close" aria-label="Close stats">✕</button>
       </div>
-      <div class="stats-number" id="stats-completed-count">0</div>
-      <div class="stats-label">different people completed on this device</div>
-      <div class="stats-people" id="stats-people">No completions recorded yet.</div>
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-num" id="st-played">0</div><div class="stat-cap">Played</div></div>
+        <div class="stat"><div class="stat-num" id="st-winrate">0%</div><div class="stat-cap">Win %</div></div>
+        <div class="stat"><div class="stat-num" id="st-streak">0</div><div class="stat-cap">Streak</div></div>
+        <div class="stat"><div class="stat-num" id="st-maxstreak">0</div><div class="stat-cap">Best streak</div></div>
+      </div>
+      <div class="stats-grid stats-grid-3">
+        <div class="stat"><div class="stat-num" id="st-avgtime">–</div><div class="stat-cap">Avg time</div></div>
+        <div class="stat"><div class="stat-num" id="st-besttime">–</div><div class="stat-cap">Best time</div></div>
+        <div class="stat"><div class="stat-num" id="st-avgmiss">–</div><div class="stat-cap">Avg mistakes</div></div>
+      </div>
+      <div class="stats-dist">
+        <div class="stats-dist-title">Mistakes when solved</div>
+        <div id="stats-dist-rows"></div>
+      </div>
     </div>
   </div>
 
@@ -724,45 +775,78 @@
   }
 
   function storageKey() { return "anatomy-connections-v1-" + dateKey; }
-  function statsKey() { return "anatomy-connections-stats-v1"; }
+  function statsKey() { return "anatomy-connections-stats-v2"; }
+
+  const DEFAULT_STATS = {
+    played: 0, wins: 0, losses: 0,
+    curStreak: 0, maxStreak: 0,
+    totalWinTime: 0, totalWinMistakes: 0, bestTime: null,
+    dist: [0, 0, 0, 0], // solves bucketed by mistake count 0..3
+    lastWinDay: null,
+    days: [],           // dateKeys already recorded (one result per day)
+  };
 
   function readStats() {
     try {
-      const stats = JSON.parse(localStorage.getItem(statsKey()) || "null");
-      if (stats && Array.isArray(stats.people)) return stats;
+      const s = JSON.parse(localStorage.getItem(statsKey()) || "null");
+      if (s && typeof s.played === "number") {
+        return Object.assign({}, DEFAULT_STATS, s, {
+          dist: Array.isArray(s.dist) ? s.dist : [0, 0, 0, 0],
+          days: Array.isArray(s.days) ? s.days : [],
+        });
+      }
     } catch (e) {}
-    return { people: [] };
+    return Object.assign({}, DEFAULT_STATS, { dist: [0, 0, 0, 0], days: [] });
   }
 
   function writeStats(stats) {
     try { localStorage.setItem(statsKey(), JSON.stringify(stats)); } catch (e) {}
   }
 
-  function normalizeName(name) {
-    return name.trim().replace(/\s+/g, " ").slice(0, 24);
-  }
-
-  function recordCompletion() {
-    const existing = readStats();
-    const name = normalizeName(window.prompt("Who completed the puzzle?", "") || "");
-    if (!name) return;
-
-    const alreadySaved = existing.people.some(
-      (person) => person.toLowerCase() === name.toLowerCase()
-    );
-    if (!alreadySaved) {
-      existing.people.push(name);
-      existing.people.sort((a, b) => a.localeCompare(b));
-      writeStats(existing);
+  // Record one result per calendar day (first finish counts; replays are ignored).
+  function recordResult(won) {
+    const s = readStats();
+    if (s.days.indexOf(dateKey) !== -1) return;
+    s.days.push(dateKey);
+    s.played++;
+    if (won) {
+      s.wins++;
+      s.dist[Math.min(state.mistakes, 3)]++;
+      const t = state.elapsed || 0;
+      s.totalWinTime += t;
+      s.totalWinMistakes += state.mistakes;
+      if (t > 0 && (s.bestTime == null || t < s.bestTime)) s.bestTime = t;
+      s.curStreak = (s.lastWinDay === dayIndex - 1) ? s.curStreak + 1 : 1;
+      s.lastWinDay = dayIndex;
+      if (s.curStreak > s.maxStreak) s.maxStreak = s.curStreak;
+    } else {
+      s.losses++;
+      s.curStreak = 0;
     }
+    writeStats(s);
   }
 
   function openStats() {
-    const stats = readStats();
-    $("stats-completed-count").textContent = stats.people.length;
-    $("stats-people").innerHTML = stats.people.length
-      ? "<strong>People:</strong> " + stats.people.map(escapeHtml).join(", ")
-      : "No completions recorded yet.";
+    const s = readStats();
+    $("st-played").textContent = s.played;
+    $("st-winrate").textContent = s.played ? Math.round((s.wins / s.played) * 100) + "%" : "0%";
+    $("st-streak").textContent = s.curStreak;
+    $("st-maxstreak").textContent = s.maxStreak;
+    $("st-avgtime").textContent = s.wins ? formatTime(Math.round(s.totalWinTime / s.wins)) : "–";
+    $("st-besttime").textContent = s.bestTime != null ? formatTime(s.bestTime) : "–";
+    $("st-avgmiss").textContent = s.wins ? (s.totalWinMistakes / s.wins).toFixed(1) : "–";
+
+    const rowsEl = $("stats-dist-rows");
+    if (s.wins === 0) {
+      rowsEl.innerHTML = '<div class="stats-empty">No solved puzzles yet — play today!</div>';
+    } else {
+      const maxCount = Math.max(1, s.dist[0], s.dist[1], s.dist[2], s.dist[3]);
+      rowsEl.innerHTML = s.dist.map((count, i) => {
+        const pct = Math.round((count / maxCount) * 100);
+        return '<div class="dist-row"><span class="dist-key">' + i + '</span>' +
+          '<span class="dist-bar-wrap"><span class="dist-bar" style="width:' + pct + '%">' + count + '</span></span></div>';
+      }).join("");
+    }
     $("stats-modal").classList.add("show");
     $("stats-modal").setAttribute("aria-hidden", "false");
   }
@@ -980,7 +1064,7 @@
     }
     state.selected = [];
     persist();
-    if (won) recordCompletion();
+    recordResult(won);
     render();
   }
 
