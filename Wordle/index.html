@@ -184,8 +184,77 @@
     .dist-row { display: grid; grid-template-columns: 18px 1fr 28px; align-items: center; gap: 0.45rem; color: var(--muted); font-size: 0.76rem; }
     .bar { height: 18px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
     .bar span { display: block; height: 100%; min-width: 8px; background: var(--correct); border-radius: 999px; }
-    .people { padding-top: 1rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
-    .people strong { color: var(--text); }
+    .keyboard.hidden { display: none; }
+    .camera-modal, .camera-preview {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: #000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .camera-modal.show, .camera-preview.show { display: flex; }
+    #camera-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+    .camera-ui {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.5rem 1.25rem calc(2.2rem + env(safe-area-inset-bottom));
+      background: linear-gradient(to top, rgba(0,0,0,0.82), rgba(0,0,0,0.25) 55%, transparent);
+      pointer-events: none;
+    }
+    .camera-hint {
+      max-width: 340px;
+      text-align: center;
+      color: rgba(255,255,255,0.82);
+      font-size: 0.78rem;
+      line-height: 1.4;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.6);
+    }
+    .camera-actions {
+      display: flex;
+      gap: 0.75rem;
+      width: 100%;
+      max-width: 420px;
+      pointer-events: all;
+    }
+    .camera-capture, .camera-close {
+      flex: 1;
+      border-radius: 999px;
+      padding: 1rem;
+      font-size: 0.86rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .camera-capture { background: #fff; color: #000; border: none; }
+    .camera-close { background: rgba(255,255,255,0.14); color: #fff; border: 1px solid rgba(255,255,255,0.22); }
+    #camera-img {
+      max-width: 100%;
+      max-height: 72vh;
+      object-fit: contain;
+    }
+    .camera-preview-ui {
+      width: 100%;
+      max-width: 420px;
+      padding: 1rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    .camera-preview-actions { display: flex; gap: 0.75rem; width: 100%; }
+    .camera-preview-actions .btn { display: grid; place-items: center; text-decoration: none; }
     footer { margin-top: 1.2rem; text-align: center; font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: #333; }
   </style>
 </head>
@@ -210,7 +279,7 @@
       <div class="end-sub" id="end-sub"></div>
       <div class="share-grid" id="share-grid"></div>
       <div class="actions">
-        <button class="btn btn-primary" id="share">Share</button>
+        <button class="btn btn-primary" id="share">Share with camera</button>
         <button class="btn" id="open-stats">Stats</button>
       </div>
     </div>
@@ -228,10 +297,32 @@
         <div class="stat"><div class="stat-num" id="stat-played">0</div><div class="stat-label">Played</div></div>
         <div class="stat"><div class="stat-num" id="stat-win">0%</div><div class="stat-label">Win %</div></div>
         <div class="stat"><div class="stat-num" id="stat-streak">0</div><div class="stat-label">Streak</div></div>
-        <div class="stat"><div class="stat-num" id="stat-people">0</div><div class="stat-label">People</div></div>
+        <div class="stat"><div class="stat-num" id="stat-max">0</div><div class="stat-label">Max</div></div>
       </div>
       <div class="dist" id="distribution"></div>
-      <div class="people" id="people-list">No completions recorded yet.</div>
+    </div>
+  </div>
+
+  <div class="camera-modal" id="camera-modal">
+    <video id="camera-video" autoplay playsinline muted></video>
+    <div class="camera-ui">
+      <div class="camera-hint">Line up your selfie — your Wordle result gets added to the photo.</div>
+      <div class="camera-actions">
+        <button class="camera-capture" id="camera-capture">Take Photo</button>
+        <button class="camera-close" id="camera-close">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="camera-preview" id="camera-preview">
+    <img id="camera-img" alt="Your Anatomy Wordle result" />
+    <div class="camera-preview-ui">
+      <div class="camera-preview-actions">
+        <button class="btn btn-primary" id="camera-share-img">Share to story</button>
+        <a class="btn" id="camera-download" download>Save photo</a>
+      </div>
+      <button class="camera-close" id="camera-preview-close">Done</button>
+      <div class="camera-hint">Tap “Share to story”, then choose Instagram → Stories.</div>
     </div>
   </div>
 
@@ -259,18 +350,16 @@
 
   function gameKey() { return "anatomy-wordle-v1-" + dateKey; }
   function statsKey() { return "anatomy-wordle-stats-v1"; }
-  function defaultStats() { return { played: 0, wins: 0, streak: 0, maxStreak: 0, distribution: [0,0,0,0,0,0], people: [], lastPlayed: null }; }
+  function defaultStats() { return { played: 0, wins: 0, streak: 0, maxStreak: 0, distribution: [0,0,0,0,0,0], lastPlayed: null }; }
   function readStats() {
     try {
       const stats = JSON.parse(localStorage.getItem(statsKey()) || "null");
-      if (stats && Array.isArray(stats.distribution) && Array.isArray(stats.people)) return { ...defaultStats(), ...stats };
+      if (stats && Array.isArray(stats.distribution)) return { ...defaultStats(), ...stats };
     } catch (e) {}
     return defaultStats();
   }
   function writeStats(stats) { try { localStorage.setItem(statsKey(), JSON.stringify(stats)); } catch (e) {} }
   function saveGame() { try { localStorage.setItem(gameKey(), JSON.stringify(state)); } catch (e) {} }
-  function normalizeName(name) { return name.trim().replace(/\s+/g, " ").slice(0, 24); }
-  function escapeHtml(text) { const div = document.createElement("div"); div.textContent = text; return div.innerHTML; }
 
   function init() {
     buildBoard();
@@ -396,7 +485,6 @@
     state.won = won;
     saveGame();
     updateStats(won);
-    if (won) recordPerson();
     render();
   }
 
@@ -416,17 +504,6 @@
     writeStats(stats);
   }
 
-  function recordPerson() {
-    const stats = readStats();
-    const name = normalizeName(window.prompt("Who completed the puzzle?", "") || "");
-    if (!name) return;
-    if (!stats.people.some((person) => person.toLowerCase() === name.toLowerCase())) {
-      stats.people.push(name);
-      stats.people.sort((a, b) => a.localeCompare(b));
-      writeStats(stats);
-    }
-  }
-
   function shareGridText() {
     return state.guesses.map((guess) => scoreGuess(guess).map((s) => s === "correct" ? "🟩" : s === "present" ? "🟨" : "⬛").join("")).join("\n");
   }
@@ -437,6 +514,7 @@
     $("end-title").textContent = state.won ? "Solved it!" : "Out of guesses";
     $("end-sub").textContent = state.won ? "Guessed in " + state.guesses.length + "/6" : "The word was " + answer;
     $("share-grid").textContent = shareGridText();
+    $("keyboard").classList.add("hidden");
   }
 
   function buildShareText() {
@@ -452,16 +530,139 @@
     } catch (e) {}
   }
 
+  let cameraStream = null;
+  let lastBlob = null;
+  function stopCamera() {
+    if (cameraStream) cameraStream.getTracks().forEach((track) => track.stop());
+    cameraStream = null;
+  }
+
+  async function openCamera() {
+    try {
+      const video = $("camera-video");
+      cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+      video.srcObject = cameraStream;
+      $("camera-modal").classList.add("show");
+    } catch (e) {
+      toast("Camera unavailable — copying text");
+      shareResult();
+    }
+  }
+
+  function closeCamera() {
+    $("camera-modal").classList.remove("show");
+    stopCamera();
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function captureCamera() {
+    const video = $("camera-video");
+    const W = 1080, H = 1920;
+    const canvas = document.createElement("canvas");
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#0d0d0d";
+    ctx.fillRect(0, 0, W, H);
+
+    const vw = video.videoWidth || 1080;
+    const vh = video.videoHeight || 1920;
+    const regionH = Math.round(H * 0.6);
+    const scale = Math.min(W / vw, regionH / vh);
+    const dw = vw * scale, dh = vh * scale;
+    const dx = (W - dw) / 2, dy = (regionH - dh) / 2;
+    ctx.save();
+    ctx.translate(W, 0); ctx.scale(-1, 1);
+    ctx.drawImage(video, dx, dy, dw, dh);
+    ctx.restore();
+
+    const grad = ctx.createLinearGradient(0, regionH - 120, 0, regionH + 20);
+    grad.addColorStop(0, "rgba(13,13,13,0)");
+    grad.addColorStop(1, "rgba(13,13,13,1)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, regionH - 120, W, 140);
+
+    const cx = W / 2;
+    const panelTop = regionH;
+    ctx.textAlign = "center";
+    ctx.fillStyle = "rgba(240,236,228,0.6)";
+    ctx.font = "600 " + Math.round(W * 0.031) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText("A N A T O M Y   W O R D L E", cx, panelTop + 78);
+    ctx.fillStyle = "#f0ece4";
+    ctx.font = "800 " + Math.round(W * 0.1) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText(state.won ? "SOLVED" : "SO CLOSE", cx, panelTop + 172);
+    ctx.fillStyle = "rgba(240,236,228,0.65)";
+    ctx.font = "600 " + Math.round(W * 0.036) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText("No. " + puzzleNumber + "  ·  " + (state.won ? state.guesses.length : "X") + "/6", cx, panelTop + 226);
+
+    const colors = { correct: "#4a934a", present: "#b59f3b", absent: "#333333" };
+    const rows = state.guesses.length || 1;
+    const gap = Math.round(W * 0.014);
+    const sq = Math.min(Math.round(W * 0.075), Math.floor((H - panelTop - 360 - (rows - 1) * gap) / rows));
+    const gridW = LEN * sq + (LEN - 1) * gap;
+    const gridTop = panelTop + 288;
+    const gx0 = cx - gridW / 2;
+    state.guesses.forEach((guess, r) => {
+      const score = scoreGuess(guess);
+      for (let c = 0; c < LEN; c++) {
+        const x = gx0 + c * (sq + gap);
+        const y = gridTop + r * (sq + gap);
+        roundRect(ctx, x, y, sq, sq, sq * 0.18);
+        ctx.fillStyle = colors[score[c]];
+        ctx.fill();
+        ctx.fillStyle = score[c] === "absent" ? "#f0ece4" : "#0d0d0d";
+        ctx.font = "800 " + Math.round(sq * 0.52) + "px -apple-system,'Segoe UI',sans-serif";
+        ctx.fillText(guess[c], x + sq / 2, y + sq * 0.68);
+      }
+    });
+
+    ctx.fillStyle = "rgba(240,236,228,0.55)";
+    ctx.font = "600 " + Math.round(W * 0.028) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText("vashtag.github.io/Social/Wordle", cx, H - 90);
+
+    const dataUrl = canvas.toDataURL("image/png");
+    $("camera-img").src = dataUrl;
+    const dl = $("camera-download");
+    dl.href = dataUrl;
+    dl.download = "anatomy-wordle-" + puzzleNumber + ".png";
+    canvas.toBlob((blob) => { lastBlob = blob; }, "image/png");
+    closeCamera();
+    $("camera-preview").classList.add("show");
+  }
+
+  async function shareImage() {
+    if (!lastBlob) return shareResult();
+    const file = new File([lastBlob], "anatomy-wordle-" + puzzleNumber + ".png", { type: "image/png" });
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: "Anatomy Wordle" });
+      } else {
+        await shareResult();
+      }
+    } catch (e) {}
+  }
+
+  function closePreview() {
+    $("camera-preview").classList.remove("show");
+  }
+
   function openStats() {
     const stats = readStats();
     const winPct = stats.played ? Math.round((stats.wins / stats.played) * 100) : 0;
     $("stat-played").textContent = stats.played;
     $("stat-win").textContent = winPct + "%";
     $("stat-streak").textContent = stats.streak || 0;
-    $("stat-people").textContent = stats.people.length;
+    $("stat-max").textContent = stats.maxStreak || 0;
     const max = Math.max(1, ...stats.distribution);
     $("distribution").innerHTML = stats.distribution.map((n, i) => '<div class="dist-row"><span>' + (i + 1) + '</span><div class="bar"><span style="width:' + Math.max(8, Math.round((n / max) * 100)) + '%"></span></div><span>' + n + '</span></div>').join("");
-    $("people-list").innerHTML = stats.people.length ? "<strong>People:</strong> " + stats.people.map(escapeHtml).join(", ") : "No completions recorded yet.";
     $("stats-modal").classList.add("show");
     $("stats-modal").setAttribute("aria-hidden", "false");
   }
@@ -486,10 +687,14 @@
   }
 
   document.addEventListener("keydown", (e) => handleKey(e.key));
-  $("share").addEventListener("click", shareResult);
+  $("share").addEventListener("click", openCamera);
   $("open-stats").addEventListener("click", openStats);
   $("stats-close").addEventListener("click", closeStats);
   $("stats-modal").addEventListener("click", (e) => { if (e.target.id === "stats-modal") closeStats(); });
+  $("camera-capture").addEventListener("click", captureCamera);
+  $("camera-close").addEventListener("click", closeCamera);
+  $("camera-share-img").addEventListener("click", shareImage);
+  $("camera-preview-close").addEventListener("click", closePreview);
   $("brand-title").addEventListener("click", countTitleTap);
   $("brand-title").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); countTitleTap(); } });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeStats(); });
