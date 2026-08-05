@@ -15,6 +15,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
+      color-scheme: dark;
       --bg: #0d0d0d;
       --surface: #161616;
       --surface-2: #1d1d1d;
@@ -70,6 +71,14 @@
       font-size: 1.5rem;
       font-weight: 800;
       letter-spacing: -0.02em;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .brand-title:focus-visible {
+      outline: 2px solid var(--text);
+      outline-offset: 4px;
+      border-radius: 6px;
     }
     .brand-sub {
       font-size: 0.6rem;
@@ -120,6 +129,7 @@
       padding: 0.7rem 1rem;
       text-align: center;
       color: #0d0d0d;
+      text-shadow: none;
       animation: pop 0.35s ease;
     }
     .solved-title {
@@ -154,6 +164,7 @@
     .tile {
       position: relative;
       background: var(--tile);
+      color: var(--text);
       border: 1px solid var(--tile-border);
       border-radius: 12px;
       aspect-ratio: 1 / 1;
@@ -244,6 +255,7 @@
       background: var(--text);
       color: var(--bg);
       border-color: var(--text);
+      text-shadow: none;
     }
     .btn-submit:hover:not(:disabled) { background: #fff; }
 
@@ -284,6 +296,68 @@
       white-space: nowrap;
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .stats-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      background: rgba(0,0,0,0.72);
+    }
+    .stats-modal.show { display: flex; }
+    .stats-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 1.5rem;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.45);
+    }
+    .stats-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .stats-title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; }
+    .stats-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .stats-number {
+      font-size: clamp(3.5rem, 18vw, 6rem);
+      font-weight: 800;
+      line-height: 0.9;
+      letter-spacing: -0.06em;
+    }
+    .stats-label {
+      color: var(--muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      margin-top: 0.6rem;
+    }
+    .stats-people {
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    .stats-people strong { color: var(--text); }
 
     .text-share {
       background: none;
@@ -394,7 +468,7 @@
   <div class="wrap">
     <header>
       <div class="brand">
-        <div class="brand-title">Connections</div>
+        <div class="brand-title" id="brand-title" role="button" tabindex="0" aria-label="Connections title. Press five times to open stats.">Connections</div>
         <div class="brand-sub">Anatomy Edition</div>
       </div>
       <a class="back-link" href="../">← Games</a>
@@ -463,6 +537,18 @@
     </div>
 
     <footer>vashtag · social games</footer>
+  </div>
+
+  <div class="stats-modal" id="stats-modal" aria-hidden="true">
+    <div class="stats-card" role="dialog" aria-modal="true" aria-labelledby="stats-title">
+      <div class="stats-top">
+        <div class="stats-title" id="stats-title">Completion Stats</div>
+        <button class="stats-close" id="stats-close" aria-label="Close stats">✕</button>
+      </div>
+      <div class="stats-number" id="stats-completed-count">0</div>
+      <div class="stats-label">different people completed on this device</div>
+      <div class="stats-people" id="stats-people">No completions recorded yet.</div>
+    </div>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -575,6 +661,59 @@
   }
 
   function storageKey() { return "anatomy-connections-v1-" + dateKey; }
+  function statsKey() { return "anatomy-connections-stats-v1"; }
+
+  function readStats() {
+    try {
+      const stats = JSON.parse(localStorage.getItem(statsKey()) || "null");
+      if (stats && Array.isArray(stats.people)) return stats;
+    } catch (e) {}
+    return { people: [] };
+  }
+
+  function writeStats(stats) {
+    try { localStorage.setItem(statsKey(), JSON.stringify(stats)); } catch (e) {}
+  }
+
+  function normalizeName(name) {
+    return name.trim().replace(/\s+/g, " ").slice(0, 24);
+  }
+
+  function recordCompletion() {
+    const existing = readStats();
+    const name = normalizeName(window.prompt("Who completed the puzzle?", "") || "");
+    if (!name) return;
+
+    const alreadySaved = existing.people.some(
+      (person) => person.toLowerCase() === name.toLowerCase()
+    );
+    if (!alreadySaved) {
+      existing.people.push(name);
+      existing.people.sort((a, b) => a.localeCompare(b));
+      writeStats(existing);
+    }
+  }
+
+  function openStats() {
+    const stats = readStats();
+    $("stats-completed-count").textContent = stats.people.length;
+    $("stats-people").innerHTML = stats.people.length
+      ? "<strong>People:</strong> " + stats.people.map(escapeHtml).join(", ")
+      : "No completions recorded yet.";
+    $("stats-modal").classList.add("show");
+    $("stats-modal").setAttribute("aria-hidden", "false");
+  }
+
+  function closeStats() {
+    $("stats-modal").classList.remove("show");
+    $("stats-modal").setAttribute("aria-hidden", "true");
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
 
   function initState() {
     const puzzle = PUZZLES[puzzleIndex];
@@ -778,6 +917,7 @@
     }
     state.selected = [];
     persist();
+    if (won) recordCompletion();
     render();
   }
 
@@ -1055,6 +1195,34 @@
   }
 
   /* ── Events ── */
+  let titleTapCount = 0;
+  let titleTapTimer;
+  function countTitleTap() {
+    clearTimeout(titleTapTimer);
+    titleTapCount++;
+    if (titleTapCount >= 5) {
+      titleTapCount = 0;
+      openStats();
+      return;
+    }
+    titleTapTimer = setTimeout(() => { titleTapCount = 0; }, 1400);
+  }
+
+  $("brand-title").addEventListener("click", countTitleTap);
+  $("brand-title").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      countTitleTap();
+    }
+  });
+  $("stats-close").addEventListener("click", closeStats);
+  $("stats-modal").addEventListener("click", (e) => {
+    if (e.target.id === "stats-modal") closeStats();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeStats();
+  });
+
   $("submit").addEventListener("click", submit);
   $("shuffle").addEventListener("click", () => {
     const solvedWords = new Set(state.solved.flatMap((gi) => state.puzzle.groups[gi].words));
