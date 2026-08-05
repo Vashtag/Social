@@ -1108,23 +1108,26 @@
       : "  ·  out of guesses";
     ctx.fillText(sub, cx, panelTop + 226);
 
-    // QR code footer — bottom-centered card that links to the game
-    const qrBox = Math.round(W * 0.155);
-    const qrBottom = H - 56;
-    const qrTop = qrBottom - qrBox;
-    const captionY = qrTop - 20;
-
-    // Result grid — squares shrink so any number of guesses fits above the QR
+    // Result grid + QR card — side-by-side so the QR never covers the score grid.
     const rows = state.guesses.length || 1;
     const gap = Math.round(W * 0.016);
-    const gridTop = panelTop + 270;
-    const maxGridH = captionY - 46 - gridTop;
-    const sq = Math.max(
-      18,
-      Math.min(Math.round(W * 0.058), Math.floor((maxGridH - (rows - 1) * gap) / rows))
-    );
+    const qrBox = Math.round(W * 0.17);
+    const sideGap = Math.round(W * 0.055);
+    const contentTop = panelTop + 282;
+    const contentBottom = H - 94;
+    const contentH = contentBottom - contentTop;
+    const maxGridW = W - 96 - qrBox - sideGap;
+    const maxSqByWidth = Math.floor((maxGridW - 3 * gap) / 4);
+    const maxSqByHeight = Math.floor((contentH - (rows - 1) * gap) / rows);
+    const sq = Math.max(18, Math.min(Math.round(W * 0.064), maxSqByWidth, maxSqByHeight));
     const gridW = 4 * sq + 3 * gap;
-    const gx0 = cx - gridW / 2;
+    const gridH = rows * sq + (rows - 1) * gap;
+    const groupW = gridW + sideGap + qrBox;
+    const gx0 = cx - groupW / 2;
+    const gridTop = contentTop + (contentH - gridH) / 2;
+    const qrX = gx0 + gridW + sideGap;
+    const qrTop = contentTop + (contentH - qrBox) / 2 - 18;
+
     state.guesses.forEach((row, r) => {
       row.forEach((gi, c) => {
         const x = gx0 + c * (sq + gap);
@@ -1135,10 +1138,10 @@
       });
     });
 
+    drawQR(ctx, qrX, qrTop, qrBox);
     ctx.fillStyle = "rgba(240,236,228,0.55)";
-    ctx.font = "600 " + Math.round(W * 0.026) + "px -apple-system,'Segoe UI',sans-serif";
-    ctx.fillText("S C A N   T O   P L A Y", cx, captionY);
-    drawQR(ctx, cx - qrBox / 2, qrTop, qrBox);
+    ctx.font = "600 " + Math.round(W * 0.023) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText("S C A N   T O   P L A Y", qrX + qrBox / 2, qrTop + qrBox + 38);
 
     // Emit
     const dataUrl = canvas.toDataURL("image/png");
