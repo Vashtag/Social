@@ -15,6 +15,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
+      color-scheme: dark;
       --bg: #0d0d0d;
       --surface: #161616;
       --surface-2: #1d1d1d;
@@ -120,6 +121,7 @@
       padding: 0.7rem 1rem;
       text-align: center;
       color: #0d0d0d;
+      text-shadow: none;
       animation: pop 0.35s ease;
     }
     .solved-title {
@@ -154,6 +156,7 @@
     .tile {
       position: relative;
       background: var(--tile);
+      color: var(--text);
       border: 1px solid var(--tile-border);
       border-radius: 12px;
       aspect-ratio: 1 / 1;
@@ -244,6 +247,7 @@
       background: var(--text);
       color: var(--bg);
       border-color: var(--text);
+      text-shadow: none;
     }
     .btn-submit:hover:not(:disabled) { background: #fff; }
 
