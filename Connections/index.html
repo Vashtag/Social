@@ -167,13 +167,12 @@
       transition: transform 0.08s ease, background 0.15s, border-color 0.15s, color 0.15s;
     }
     .tile-word {
-      font-size: clamp(0.6rem, 3vw, 0.95rem);
+      font-size: 0.9rem; /* starting point; JS shrinks to fit each word */
       font-weight: 700;
       letter-spacing: 0.01em;
       text-transform: uppercase;
       line-height: 1.05;
-      word-break: break-word;
-      hyphens: auto;
+      white-space: nowrap; /* keep on one line — shrink font instead of hyphenating */
     }
     .tile:hover { border-color: #3d3d3d; }
     .tile.selected {
@@ -317,7 +316,8 @@
       inset: 0;
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain; /* show the true framing — no zoom/crop */
+      background: #000;
       transform: scaleX(-1); /* mirror like a real selfie cam */
     }
     .cam-ui {
@@ -629,6 +629,25 @@
     }
   }
 
+  // Shrink each tile's word until it fits on one line — no hyphens.
+  function fitTiles() {
+    requestAnimationFrame(() => {
+      [...gridEl.children].forEach((tile) => {
+        const span = tile.querySelector(".tile-word");
+        if (!span) return;
+        const availW = tile.clientWidth - 12;
+        let fs = Math.min(17, tile.clientWidth * 0.2);
+        span.style.fontSize = fs + "px";
+        let guard = 40;
+        while (guard-- > 0 && span.scrollWidth > availW && fs > 7) {
+          fs -= 0.5;
+          span.style.fontSize = fs + "px";
+        }
+      });
+    });
+  }
+  window.addEventListener("resize", () => { if (state) fitTiles(); });
+
   function render() {
     // Solved banners
     solvedEl.innerHTML = "";
@@ -658,6 +677,7 @@
         tile.addEventListener("click", () => toggle(w));
         gridEl.appendChild(tile);
       });
+    fitTiles();
 
     // Mistake dots
     dotsEl.innerHTML = "";
@@ -815,7 +835,7 @@
     const video = $("cam-video");
     try {
       _camStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 1080 }, height: { ideal: 1920 } },
+        video: { facingMode: "user" }, // native framing — avoids forced-crop zoom
         audio: false,
       });
       video.srcObject = _camStream;
@@ -849,68 +869,77 @@
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext("2d");
 
-    // Cover-fit the (mirrored) selfie into the whole frame
+    // Dark backdrop (fills any letterbox bars on-brand)
+    ctx.fillStyle = "#0d0d0d";
+    ctx.fillRect(0, 0, W, H);
+
+    // Contain-fit the (mirrored) selfie into the top region — whole frame, no zoom
     const vw = video.videoWidth || 1080;
     const vh = video.videoHeight || 1920;
-    const scale = Math.max(W / vw, H / vh);
+    const regionH = Math.round(H * 0.6);
+    const scale = Math.min(W / vw, regionH / vh);
     const dw = vw * scale, dh = vh * scale;
-    const dx = (W - dw) / 2, dy = (H - dh) / 2;
+    const dx = (W - dw) / 2, dy = (regionH - dh) / 2;
     ctx.save();
     ctx.translate(W, 0); ctx.scale(-1, 1);
     ctx.drawImage(video, dx, dy, dw, dh);
     ctx.restore();
 
-    // Bottom scrim for legibility
-    const grad = ctx.createLinearGradient(0, H * 0.4, 0, H);
-    grad.addColorStop(0, "rgba(0,0,0,0)");
-    grad.addColorStop(0.45, "rgba(0,0,0,0.72)");
-    grad.addColorStop(1, "rgba(13,13,13,0.96)");
+    // Soft seam blend between photo and panel
+    const grad = ctx.createLinearGradient(0, regionH - 120, 0, regionH + 20);
+    grad.addColorStop(0, "rgba(13,13,13,0)");
+    grad.addColorStop(1, "rgba(13,13,13,1)");
     ctx.fillStyle = grad;
-    ctx.fillRect(0, H * 0.4, W, H * 0.6);
+    ctx.fillRect(0, regionH - 120, W, 140);
 
     const cx = W / 2;
     const won = state.mistakes < MAX_MISTAKES;
 
-    // Result emoji-style grid (rounded colour squares)
-    const rows = state.guesses.length || 1;
-    const sq = Math.round(W * 0.055);
-    const gap = Math.round(W * 0.016);
-    const gridW = 4 * sq + 3 * gap;
-    const gridH = rows * sq + (rows - 1) * gap;
-    const gridBottom = H * 0.885;
-    const gy = gridBottom - gridH;
-    const gx0 = cx - gridW / 2;
-    state.guesses.forEach((row, r) => {
-      row.forEach((gi, c) => {
-        const x = gx0 + c * (sq + gap);
-        const y = gy + r * (sq + gap);
-        roundRect(ctx, x, y, sq, sq, sq * 0.24);
-        ctx.fillStyle = CAT_COLORS[gi];
-        ctx.fill();
-      });
-    });
-
-    // Text above the grid
+    // ── Result panel, laid out top-down from the seam ──
     ctx.textAlign = "center";
+    const panelTop = regionH;
+
     ctx.fillStyle = "rgba(240,236,228,0.6)";
-    ctx.font = "600 " + Math.round(W * 0.033) + "px -apple-system,'Segoe UI',sans-serif";
-    ctx.fillText("A N A T O M Y   C O N N E C T I O N S", cx, gy - W * 0.155);
+    ctx.font = "600 " + Math.round(W * 0.031) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText("A N A T O M Y   C O N N E C T I O N S", cx, panelTop + 78);
 
     ctx.fillStyle = "#f0ece4";
     ctx.font = "800 " + Math.round(W * 0.1) + "px -apple-system,'Segoe UI',sans-serif";
-    ctx.fillText(won ? "SOLVED" : "SO CLOSE", cx, gy - W * 0.06);
+    ctx.fillText(won ? "SOLVED" : "SO CLOSE", cx, panelTop + 172);
 
     ctx.fillStyle = "rgba(240,236,228,0.65)";
     ctx.font = "600 " + Math.round(W * 0.036) + "px -apple-system,'Segoe UI',sans-serif";
     const sub = won
       ? "No. " + puzzleNumber + "  ·  " + state.mistakes + (state.mistakes === 1 ? " mistake" : " mistakes")
       : "No. " + puzzleNumber + "  ·  out of guesses";
-    ctx.fillText(sub, cx, gy - W * 0.02);
+    ctx.fillText(sub, cx, panelTop + 226);
+
+    // Result grid — squares shrink so any number of guesses fits the panel
+    const rows = state.guesses.length || 1;
+    const gap = Math.round(W * 0.016);
+    const gridTop = panelTop + 270;
+    const urlY = H - 78;
+    const maxGridH = urlY - 46 - gridTop;
+    const sq = Math.max(
+      18,
+      Math.min(Math.round(W * 0.058), Math.floor((maxGridH - (rows - 1) * gap) / rows))
+    );
+    const gridW = 4 * sq + 3 * gap;
+    const gx0 = cx - gridW / 2;
+    state.guesses.forEach((row, r) => {
+      row.forEach((gi, c) => {
+        const x = gx0 + c * (sq + gap);
+        const y = gridTop + r * (sq + gap);
+        roundRect(ctx, x, y, sq, sq, sq * 0.24);
+        ctx.fillStyle = CAT_COLORS[gi];
+        ctx.fill();
+      });
+    });
 
     // URL footer
     ctx.fillStyle = "rgba(240,236,228,0.5)";
     ctx.font = "600 " + Math.round(W * 0.03) + "px -apple-system,'Segoe UI',sans-serif";
-    ctx.fillText((location.host + location.pathname).replace(/\/$/, ""), cx, H * 0.95);
+    ctx.fillText((location.host + location.pathname).replace(/\/$/, ""), cx, urlY);
 
     // Emit
     const dataUrl = canvas.toDataURL("image/png");
