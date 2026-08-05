@@ -108,6 +108,16 @@
     .icon-unscramble span:nth-child(2){ transform: rotate(10deg) translateY(2px); }
     .icon-unscramble span:nth-child(3){ transform: rotate(-5deg) translateY(-1px); color:#9a9a9a;}
 
+    /* Wordle icon — solved letter tile */
+    .icon-wordle {
+      background: var(--cat-green);
+      border: 1px solid var(--cat-green);
+      color: #0d0d0d;
+      font-size: 1.7rem;
+      font-weight: 800;
+      text-shadow: none;
+    }
+
     /* Connections icon — 2x2 colour grid */
     .icon-connections {
       display: grid;
@@ -168,6 +178,16 @@
         <div class="game-body">
           <div class="game-name">Unscramble</div>
           <div class="game-desc">Race the clock to unscramble anatomy terms.</div>
+        </div>
+        <div class="game-arrow">→</div>
+      </a>
+
+
+      <a class="game-card" href="./Wordle/">
+        <div class="game-icon icon-wordle"><span>W</span></div>
+        <div class="game-body">
+          <div class="game-name">Anatomy Wordle</div>
+          <div class="game-desc">Guess the five-letter anatomy word. A new puzzle every day.</div>
         </div>
         <div class="game-arrow">→</div>
       </a>

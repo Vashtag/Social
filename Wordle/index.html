@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Anatomy Wordle</title>
+  <meta name="description" content="Guess the five-letter anatomy word. A new puzzle every day." />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      color-scheme: dark;
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --surface-2: #1d1d1d;
+      --border: #2a2a2a;
+      --text: #f0ece4;
+      --muted: #777;
+      --absent: #333333;
+      --present: #b59f3b;
+      --correct: #4a934a;
+      --danger: #c95454;
+    }
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    body {
+      min-height: 100dvh;
+      display: flex;
+      justify-content: center;
+      padding: 1.25rem 1rem calc(1.5rem + env(safe-area-inset-bottom));
+    }
+    .wrap { width: 100%; max-width: 520px; display: flex; flex-direction: column; min-height: calc(100dvh - 2.75rem); }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.25rem 0.1rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1rem;
+    }
+    .brand { display: flex; flex-direction: column; gap: 0.25rem; }
+    .brand-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .brand-title:focus-visible, .btn:focus-visible, .key:focus-visible, .back-link:focus-visible {
+      outline: 2px solid var(--text);
+      outline-offset: 4px;
+      border-radius: 6px;
+    }
+    .brand-sub { font-size: 0.6rem; letter-spacing: 0.32em; text-transform: uppercase; color: var(--muted); }
+    .back-link {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.5rem 0.9rem;
+      white-space: nowrap;
+    }
+    .back-link:hover { color: var(--text); border-color: #3a3a3a; }
+    .daystrip { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.9rem; }
+    .day-label, .day-num { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+    .day-num { color: var(--text); font-weight: 700; }
+    .prompt { min-height: 1.2rem; text-align: center; color: var(--muted); font-size: 0.82rem; margin-bottom: 0.9rem; }
+    .board { display: grid; grid-template-rows: repeat(6, 1fr); gap: 0.38rem; width: min(100%, 360px); margin: 0 auto 1rem; }
+    .row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.38rem; }
+    .tile {
+      aspect-ratio: 1 / 1;
+      display: grid;
+      place-items: center;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text);
+      font-size: clamp(1.6rem, 9vw, 2.2rem);
+      font-weight: 800;
+      line-height: 1;
+      text-transform: uppercase;
+      transition: transform 0.12s ease, background 0.2s, border-color 0.2s;
+    }
+    .tile.filled { border-color: #4a4a4a; transform: scale(0.97); }
+    .tile.correct { background: var(--correct); border-color: var(--correct); color: #0d0d0d; }
+    .tile.present { background: var(--present); border-color: var(--present); color: #0d0d0d; }
+    .tile.absent { background: var(--absent); border-color: var(--absent); color: var(--text); }
+    .keyboard { display: flex; flex-direction: column; gap: 0.42rem; margin-top: auto; }
+    .key-row { display: flex; justify-content: center; gap: 0.32rem; }
+    .key {
+      min-width: 0;
+      flex: 1;
+      max-width: 42px;
+      height: 48px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 0.82rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+    .key.wide { flex: 1.6; max-width: 70px; font-size: 0.7rem; }
+    .key.correct { background: var(--correct); border-color: var(--correct); color: #0d0d0d; }
+    .key.present { background: var(--present); border-color: var(--present); color: #0d0d0d; }
+    .key.absent { background: var(--absent); border-color: var(--absent); color: var(--text); }
+    .end { display: none; flex-direction: column; align-items: center; gap: 0.8rem; margin-top: 1rem; text-align: center; }
+    .end.show { display: flex; }
+    .end-title { font-size: 1.3rem; font-weight: 800; }
+    .end-sub { color: var(--muted); font-size: 0.85rem; }
+    .share-grid { font-size: 1.15rem; line-height: 1.35; letter-spacing: 0.12em; }
+    .actions { display: flex; gap: 0.6rem; width: 100%; }
+    .btn {
+      flex: 1;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid #3a3a3a;
+      border-radius: 999px;
+      padding: 0.8rem 0.5rem;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 2rem;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--text);
+      color: var(--bg);
+      padding: 0.7rem 1.2rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s;
+      z-index: 150;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      background: rgba(0,0,0,0.72);
+    }
+    .modal.show { display: flex; }
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 1.5rem;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.45);
+    }
+    .modal-top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+    .modal-title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; }
+    .modal-close { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); cursor: pointer; }
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; margin-bottom: 1.25rem; }
+    .stat { text-align: center; padding: 0.75rem 0.3rem; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; }
+    .stat-num { font-size: 1.5rem; font-weight: 800; }
+    .stat-label { color: var(--muted); font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 0.2rem; }
+    .dist { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+    .dist-row { display: grid; grid-template-columns: 18px 1fr 28px; align-items: center; gap: 0.45rem; color: var(--muted); font-size: 0.76rem; }
+    .bar { height: 18px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+    .bar span { display: block; height: 100%; min-width: 8px; background: var(--correct); border-radius: 999px; }
+    .people { padding-top: 1rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
+    .people strong { color: var(--text); }
+    footer { margin-top: 1.2rem; text-align: center; font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: #333; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="brand-title" id="brand-title" role="button" tabindex="0" aria-label="Wordle title. Press five times to open stats.">Wordle</div>
+        <div class="brand-sub">Anatomy Edition</div>
+      </div>
+      <a class="back-link" href="../">← Games</a>
+    </header>
+
+    <div class="daystrip">
+      <span class="day-label" id="day-date">Puzzle of the day</span>
+      <span class="day-num" id="day-num"></span>
+    </div>
+    <div class="prompt" id="prompt">Guess the five-letter anatomy word.</div>
+    <div class="board" id="board" aria-label="Anatomy Wordle board"></div>
+    <div class="end" id="end">
+      <div class="end-title" id="end-title"></div>
+      <div class="end-sub" id="end-sub"></div>
+      <div class="share-grid" id="share-grid"></div>
+      <div class="actions">
+        <button class="btn btn-primary" id="share">Share</button>
+        <button class="btn" id="open-stats">Stats</button>
+      </div>
+    </div>
+    <div class="keyboard" id="keyboard" aria-label="Keyboard"></div>
+    <footer>vashtag · social games</footer>
+  </div>
+
+  <div class="modal" id="stats-modal" aria-hidden="true">
+    <div class="card" role="dialog" aria-modal="true" aria-labelledby="stats-title">
+      <div class="modal-top">
+        <div class="modal-title" id="stats-title">Wordle Stats</div>
+        <button class="modal-close" id="stats-close" aria-label="Close stats">✕</button>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-num" id="stat-played">0</div><div class="stat-label">Played</div></div>
+        <div class="stat"><div class="stat-num" id="stat-win">0%</div><div class="stat-label">Win %</div></div>
+        <div class="stat"><div class="stat-num" id="stat-streak">0</div><div class="stat-label">Streak</div></div>
+        <div class="stat"><div class="stat-num" id="stat-people">0</div><div class="stat-label">People</div></div>
+      </div>
+      <div class="dist" id="distribution"></div>
+      <div class="people" id="people-list">No completions recorded yet.</div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+  const WORDS = [
+    "aorta", "atrio", "brain", "colon", "costa", "derma", "femur", "fibra", "glans", "heart",
+    "ilium", "joint", "liver", "lymph", "molar", "nerve", "organ", "pubis", "renal", "spine",
+    "tibia", "ulnar", "veins", "vomer", "wrist", "ankle", "blood", "cecum", "digit", "groin",
+    "hyoid", "ileum", "lungs", "nasal", "orbit", "patel", "pelvi", "scalp", "sinus", "teeth"
+  ];
+  const VALID = new Set(WORDS);
+  const $ = (id) => document.getElementById(id);
+  const now = new Date();
+  const dayNumber = Math.floor(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86400000);
+  const EPOCH_DAY = Math.floor(Date.UTC(2026, 7, 5) / 86400000);
+  const dayIndex = Math.max(0, dayNumber - EPOCH_DAY);
+  const puzzleNumber = dayIndex + 1;
+  const answer = WORDS[dayIndex % WORDS.length].toUpperCase();
+  const dateKey = now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate();
+  const MAX_ROWS = 6;
+  const LEN = 5;
+  let state = { row: 0, col: 0, guesses: [], current: "", finished: false, won: false };
+
+  function gameKey() { return "anatomy-wordle-v1-" + dateKey; }
+  function statsKey() { return "anatomy-wordle-stats-v1"; }
+  function defaultStats() { return { played: 0, wins: 0, streak: 0, maxStreak: 0, distribution: [0,0,0,0,0,0], people: [], lastPlayed: null }; }
+  function readStats() {
+    try {
+      const stats = JSON.parse(localStorage.getItem(statsKey()) || "null");
+      if (stats && Array.isArray(stats.distribution) && Array.isArray(stats.people)) return { ...defaultStats(), ...stats };
+    } catch (e) {}
+    return defaultStats();
+  }
+  function writeStats(stats) { try { localStorage.setItem(statsKey(), JSON.stringify(stats)); } catch (e) {} }
+  function saveGame() { try { localStorage.setItem(gameKey(), JSON.stringify(state)); } catch (e) {} }
+  function normalizeName(name) { return name.trim().replace(/\s+/g, " ").slice(0, 24); }
+  function escapeHtml(text) { const div = document.createElement("div"); div.textContent = text; return div.innerHTML; }
+
+  function init() {
+    buildBoard();
+    buildKeyboard();
+    try {
+      const saved = JSON.parse(localStorage.getItem(gameKey()) || "null");
+      if (saved && Array.isArray(saved.guesses)) state = { ...state, ...saved };
+    } catch (e) {}
+    try {
+      $("day-date").textContent = now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+    } catch (e) {}
+    $("day-num").textContent = "No. " + puzzleNumber;
+    render();
+  }
+
+  function buildBoard() {
+    const board = $("board");
+    board.innerHTML = "";
+    for (let r = 0; r < MAX_ROWS; r++) {
+      const row = document.createElement("div");
+      row.className = "row";
+      for (let c = 0; c < LEN; c++) {
+        const tile = document.createElement("div");
+        tile.className = "tile";
+        tile.id = "tile-" + r + "-" + c;
+        row.appendChild(tile);
+      }
+      board.appendChild(row);
+    }
+  }
+
+  function buildKeyboard() {
+    const keys = [["Q","W","E","R","T","Y","U","I","O","P"],["A","S","D","F","G","H","J","K","L"],["Enter","Z","X","C","V","B","N","M","⌫"]];
+    const kb = $("keyboard");
+    kb.innerHTML = "";
+    keys.forEach((row) => {
+      const div = document.createElement("div");
+      div.className = "key-row";
+      row.forEach((k) => {
+        const btn = document.createElement("button");
+        btn.className = "key" + (k.length > 1 ? " wide" : "");
+        btn.textContent = k;
+        btn.dataset.key = k;
+        btn.addEventListener("click", () => handleKey(k));
+        div.appendChild(btn);
+      });
+      kb.appendChild(div);
+    });
+  }
+
+  function scoreGuess(guess) {
+    const result = Array(LEN).fill("absent");
+    const remaining = answer.split("");
+    for (let i = 0; i < LEN; i++) {
+      if (guess[i] === answer[i]) { result[i] = "correct"; remaining[i] = null; }
+    }
+    for (let i = 0; i < LEN; i++) {
+      if (result[i] === "correct") continue;
+      const idx = remaining.indexOf(guess[i]);
+      if (idx >= 0) { result[i] = "present"; remaining[idx] = null; }
+    }
+    return result;
+  }
+
+  function render() {
+    for (let r = 0; r < MAX_ROWS; r++) {
+      const guess = state.guesses[r] || (r === state.row ? state.current : "");
+      const score = state.guesses[r] ? scoreGuess(state.guesses[r]) : [];
+      for (let c = 0; c < LEN; c++) {
+        const tile = $("tile-" + r + "-" + c);
+        tile.textContent = guess[c] || "";
+        tile.className = "tile" + (guess[c] ? " filled" : "") + (score[c] ? " " + score[c] : "");
+      }
+    }
+    updateKeys();
+    if (state.finished) showEnd();
+  }
+
+  function updateKeys() {
+    const rank = { absent: 1, present: 2, correct: 3 };
+    const found = {};
+    state.guesses.forEach((guess) => scoreGuess(guess).forEach((status, i) => {
+      const ch = guess[i];
+      if (!found[ch] || rank[status] > rank[found[ch]]) found[ch] = status;
+    }));
+    document.querySelectorAll(".key").forEach((key) => {
+      key.classList.remove("absent", "present", "correct");
+      const status = found[key.dataset.key];
+      if (status) key.classList.add(status);
+    });
+  }
+
+  function handleKey(key) {
+    if (state.finished) return;
+    if (key === "Enter") return submitGuess();
+    if (key === "⌫" || key === "Backspace") {
+      state.current = state.current.slice(0, -1);
+      state.col = state.current.length;
+      render();
+      return;
+    }
+    if (/^[a-zA-Z]$/.test(key) && state.current.length < LEN) {
+      state.current += key.toUpperCase();
+      state.col = state.current.length;
+      render();
+    }
+  }
+
+  function submitGuess() {
+    if (state.current.length !== LEN) return toast("Not enough letters");
+    if (!VALID.has(state.current.toLowerCase())) return toast("Use an anatomy word");
+    const guess = state.current;
+    state.guesses.push(guess);
+    state.current = "";
+    state.row = state.guesses.length;
+    if (guess === answer) finish(true);
+    else if (state.guesses.length >= MAX_ROWS) finish(false);
+    else { saveGame(); render(); }
+  }
+
+  function finish(won) {
+    state.finished = true;
+    state.won = won;
+    saveGame();
+    updateStats(won);
+    if (won) recordPerson();
+    render();
+  }
+
+  function updateStats(won) {
+    const stats = readStats();
+    if (stats.lastPlayed === dateKey) return;
+    stats.played++;
+    stats.lastPlayed = dateKey;
+    if (won) {
+      stats.wins++;
+      stats.streak++;
+      stats.maxStreak = Math.max(stats.maxStreak || 0, stats.streak);
+      stats.distribution[state.guesses.length - 1]++;
+    } else {
+      stats.streak = 0;
+    }
+    writeStats(stats);
+  }
+
+  function recordPerson() {
+    const stats = readStats();
+    const name = normalizeName(window.prompt("Who completed the puzzle?", "") || "");
+    if (!name) return;
+    if (!stats.people.some((person) => person.toLowerCase() === name.toLowerCase())) {
+      stats.people.push(name);
+      stats.people.sort((a, b) => a.localeCompare(b));
+      writeStats(stats);
+    }
+  }
+
+  function shareGridText() {
+    return state.guesses.map((guess) => scoreGuess(guess).map((s) => s === "correct" ? "🟩" : s === "present" ? "🟨" : "⬛").join("")).join("\n");
+  }
+
+  function showEnd() {
+    $("end").classList.add("show");
+    $("prompt").textContent = state.won ? "Solved!" : "Answer: " + answer;
+    $("end-title").textContent = state.won ? "Solved it!" : "Out of guesses";
+    $("end-sub").textContent = state.won ? "Guessed in " + state.guesses.length + "/6" : "The word was " + answer;
+    $("share-grid").textContent = shareGridText();
+  }
+
+  function buildShareText() {
+    return "Anatomy Wordle No. " + puzzleNumber + " " + (state.won ? state.guesses.length : "X") + "/6\n" + shareGridText() + "\n" + location.origin + location.pathname;
+  }
+
+  async function shareResult() {
+    const text = buildShareText();
+    try {
+      if (navigator.share) await navigator.share({ text });
+      else if (navigator.clipboard) { await navigator.clipboard.writeText(text); toast("Copied result"); }
+      else toast("Copy unavailable");
+    } catch (e) {}
+  }
+
+  function openStats() {
+    const stats = readStats();
+    const winPct = stats.played ? Math.round((stats.wins / stats.played) * 100) : 0;
+    $("stat-played").textContent = stats.played;
+    $("stat-win").textContent = winPct + "%";
+    $("stat-streak").textContent = stats.streak || 0;
+    $("stat-people").textContent = stats.people.length;
+    const max = Math.max(1, ...stats.distribution);
+    $("distribution").innerHTML = stats.distribution.map((n, i) => '<div class="dist-row"><span>' + (i + 1) + '</span><div class="bar"><span style="width:' + Math.max(8, Math.round((n / max) * 100)) + '%"></span></div><span>' + n + '</span></div>').join("");
+    $("people-list").innerHTML = stats.people.length ? "<strong>People:</strong> " + stats.people.map(escapeHtml).join(", ") : "No completions recorded yet.";
+    $("stats-modal").classList.add("show");
+    $("stats-modal").setAttribute("aria-hidden", "false");
+  }
+  function closeStats() { $("stats-modal").classList.remove("show"); $("stats-modal").setAttribute("aria-hidden", "true"); }
+
+  let tapCount = 0;
+  let tapTimer;
+  function countTitleTap() {
+    clearTimeout(tapTimer);
+    tapCount++;
+    if (tapCount >= 5) { tapCount = 0; openStats(); return; }
+    tapTimer = setTimeout(() => { tapCount = 0; }, 1400);
+  }
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 1600);
+  }
+
+  document.addEventListener("keydown", (e) => handleKey(e.key));
+  $("share").addEventListener("click", shareResult);
+  $("open-stats").addEventListener("click", openStats);
+  $("stats-close").addEventListener("click", closeStats);
+  $("stats-modal").addEventListener("click", (e) => { if (e.target.id === "stats-modal") closeStats(); });
+  $("brand-title").addEventListener("click", countTitleTap);
+  $("brand-title").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); countTitleTap(); } });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeStats(); });
+  init();
+  </script>
+</body>
+</html>
