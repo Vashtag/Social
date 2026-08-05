@@ -1068,6 +1068,25 @@
     state.selected = [];
     render();
   });
+  // Hidden reset: tap the "No. X" label 3 times to replay today's puzzle.
+  function resetPuzzle() {
+    try { localStorage.removeItem(storageKey()); } catch (e) {}
+    $("end").classList.remove("show");
+    $("controls").style.display = "flex";
+    promptEl.textContent = "Create four groups of four!";
+    initState();
+    toast("Puzzle reset");
+  }
+  let _tapCount = 0, _tapTimer = null;
+  const dayNumEl = $("day-num");
+  dayNumEl.style.cursor = "pointer";
+  dayNumEl.addEventListener("click", () => {
+    _tapCount++;
+    clearTimeout(_tapTimer);
+    _tapTimer = setTimeout(() => { _tapCount = 0; }, 1200);
+    if (_tapCount >= 3) { _tapCount = 0; clearTimeout(_tapTimer); resetPuzzle(); }
+  });
+
   $("share").addEventListener("click", openCam);
   $("copy-text").addEventListener("click", shareText);
   $("cam-shutter").addEventListener("click", capture);
