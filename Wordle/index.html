@@ -297,7 +297,7 @@
         <div class="stat"><div class="stat-num" id="stat-played">0</div><div class="stat-label">Played</div></div>
         <div class="stat"><div class="stat-num" id="stat-win">0%</div><div class="stat-label">Win %</div></div>
         <div class="stat"><div class="stat-num" id="stat-streak">0</div><div class="stat-label">Streak</div></div>
-        <div class="stat"><div class="stat-num" id="stat-max">0</div><div class="stat-label">Max</div></div>
+        <div class="stat"><div class="stat-num" id="stat-completed">0</div><div class="stat-label">Completed</div></div>
       </div>
       <div class="dist" id="distribution"></div>
     </div>
@@ -663,7 +663,7 @@
     $("stat-played").textContent = stats.played;
     $("stat-win").textContent = winPct + "%";
     $("stat-streak").textContent = stats.streak || 0;
-    $("stat-max").textContent = stats.maxStreak || 0;
+    $("stat-completed").textContent = stats.wins || 0;
     const max = Math.max(1, ...stats.distribution);
     $("distribution").innerHTML = stats.distribution.map((n, i) => '<div class="dist-row"><span>' + (i + 1) + '</span><div class="bar"><span style="width:' + Math.max(8, Math.round((n / max) * 100)) + '%"></span></div><span>' + n + '</span></div>').join("");
     $("stats-modal").classList.add("show");
@@ -689,11 +689,34 @@
     toastTimer = setTimeout(() => t.classList.remove("show"), 1600);
   }
 
+  function resetPuzzle() {
+    try { localStorage.removeItem(gameKey()); } catch (e) {}
+    state = { row: 0, col: 0, guesses: [], current: "", finished: false, won: false };
+    $("end").classList.remove("show");
+    $("keyboard").classList.remove("hidden");
+    $("prompt").textContent = "Guess the five-letter anatomy word.";
+    init();
+    toast("Puzzle reset");
+  }
+
   document.addEventListener("keydown", (e) => handleKey(e.key));
   $("share").addEventListener("click", openCamera);
   $("open-stats").addEventListener("click", openStats);
   $("stats-close").addEventListener("click", closeStats);
   $("stats-modal").addEventListener("click", (e) => { if (e.target.id === "stats-modal") closeStats(); });
+  let dayTapCount = 0;
+  let dayTapTimer;
+  $("day-num").style.cursor = "pointer";
+  $("day-num").addEventListener("click", () => {
+    clearTimeout(dayTapTimer);
+    dayTapCount++;
+    dayTapTimer = setTimeout(() => { dayTapCount = 0; }, 1200);
+    if (dayTapCount >= 3) {
+      dayTapCount = 0;
+      clearTimeout(dayTapTimer);
+      resetPuzzle();
+    }
+  });
   $("camera-capture").addEventListener("click", captureCamera);
   $("camera-close").addEventListener("click", closeCamera);
   $("camera-share-img").addEventListener("click", shareImage);
