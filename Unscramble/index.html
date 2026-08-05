@@ -8,6 +8,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
+      color-scheme: dark;
       --bg: #0d0d0d;
       --surface: #161616;
       --border: #242424;
@@ -50,6 +51,7 @@
     #setup-screen { flex-direction: column; background: transparent; }
 
     .setup-inner {
+      color: var(--text);
       width: 100%;
       max-width: 380px;
       display: flex;
@@ -154,6 +156,8 @@
     }
 
     input[type="text"] {
+      appearance: none;
+      -webkit-appearance: none;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -165,7 +169,15 @@
       transition: border-color 0.2s;
     }
     input[type="text"]:focus { border-color: #444; }
-    input[type="text"]::placeholder { color: #3a3a3a; }
+    input[type="text"]::placeholder { color: #8a8378; opacity: 1; }
+    input[type="text"]:-webkit-autofill,
+    input[type="text"]:-webkit-autofill:hover,
+    input[type="text"]:-webkit-autofill:focus {
+      -webkit-text-fill-color: var(--text);
+      caret-color: var(--text);
+      box-shadow: 0 0 0 1000px var(--surface) inset;
+      transition: background-color 9999s ease-out;
+    }
 
     .btn-primary {
       background: var(--text);
@@ -231,6 +243,7 @@
 
     /* Scoreboard */
     .scoreboard {
+      color: var(--text);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -824,6 +837,7 @@
       background: rgba(0,0,0,0.55);
     }
     .settings-sheet {
+      color: var(--text);
       position: absolute;
       bottom: 0;
       left: 0;
@@ -859,6 +873,7 @@
     }
     .settings-close:hover { color: var(--text); }
     .settings-item {
+      color: var(--text);
       display: flex;
       align-items: center;
       gap: 1rem;
@@ -957,6 +972,7 @@
     }
 
     .raffle-item {
+      color: var(--text);
       display: flex;
       align-items: center;
       gap: 0.5rem;
@@ -1023,6 +1039,7 @@
     }
 
     .raffle-winner {
+      color: var(--text);
       text-align: center;
       padding: 1rem 1.5rem;
       background: var(--correct-bg);
