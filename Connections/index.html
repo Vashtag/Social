@@ -15,6 +15,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
+      color-scheme: dark;
       --bg: #0d0d0d;
       --surface: #161616;
       --surface-2: #1d1d1d;
@@ -70,6 +71,14 @@
       font-size: 1.5rem;
       font-weight: 800;
       letter-spacing: -0.02em;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .brand-title:focus-visible {
+      outline: 2px solid var(--text);
+      outline-offset: 4px;
+      border-radius: 6px;
     }
     .brand-sub {
       font-size: 0.6rem;
@@ -120,6 +129,7 @@
       padding: 0.7rem 1rem;
       text-align: center;
       color: #0d0d0d;
+      text-shadow: none;
       animation: pop 0.35s ease;
     }
     .solved-title {
@@ -154,6 +164,7 @@
     .tile {
       position: relative;
       background: var(--tile);
+      color: var(--text);
       border: 1px solid var(--tile-border);
       border-radius: 12px;
       aspect-ratio: 1 / 1;
@@ -244,6 +255,7 @@
       background: var(--text);
       color: var(--bg);
       border-color: var(--text);
+      text-shadow: none;
     }
     .btn-submit:hover:not(:disabled) { background: #fff; }
 
@@ -284,6 +296,68 @@
       white-space: nowrap;
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .stats-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      background: rgba(0,0,0,0.72);
+    }
+    .stats-modal.show { display: flex; }
+    .stats-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 1.5rem;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.45);
+    }
+    .stats-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .stats-title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; }
+    .stats-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .stats-number {
+      font-size: clamp(3.5rem, 18vw, 6rem);
+      font-weight: 800;
+      line-height: 0.9;
+      letter-spacing: -0.06em;
+    }
+    .stats-label {
+      color: var(--muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      margin-top: 0.6rem;
+    }
+    .stats-people {
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    .stats-people strong { color: var(--text); }
 
     .text-share {
       background: none;
@@ -394,7 +468,7 @@
   <div class="wrap">
     <header>
       <div class="brand">
-        <div class="brand-title">Connections</div>
+        <div class="brand-title" id="brand-title" role="button" tabindex="0" aria-label="Connections title. Press five times to open stats.">Connections</div>
         <div class="brand-sub">Anatomy Edition</div>
       </div>
       <a class="back-link" href="../">← Games</a>
@@ -463,6 +537,18 @@
     </div>
 
     <footer>vashtag · social games</footer>
+  </div>
+
+  <div class="stats-modal" id="stats-modal" aria-hidden="true">
+    <div class="stats-card" role="dialog" aria-modal="true" aria-labelledby="stats-title">
+      <div class="stats-top">
+        <div class="stats-title" id="stats-title">Completion Stats</div>
+        <button class="stats-close" id="stats-close" aria-label="Close stats">✕</button>
+      </div>
+      <div class="stats-number" id="stats-completed-count">0</div>
+      <div class="stats-label">different people completed on this device</div>
+      <div class="stats-people" id="stats-people">No completions recorded yet.</div>
+    </div>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -538,6 +624,69 @@
         { title: "The basic tastes", words: ["SWEET", "SOUR", "SALTY", "UMAMI"] },
       ],
     },
+    {
+      // Trap: CANAL can be in the ear or vertebral column; all words stay anatomical.
+      groups: [
+        { title: "Parts of the eye", words: ["CORNEA", "RETINA", "IRIS", "LENS"] },
+        { title: "Parts of the ear", words: ["COCHLEA", "OSSICLES", "EUSTACHIAN", "CANAL"] },
+        { title: "Vertebral landmarks", words: ["BODY", "ARCH", "FORAMEN", "PROCESS"] },
+        { title: "Eye exam words", words: ["PUPIL", "FOCUS", "BLINK", "SIGHT"] },
+      ],
+    },
+    {
+      // Trap: QUAD reads as a muscle nickname but belongs with directional regions here.
+      groups: [
+        { title: "Muscles of mastication", words: ["MASSETER", "TEMPORALIS", "PTERYGOID", "BUCCINATOR"] },
+        { title: "Major arteries", words: ["AORTA", "CAROTID", "FEMORAL", "RADIAL"] },
+        { title: "Directional terms", words: ["MEDIAL", "LATERAL", "ANTERIOR", "POSTERIOR"] },
+        { title: "Short anatomy nicknames", words: ["PEC", "LAT", "TRAP", "QUAD"] },
+      ],
+    },
+    {
+      // Trap: DELTOID and HAMSTRING both sound like muscle groups; one is shoulder, one is thigh.
+      groups: [
+        { title: "Shoulder muscles", words: ["DELTOID", "SUPRASPINATUS", "INFRASPINATUS", "SUBSCAPULARIS"] },
+        { title: "Thigh muscles", words: ["SARTORIUS", "GRACILIS", "HAMSTRING", "ADDUCTOR"] },
+        { title: "Cranial nerves", words: ["OLFACTORY", "OPTIC", "VAGUS", "HYPOGLOSSAL"] },
+        { title: "Synovial joint features", words: ["CARTILAGE", "CAPSULE", "SYNOVIUM", "LIGAMENT"] },
+      ],
+    },
+    {
+      // Trap: CORTEX appears in brain and kidney contexts; here it anchors the brain set.
+      groups: [
+        { title: "Brain regions", words: ["CORTEX", "CEREBRUM", "BRAINSTEM", "HYPOTHALAMUS"] },
+        { title: "Kidney structures", words: ["NEPHRON", "GLOMERULUS", "URETER", "MEDULLA"] },
+        { title: "Heart valves", words: ["MITRAL", "TRICUSPID", "AORTIC", "PULMONARY"] },
+        { title: "Body cavities", words: ["CRANIAL", "THORACIC", "ABDOMINAL", "PELVIC"] },
+      ],
+    },
+    {
+      // Trap: ROOT can describe nerves or teeth; the tooth terms are grouped together.
+      groups: [
+        { title: "Tooth anatomy", words: ["ENAMEL", "DENTIN", "PULP", "ROOT"] },
+        { title: "Skin layers", words: ["EPIDERMIS", "DERMIS", "HYPODERMIS", "KERATIN"] },
+        { title: "White blood cells", words: ["NEUTROPHIL", "LYMPHOCYTE", "MONOCYTE", "EOSINOPHIL"] },
+        { title: "Nerve plexuses", words: ["CERVICAL", "BRACHIAL", "LUMBAR", "SACRAL"] },
+      ],
+    },
+    {
+      // Trap: RIB and STERNUM are thoracic cage; SCAPULA is shoulder girdle.
+      groups: [
+        { title: "Thoracic cage", words: ["RIB", "STERNUM", "COSTAL", "MANUBRIUM"] },
+        { title: "Pelvic bones", words: ["ILIUM", "ISCHIUM", "PUBIS", "SACRUM"] },
+        { title: "Shoulder girdle", words: ["SCAPULA", "CLAVICLE", "ACROMION", "CORACOID"] },
+        { title: "Skull bones", words: ["FRONTAL", "PARIETAL", "OCCIPITAL", "TEMPORAL"] },
+      ],
+    },
+    {
+      // Trap: PALM and SOLE are surfaces, while DORSUM belongs with directional surface terms.
+      groups: [
+        { title: "Hand surfaces", words: ["PALM", "DORSUM", "THENAR", "HYPOTHENAR"] },
+        { title: "Foot structures", words: ["TARSAL", "METATARSAL", "TOE", "SOLE"] },
+        { title: "Lung lobes", words: ["SUPERIOR", "MIDDLE", "INFERIOR", "LINGULA"] },
+        { title: "Abdominal quadrants", words: ["RUQ", "LUQ", "RLQ", "LLQ"] },
+      ],
+    },
   ];
 
   /* ========================================================================== */
@@ -575,6 +724,59 @@
   }
 
   function storageKey() { return "anatomy-connections-v1-" + dateKey; }
+  function statsKey() { return "anatomy-connections-stats-v1"; }
+
+  function readStats() {
+    try {
+      const stats = JSON.parse(localStorage.getItem(statsKey()) || "null");
+      if (stats && Array.isArray(stats.people)) return stats;
+    } catch (e) {}
+    return { people: [] };
+  }
+
+  function writeStats(stats) {
+    try { localStorage.setItem(statsKey(), JSON.stringify(stats)); } catch (e) {}
+  }
+
+  function normalizeName(name) {
+    return name.trim().replace(/\s+/g, " ").slice(0, 24);
+  }
+
+  function recordCompletion() {
+    const existing = readStats();
+    const name = normalizeName(window.prompt("Who completed the puzzle?", "") || "");
+    if (!name) return;
+
+    const alreadySaved = existing.people.some(
+      (person) => person.toLowerCase() === name.toLowerCase()
+    );
+    if (!alreadySaved) {
+      existing.people.push(name);
+      existing.people.sort((a, b) => a.localeCompare(b));
+      writeStats(existing);
+    }
+  }
+
+  function openStats() {
+    const stats = readStats();
+    $("stats-completed-count").textContent = stats.people.length;
+    $("stats-people").innerHTML = stats.people.length
+      ? "<strong>People:</strong> " + stats.people.map(escapeHtml).join(", ")
+      : "No completions recorded yet.";
+    $("stats-modal").classList.add("show");
+    $("stats-modal").setAttribute("aria-hidden", "false");
+  }
+
+  function closeStats() {
+    $("stats-modal").classList.remove("show");
+    $("stats-modal").setAttribute("aria-hidden", "true");
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
 
   function initState() {
     const puzzle = PUZZLES[puzzleIndex];
@@ -778,6 +980,7 @@
     }
     state.selected = [];
     persist();
+    if (won) recordCompletion();
     render();
   }
 
@@ -968,23 +1171,26 @@
       : "  ·  out of guesses";
     ctx.fillText(sub, cx, panelTop + 226);
 
-    // QR code footer — bottom-centered card that links to the game
-    const qrBox = Math.round(W * 0.155);
-    const qrBottom = H - 56;
-    const qrTop = qrBottom - qrBox;
-    const captionY = qrTop - 20;
-
-    // Result grid — squares shrink so any number of guesses fits above the QR
+    // Result grid + QR card — side-by-side so the QR never covers the score grid.
     const rows = state.guesses.length || 1;
     const gap = Math.round(W * 0.016);
-    const gridTop = panelTop + 270;
-    const maxGridH = captionY - 46 - gridTop;
-    const sq = Math.max(
-      18,
-      Math.min(Math.round(W * 0.058), Math.floor((maxGridH - (rows - 1) * gap) / rows))
-    );
+    const qrBox = Math.round(W * 0.17);
+    const sideGap = Math.round(W * 0.055);
+    const contentTop = panelTop + 282;
+    const contentBottom = H - 94;
+    const contentH = contentBottom - contentTop;
+    const maxGridW = W - 96 - qrBox - sideGap;
+    const maxSqByWidth = Math.floor((maxGridW - 3 * gap) / 4);
+    const maxSqByHeight = Math.floor((contentH - (rows - 1) * gap) / rows);
+    const sq = Math.max(18, Math.min(Math.round(W * 0.064), maxSqByWidth, maxSqByHeight));
     const gridW = 4 * sq + 3 * gap;
-    const gx0 = cx - gridW / 2;
+    const gridH = rows * sq + (rows - 1) * gap;
+    const groupW = gridW + sideGap + qrBox;
+    const gx0 = cx - groupW / 2;
+    const gridTop = contentTop + (contentH - gridH) / 2;
+    const qrX = gx0 + gridW + sideGap;
+    const qrTop = contentTop + (contentH - qrBox) / 2 - 18;
+
     state.guesses.forEach((row, r) => {
       row.forEach((gi, c) => {
         const x = gx0 + c * (sq + gap);
@@ -995,10 +1201,10 @@
       });
     });
 
+    drawQR(ctx, qrX, qrTop, qrBox);
     ctx.fillStyle = "rgba(240,236,228,0.55)";
-    ctx.font = "600 " + Math.round(W * 0.026) + "px -apple-system,'Segoe UI',sans-serif";
-    ctx.fillText("S C A N   T O   P L A Y", cx, captionY);
-    drawQR(ctx, cx - qrBox / 2, qrTop, qrBox);
+    ctx.font = "600 " + Math.round(W * 0.023) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText("S C A N   T O   P L A Y", qrX + qrBox / 2, qrTop + qrBox + 38);
 
     // Emit
     const dataUrl = canvas.toDataURL("image/png");
@@ -1055,6 +1261,34 @@
   }
 
   /* ── Events ── */
+  let titleTapCount = 0;
+  let titleTapTimer;
+  function countTitleTap() {
+    clearTimeout(titleTapTimer);
+    titleTapCount++;
+    if (titleTapCount >= 5) {
+      titleTapCount = 0;
+      openStats();
+      return;
+    }
+    titleTapTimer = setTimeout(() => { titleTapCount = 0; }, 1400);
+  }
+
+  $("brand-title").addEventListener("click", countTitleTap);
+  $("brand-title").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      countTitleTap();
+    }
+  });
+  $("stats-close").addEventListener("click", closeStats);
+  $("stats-modal").addEventListener("click", (e) => {
+    if (e.target.id === "stats-modal") closeStats();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeStats();
+  });
+
   $("submit").addEventListener("click", submit);
   $("shuffle").addEventListener("click", () => {
     const solvedWords = new Set(state.solved.flatMap((gi) => state.puzzle.groups[gi].words));
