@@ -338,7 +338,6 @@
     "teeth", "tooth", "tibia", "trunk", "ulnar", "uvula", "vagus", "veins", "villi", "vomer",
     "vulva", "wrist"
   ];
-  const VALID = new Set(WORDS);
   const $ = (id) => document.getElementById(id);
   const now = new Date();
   const dayNumber = Math.floor(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86400000);
@@ -473,7 +472,8 @@
 
   function submitGuess() {
     if (state.current.length !== LEN) return toast("Not enough letters");
-    if (!VALID.has(state.current.toLowerCase())) return toast("Use an anatomy word");
+    // Guesses can be any 5-letter word — only the daily answer is anatomy.
+    if (!/^[A-Za-z]{5}$/.test(state.current)) return toast("Letters only");
     const guess = state.current;
     state.guesses.push(guess);
     state.current = "";
