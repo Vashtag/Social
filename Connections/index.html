@@ -157,7 +157,7 @@
     /* ── Grid ── */
     .grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(4, minmax(0, 1fr)); /* columns can't be widened by long words */
       gap: 0.5rem;
       margin-bottom: 1.25rem;
     }
@@ -168,6 +168,8 @@
       border: 1px solid var(--tile-border);
       border-radius: 12px;
       aspect-ratio: 1 / 1;
+      min-width: 0;      /* allow the tile to shrink within its column */
+      overflow: hidden;  /* long words clip until the font-fit shrinks them */
       display: grid;
       place-items: center;
       text-align: center;
@@ -736,6 +738,132 @@
         { title: "Foot structures", words: ["TARSAL", "METATARSAL", "TOE", "SOLE"] },
         { title: "Lung lobes", words: ["SUPERIOR", "MIDDLE", "INFERIOR", "LINGULA"] },
         { title: "Abdominal quadrants", words: ["RUQ", "LUQ", "RLQ", "LLQ"] },
+      ],
+    },
+    {
+      // Trap: STOMACH is a verb here, not an organ; SPINE tempts the skeleton set.
+      groups: [
+        { title: "Major skeleton parts", words: ["SKULL", "SPINE", "RIBS", "PELVIS"] },
+        { title: "Parts of the eye", words: ["CORNEA", "RETINA", "IRIS", "LENS"] },
+        { title: "Layers of the heart wall", words: ["ENDOCARDIUM", "MYOCARDIUM", "EPICARDIUM", "PERICARDIUM"] },
+        { title: "Body parts used as verbs", words: ["ELBOW", "SHOULDER", "STOMACH", "THUMB"] },
+      ],
+    },
+    {
+      // Trap: PALM and SOLE look like foot parts but are the double-meaning purples.
+      groups: [
+        { title: "Parts of the foot", words: ["HEEL", "TOE", "INSTEP", "ANKLE"] },
+        { title: "Divisions of the nervous system", words: ["CENTRAL", "PERIPHERAL", "SOMATIC", "AUTONOMIC"] },
+        { title: "Skull bones", words: ["ETHMOID", "SPHENOID", "LACRIMAL", "PALATINE"] },
+        { title: "Body parts that are also plants or animals", words: ["PALM", "IRIS", "CALF", "SOLE"] },
+      ],
+    },
+    {
+      // Trap: CARDIAC sphincter tempts the heart; ILEUM echoes the bone ILIUM.
+      groups: [
+        { title: "The digestive path", words: ["MOUTH", "STOMACH", "INTESTINE", "ANUS"] },
+        { title: "Accessory digestive organs", words: ["LIVER", "PANCREAS", "GALLBLADDER", "SALIVARY"] },
+        { title: "Intestinal segments", words: ["DUODENUM", "JEJUNUM", "ILEUM", "CECUM"] },
+        { title: "Sphincters", words: ["PYLORIC", "CARDIAC", "ANAL", "ILEOCECAL"] },
+      ],
+    },
+    {
+      // Trap: MEDIA and LUMEN read as everyday words; the conduction system is the deep cut.
+      groups: [
+        { title: "Parts of the heart", words: ["ATRIUM", "VENTRICLE", "SEPTUM", "APEX"] },
+        { title: "Types of blood vessel", words: ["ARTERY", "ARTERIOLE", "CAPILLARY", "VENULE"] },
+        { title: "A vessel in cross-section", words: ["INTIMA", "MEDIA", "ADVENTITIA", "LUMEN"] },
+        { title: "Heart conduction system", words: ["SINOATRIAL", "ATRIOVENTRICULAR", "BUNDLE", "PURKINJE"] },
+      ],
+    },
+    {
+      // Trap: two movement sets force a split; the shape-named muscles are the twist.
+      groups: [
+        { title: "Movements at a joint", words: ["FLEXION", "EXTENSION", "ABDUCTION", "ADDUCTION"] },
+        { title: "Roles a muscle can play", words: ["AGONIST", "ANTAGONIST", "SYNERGIST", "FIXATOR"] },
+        { title: "Rotational movements", words: ["PRONATION", "SUPINATION", "INVERSION", "EVERSION"] },
+        { title: "Muscles named after shapes", words: ["DELTOID", "TRAPEZIUS", "RHOMBOID", "TERES"] },
+      ],
+    },
+    {
+      // Trap: SUPERIOR/INFERIOR/MEDIAL/LATERAL read as directions, but they're the eye muscles.
+      groups: [
+        { title: "The basic tastes", words: ["SWEET", "SOUR", "BITTER", "SALTY"] },
+        { title: "Parts of the mouth", words: ["PAPILLAE", "FRENULUM", "UVULA", "PALATE"] },
+        { title: "Cranial nerves", words: ["TRIGEMINAL", "TROCHLEAR", "ABDUCENS", "FACIAL"] },
+        { title: "Rectus muscles of the eye", words: ["SUPERIOR", "INFERIOR", "MEDIAL", "LATERAL"] },
+      ],
+    },
+    {
+      // Trap: HERD, ACTIVE and PASSIVE don't look anatomical — that's the purple.
+      groups: [
+        { title: "Immune system organs", words: ["SPLEEN", "THYMUS", "TONSILS", "NODES"] },
+        { title: "White blood cells", words: ["NEUTROPHIL", "MONOCYTE", "BASOPHIL", "EOSINOPHIL"] },
+        { title: "Antibody classes", words: ["IGG", "IGM", "IGA", "IGE"] },
+        { title: "Types of immunity", words: ["INNATE", "ACTIVE", "PASSIVE", "HERD"] },
+      ],
+    },
+    {
+      // Trap: LOOP, TUBULE and DUCT are nephron parts hiding as everyday words.
+      groups: [
+        { title: "The urinary tract", words: ["KIDNEY", "URETER", "BLADDER", "URETHRA"] },
+        { title: "Reproductive organs", words: ["OVARY", "UTERUS", "TESTIS", "PROSTATE"] },
+        { title: "Parts of a nephron", words: ["GLOMERULUS", "TUBULE", "LOOP", "DUCT"] },
+        { title: "Sex hormones", words: ["ESTROGEN", "PROGESTERONE", "TESTOSTERONE", "ANDROGEN"] },
+      ],
+    },
+    {
+      // Trap: MATRIX and BED read as everyday words; the touch receptors are eponyms.
+      groups: [
+        { title: "Skin appendages", words: ["HAIR", "NAIL", "GLAND", "FOLLICLE"] },
+        { title: "Parts of a nail", words: ["LUNULA", "CUTICLE", "MATRIX", "BED"] },
+        { title: "Layers of the epidermis", words: ["CORNEUM", "LUCIDUM", "GRANULOSUM", "BASALE"] },
+        { title: "Touch receptors", words: ["MEISSNER", "PACINIAN", "MERKEL", "RUFFINI"] },
+      ],
+    },
+    {
+      // Trap: TIDAL, VITAL and RESIDUAL don't look anatomical — they're lung volumes.
+      groups: [
+        { title: "Upper airway", words: ["NOSE", "PHARYNX", "LARYNX", "TRACHEA"] },
+        { title: "Lower airway", words: ["BRONCHUS", "BRONCHIOLE", "ALVEOLUS", "SURFACTANT"] },
+        { title: "Muscles of breathing", words: ["DIAPHRAGM", "INTERCOSTALS", "SCALENES", "ABDOMINALS"] },
+        { title: "Lung volumes & capacities", words: ["TIDAL", "RESIDUAL", "VITAL", "INSPIRATORY"] },
+      ],
+    },
+    {
+      // Trap: knee-ligament abbreviations are the purple; SCAPHOID sits with the carpals.
+      groups: [
+        { title: "Regions of the lower limb", words: ["HIP", "THIGH", "KNEE", "SHIN"] },
+        { title: "Ankle & foot bones", words: ["TALUS", "CALCANEUS", "NAVICULAR", "CUBOID"] },
+        { title: "Carpal bones", words: ["SCAPHOID", "LUNATE", "TRIQUETRUM", "TRAPEZIUM"] },
+        { title: "Knee ligaments", words: ["ACL", "PCL", "MCL", "LCL"] },
+      ],
+    },
+    {
+      // Trap: SENSORY and RECEPTOR are reflex-arc steps, not neuron parts.
+      groups: [
+        { title: "Nervous system subdivisions", words: ["SYMPATHETIC", "PARASYMPATHETIC", "SOMATIC", "ENTERIC"] },
+        { title: "Neurotransmitters", words: ["DOPAMINE", "SEROTONIN", "ACETYLCHOLINE", "GABA"] },
+        { title: "Spinal cord regions", words: ["CERVICAL", "THORACIC", "LUMBAR", "COCCYGEAL"] },
+        { title: "Reflex arc steps", words: ["RECEPTOR", "SENSORY", "INTEGRATION", "EFFECTOR"] },
+      ],
+    },
+    {
+      // Trap: GROWTH reads as an everyday word; the hunger hormones are the twist.
+      groups: [
+        { title: "Endocrine glands", words: ["THYROID", "PARATHYROID", "THYMUS", "PINEAL"] },
+        { title: "Pituitary hormones", words: ["GROWTH", "PROLACTIN", "OXYTOCIN", "VASOPRESSIN"] },
+        { title: "Adrenal hormones", words: ["CORTISOL", "ALDOSTERONE", "ADRENALINE", "ANDROGENS"] },
+        { title: "Hunger & glucose hormones", words: ["INSULIN", "GLUCAGON", "GHRELIN", "LEPTIN"] },
+      ],
+    },
+    {
+      // Trap: BONE and BLOOD are connective tissues; TIGHT and GAP are cell junctions.
+      groups: [
+        { title: "The four primary tissues", words: ["EPITHELIAL", "CONNECTIVE", "MUSCLE", "NERVOUS"] },
+        { title: "Types of epithelium", words: ["SQUAMOUS", "CUBOIDAL", "COLUMNAR", "TRANSITIONAL"] },
+        { title: "Connective tissues", words: ["BONE", "CARTILAGE", "BLOOD", "ADIPOSE"] },
+        { title: "Cell junctions", words: ["TIGHT", "GAP", "DESMOSOME", "ADHERENS"] },
       ],
     },
   ];
