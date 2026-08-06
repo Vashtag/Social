@@ -34,10 +34,15 @@
 
     html, body {
       height: 100%;
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;                 /* never scroll sideways on mobile */
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
       -webkit-font-smoothing: antialiased;
+      -webkit-text-size-adjust: 100%;     /* stop iOS from inflating text width */
+      text-size-adjust: 100%;
       text-rendering: optimizeLegibility;
     }
 
@@ -48,6 +53,8 @@
       align-items: center;
       padding: 1.25rem 1rem calc(1.5rem + env(safe-area-inset-bottom));
     }
+
+    .wrap { overflow-x: clip; }           /* contain any stray child width */
 
     .wrap {
       width: 100%;
@@ -276,7 +283,11 @@
     .share-grid {
       font-size: 1.4rem;
       line-height: 1.35;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.12em;
+      white-space: pre;      /* keep each guess on its own row */
+      text-align: center;
+      max-width: 100%;
+      overflow-x: auto;      /* just in case, scroll inside itself — never the page */
     }
     .end-actions { display: flex; gap: 0.6rem; width: 100%; }
 
