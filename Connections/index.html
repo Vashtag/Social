@@ -349,67 +349,28 @@
       cursor: pointer;
       font-size: 0.85rem;
     }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0.5rem;
-      margin-bottom: 0.5rem;
-    }
-    .stats-grid-3 { grid-template-columns: repeat(3, 1fr); }
-    .stat {
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 0.7rem 0.4rem;
-      text-align: center;
-    }
-    .stat-num {
-      font-size: 1.5rem;
+    .stats-number {
+      font-size: clamp(3.5rem, 18vw, 6rem);
       font-weight: 800;
-      letter-spacing: -0.03em;
-      line-height: 1;
+      line-height: 0.9;
+      letter-spacing: -0.06em;
     }
-    .stat-cap {
+    .stats-label {
       color: var(--muted);
-      font-size: 0.56rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      margin-top: 0.35rem;
-    }
-    .stats-dist { margin-top: 1.1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
-    .stats-dist-title {
-      color: var(--muted);
-      font-size: 0.6rem;
+      font-size: 0.72rem;
       letter-spacing: 0.16em;
       text-transform: uppercase;
-      margin-bottom: 0.6rem;
+      margin-top: 0.6rem;
     }
-    .dist-row {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.35rem;
-      font-size: 0.72rem;
-      font-weight: 700;
-    }
-    .dist-key { width: 1ch; color: var(--muted); }
-    .dist-bar-wrap { flex: 1; background: var(--surface-2); border-radius: 6px; overflow: hidden; }
-    .dist-bar {
-      background: var(--cat-green);
-      color: #0d0d0d;
-      min-width: 1.6rem;
-      padding: 0.15rem 0.4rem;
-      border-radius: 6px;
-      text-align: right;
-      font-size: 0.68rem;
-      transition: width 0.4s ease;
-    }
-    .stats-empty {
+    .stats-people {
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
       color: var(--muted);
-      font-size: 0.8rem;
-      text-align: center;
-      padding: 0.4rem 0 0.1rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
     }
+    .stats-people strong { color: var(--text); }
 
     .text-share {
       background: none;
@@ -514,6 +475,23 @@
       text-transform: uppercase;
       color: #333;
     }
+    .community-button {
+      display: block;
+      margin: 1rem auto 0;
+      border: 0;
+      background: none;
+      color: var(--muted);
+      font: inherit;
+      font-size: 0.72rem;
+      text-decoration: underline;
+      text-underline-offset: 0.2rem;
+      cursor: pointer;
+    }
+    .community-button:focus-visible {
+      outline: 2px solid var(--text);
+      outline-offset: 4px;
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body>
@@ -589,6 +567,19 @@
     </div>
 
     <footer>vashtag · social games</footer>
+    <button class="community-button" id="open-community" type="button" aria-haspopup="dialog" aria-controls="stats-modal">Community</button>
+  </div>
+
+  <div class="stats-modal" id="stats-modal" aria-hidden="true">
+    <div class="stats-card" role="dialog" aria-modal="true" aria-labelledby="stats-title">
+      <div class="stats-top">
+        <div class="stats-title" id="stats-title">Community</div>
+        <button class="stats-close" id="stats-close" aria-label="Close stats">✕</button>
+      </div>
+      <div class="stats-number" id="stats-completed-count">0</div>
+      <div class="stats-label">different people completed on this device</div>
+      <div class="stats-people" id="stats-people">No completions recorded yet.</div>
+    </div>
   </div>
 
   <div class="stats-modal" id="stats-modal" aria-hidden="true">
@@ -759,132 +750,6 @@
         { title: "Abdominal quadrants", words: ["RUQ", "LUQ", "RLQ", "LLQ"] },
       ],
     },
-    {
-      // Trap: STOMACH is a verb here, not an organ; SPINE tempts the skeleton set.
-      groups: [
-        { title: "Major skeleton parts", words: ["SKULL", "SPINE", "RIBS", "PELVIS"] },
-        { title: "Parts of the eye", words: ["CORNEA", "RETINA", "IRIS", "LENS"] },
-        { title: "Layers of the heart wall", words: ["ENDOCARDIUM", "MYOCARDIUM", "EPICARDIUM", "PERICARDIUM"] },
-        { title: "Body parts used as verbs", words: ["ELBOW", "SHOULDER", "STOMACH", "THUMB"] },
-      ],
-    },
-    {
-      // Trap: PALM and SOLE look like foot parts but are the double-meaning purples.
-      groups: [
-        { title: "Parts of the foot", words: ["HEEL", "TOE", "INSTEP", "ANKLE"] },
-        { title: "Divisions of the nervous system", words: ["CENTRAL", "PERIPHERAL", "SOMATIC", "AUTONOMIC"] },
-        { title: "Skull bones", words: ["ETHMOID", "SPHENOID", "LACRIMAL", "PALATINE"] },
-        { title: "Body parts that are also plants or animals", words: ["PALM", "IRIS", "CALF", "SOLE"] },
-      ],
-    },
-    {
-      // Trap: CARDIAC sphincter tempts the heart; ILEUM echoes the bone ILIUM.
-      groups: [
-        { title: "The digestive path", words: ["MOUTH", "STOMACH", "INTESTINE", "ANUS"] },
-        { title: "Accessory digestive organs", words: ["LIVER", "PANCREAS", "GALLBLADDER", "SALIVARY"] },
-        { title: "Intestinal segments", words: ["DUODENUM", "JEJUNUM", "ILEUM", "CECUM"] },
-        { title: "Sphincters", words: ["PYLORIC", "CARDIAC", "ANAL", "ILEOCECAL"] },
-      ],
-    },
-    {
-      // Trap: MEDIA and LUMEN read as everyday words; the conduction system is the deep cut.
-      groups: [
-        { title: "Parts of the heart", words: ["ATRIUM", "VENTRICLE", "SEPTUM", "APEX"] },
-        { title: "Types of blood vessel", words: ["ARTERY", "ARTERIOLE", "CAPILLARY", "VENULE"] },
-        { title: "A vessel in cross-section", words: ["INTIMA", "MEDIA", "ADVENTITIA", "LUMEN"] },
-        { title: "Heart conduction system", words: ["SINOATRIAL", "ATRIOVENTRICULAR", "BUNDLE", "PURKINJE"] },
-      ],
-    },
-    {
-      // Trap: two movement sets force a split; the shape-named muscles are the twist.
-      groups: [
-        { title: "Movements at a joint", words: ["FLEXION", "EXTENSION", "ABDUCTION", "ADDUCTION"] },
-        { title: "Roles a muscle can play", words: ["AGONIST", "ANTAGONIST", "SYNERGIST", "FIXATOR"] },
-        { title: "Rotational movements", words: ["PRONATION", "SUPINATION", "INVERSION", "EVERSION"] },
-        { title: "Muscles named after shapes", words: ["DELTOID", "TRAPEZIUS", "RHOMBOID", "TERES"] },
-      ],
-    },
-    {
-      // Trap: SUPERIOR/INFERIOR/MEDIAL/LATERAL read as directions, but they're the eye muscles.
-      groups: [
-        { title: "The basic tastes", words: ["SWEET", "SOUR", "BITTER", "SALTY"] },
-        { title: "Parts of the mouth", words: ["PAPILLAE", "FRENULUM", "UVULA", "PALATE"] },
-        { title: "Cranial nerves", words: ["TRIGEMINAL", "TROCHLEAR", "ABDUCENS", "FACIAL"] },
-        { title: "Rectus muscles of the eye", words: ["SUPERIOR", "INFERIOR", "MEDIAL", "LATERAL"] },
-      ],
-    },
-    {
-      // Trap: HERD, ACTIVE and PASSIVE don't look anatomical — that's the purple.
-      groups: [
-        { title: "Immune system organs", words: ["SPLEEN", "THYMUS", "TONSILS", "NODES"] },
-        { title: "White blood cells", words: ["NEUTROPHIL", "MONOCYTE", "BASOPHIL", "EOSINOPHIL"] },
-        { title: "Antibody classes", words: ["IGG", "IGM", "IGA", "IGE"] },
-        { title: "Types of immunity", words: ["INNATE", "ACTIVE", "PASSIVE", "HERD"] },
-      ],
-    },
-    {
-      // Trap: LOOP, TUBULE and DUCT are nephron parts hiding as everyday words.
-      groups: [
-        { title: "The urinary tract", words: ["KIDNEY", "URETER", "BLADDER", "URETHRA"] },
-        { title: "Reproductive organs", words: ["OVARY", "UTERUS", "TESTIS", "PROSTATE"] },
-        { title: "Parts of a nephron", words: ["GLOMERULUS", "TUBULE", "LOOP", "DUCT"] },
-        { title: "Sex hormones", words: ["ESTROGEN", "PROGESTERONE", "TESTOSTERONE", "ANDROGEN"] },
-      ],
-    },
-    {
-      // Trap: MATRIX and BED read as everyday words; the touch receptors are eponyms.
-      groups: [
-        { title: "Skin appendages", words: ["HAIR", "NAIL", "GLAND", "FOLLICLE"] },
-        { title: "Parts of a nail", words: ["LUNULA", "CUTICLE", "MATRIX", "BED"] },
-        { title: "Layers of the epidermis", words: ["CORNEUM", "LUCIDUM", "GRANULOSUM", "BASALE"] },
-        { title: "Touch receptors", words: ["MEISSNER", "PACINIAN", "MERKEL", "RUFFINI"] },
-      ],
-    },
-    {
-      // Trap: TIDAL, VITAL and RESIDUAL don't look anatomical — they're lung volumes.
-      groups: [
-        { title: "Upper airway", words: ["NOSE", "PHARYNX", "LARYNX", "TRACHEA"] },
-        { title: "Lower airway", words: ["BRONCHUS", "BRONCHIOLE", "ALVEOLUS", "SURFACTANT"] },
-        { title: "Muscles of breathing", words: ["DIAPHRAGM", "INTERCOSTALS", "SCALENES", "ABDOMINALS"] },
-        { title: "Lung volumes & capacities", words: ["TIDAL", "RESIDUAL", "VITAL", "INSPIRATORY"] },
-      ],
-    },
-    {
-      // Trap: knee-ligament abbreviations are the purple; SCAPHOID sits with the carpals.
-      groups: [
-        { title: "Regions of the lower limb", words: ["HIP", "THIGH", "KNEE", "SHIN"] },
-        { title: "Ankle & foot bones", words: ["TALUS", "CALCANEUS", "NAVICULAR", "CUBOID"] },
-        { title: "Carpal bones", words: ["SCAPHOID", "LUNATE", "TRIQUETRUM", "TRAPEZIUM"] },
-        { title: "Knee ligaments", words: ["ACL", "PCL", "MCL", "LCL"] },
-      ],
-    },
-    {
-      // Trap: SENSORY and RECEPTOR are reflex-arc steps, not neuron parts.
-      groups: [
-        { title: "Nervous system subdivisions", words: ["SYMPATHETIC", "PARASYMPATHETIC", "SOMATIC", "ENTERIC"] },
-        { title: "Neurotransmitters", words: ["DOPAMINE", "SEROTONIN", "ACETYLCHOLINE", "GABA"] },
-        { title: "Spinal cord regions", words: ["CERVICAL", "THORACIC", "LUMBAR", "COCCYGEAL"] },
-        { title: "Reflex arc steps", words: ["RECEPTOR", "SENSORY", "INTEGRATION", "EFFECTOR"] },
-      ],
-    },
-    {
-      // Trap: GROWTH reads as an everyday word; the hunger hormones are the twist.
-      groups: [
-        { title: "Endocrine glands", words: ["THYROID", "PARATHYROID", "THYMUS", "PINEAL"] },
-        { title: "Pituitary hormones", words: ["GROWTH", "PROLACTIN", "OXYTOCIN", "VASOPRESSIN"] },
-        { title: "Adrenal hormones", words: ["CORTISOL", "ALDOSTERONE", "ADRENALINE", "ANDROGENS"] },
-        { title: "Hunger & glucose hormones", words: ["INSULIN", "GLUCAGON", "GHRELIN", "LEPTIN"] },
-      ],
-    },
-    {
-      // Trap: BONE and BLOOD are connective tissues; TIGHT and GAP are cell junctions.
-      groups: [
-        { title: "The four primary tissues", words: ["EPITHELIAL", "CONNECTIVE", "MUSCLE", "NERVOUS"] },
-        { title: "Types of epithelium", words: ["SQUAMOUS", "CUBOIDAL", "COLUMNAR", "TRANSITIONAL"] },
-        { title: "Connective tissues", words: ["BONE", "CARTILAGE", "BLOOD", "ADIPOSE"] },
-        { title: "Cell junctions", words: ["TIGHT", "GAP", "DESMOSOME", "ADHERENS"] },
-      ],
-    },
   ];
 
   /* ========================================================================== */
@@ -922,85 +787,45 @@
   }
 
   function storageKey() { return "anatomy-connections-v1-" + dateKey; }
-  function statsKey() { return "anatomy-connections-stats-v2"; }
-
-  const DEFAULT_STATS = {
-    played: 0, wins: 0, losses: 0,
-    curStreak: 0, maxStreak: 0,
-    totalWinTime: 0, totalWinMistakes: 0, bestTime: null,
-    dist: [0, 0, 0, 0], // solves bucketed by mistake count 0..3
-    lastWinDay: null,
-    days: [],           // dateKeys already recorded (one result per day)
-  };
+  function statsKey() { return "anatomy-connections-stats-v1"; }
 
   function readStats() {
     try {
-      const s = JSON.parse(localStorage.getItem(statsKey()) || "null");
-      if (s && typeof s.played === "number") {
-        return Object.assign({}, DEFAULT_STATS, s, {
-          dist: Array.isArray(s.dist) ? s.dist : [0, 0, 0, 0],
-          days: Array.isArray(s.days) ? s.days : [],
-        });
-      }
+      const stats = JSON.parse(localStorage.getItem(statsKey()) || "null");
+      if (stats && Array.isArray(stats.people)) return stats;
     } catch (e) {}
-    return Object.assign({}, DEFAULT_STATS, { dist: [0, 0, 0, 0], days: [] });
+    return { people: [] };
   }
 
   function writeStats(stats) {
     try { localStorage.setItem(statsKey(), JSON.stringify(stats)); } catch (e) {}
   }
 
-  // Record one result per calendar day (first finish counts; replays are ignored).
-  function recordResult(won) {
-    const s = readStats();
-    if (s.days.indexOf(dateKey) !== -1) return;
-    s.days.push(dateKey);
-    s.played++;
-    if (won) {
-      s.wins++;
-      s.dist[Math.min(state.mistakes, 3)]++;
-      const t = state.elapsed || 0;
-      s.totalWinTime += t;
-      s.totalWinMistakes += state.mistakes;
-      if (t > 0 && (s.bestTime == null || t < s.bestTime)) s.bestTime = t;
-      s.curStreak = (s.lastWinDay === dayIndex - 1) ? s.curStreak + 1 : 1;
-      s.lastWinDay = dayIndex;
-      if (s.curStreak > s.maxStreak) s.maxStreak = s.curStreak;
-    } else {
-      s.losses++;
-      s.curStreak = 0;
+  function normalizeName(name) {
+    return name.trim().replace(/\s+/g, " ").slice(0, 24);
+  }
+
+  function recordCompletion() {
+    const existing = readStats();
+    const name = normalizeName(window.prompt("Who completed the puzzle?", "") || "");
+    if (!name) return;
+
+    const alreadySaved = existing.people.some(
+      (person) => person.toLowerCase() === name.toLowerCase()
+    );
+    if (!alreadySaved) {
+      existing.people.push(name);
+      existing.people.sort((a, b) => a.localeCompare(b));
+      writeStats(existing);
     }
-    writeStats(s);
   }
 
   function openStats() {
-    const s = readStats();
-    $("st-played").textContent = s.played;
-    $("st-winrate").textContent = s.played ? Math.round((s.wins / s.played) * 100) + "%" : "0%";
-    $("st-streak").textContent = s.curStreak;
-    $("st-maxstreak").textContent = s.maxStreak;
-    $("st-avgtime").textContent = s.wins ? formatTime(Math.round(s.totalWinTime / s.wins)) : "–";
-    $("st-besttime").textContent = s.bestTime != null ? formatTime(s.bestTime) : "–";
-    $("st-avgmiss").textContent = s.wins ? (s.totalWinMistakes / s.wins).toFixed(1) : "–";
-
-    const rowsEl = $("stats-dist-rows");
-    if (s.wins === 0) {
-      rowsEl.innerHTML = '<div class="stats-empty">No solved puzzles yet — play today!</div>';
-    } else {
-      const maxCount = Math.max(1, s.dist[0], s.dist[1], s.dist[2], s.dist[3]);
-      rowsEl.innerHTML = s.dist.map((count, i) => {
-        const pct = Math.round((count / maxCount) * 100);
-        return '<div class="dist-row"><span class="dist-key">' + i + '</span>' +
-          '<span class="dist-bar-wrap"><span class="dist-bar" style="width:' + pct + '%">' + count + '</span></span></div>';
-      }).join("");
-    }
-    if (window.VashStats) {
-      VashStats.getApp("connections").then((g) => {
-        const fmt = (n) => (n == null ? "—" : Number(n).toLocaleString());
-        $("g-players").textContent = fmt(g.users);
-        $("g-solved").textContent = fmt(g.completions);
-      });
-    }
+    const stats = readStats();
+    $("stats-completed-count").textContent = stats.people.length;
+    $("stats-people").innerHTML = stats.people.length
+      ? "<strong>People:</strong> " + stats.people.map(escapeHtml).join(", ")
+      : "No completions recorded yet.";
     $("stats-modal").classList.add("show");
     $("stats-modal").setAttribute("aria-hidden", "false");
   }
@@ -1219,8 +1044,7 @@
     }
     state.selected = [];
     persist();
-    recordResult(won);
-    if (won && window.VashStats) VashStats.countCompletion("connections");
+    if (won) recordCompletion();
     render();
   }
 
@@ -1539,26 +1363,7 @@
   }
 
   /* ── Events ── */
-  let titleTapCount = 0;
-  let titleTapTimer;
-  function countTitleTap() {
-    clearTimeout(titleTapTimer);
-    titleTapCount++;
-    if (titleTapCount >= 5) {
-      titleTapCount = 0;
-      openStats();
-      return;
-    }
-    titleTapTimer = setTimeout(() => { titleTapCount = 0; }, 1400);
-  }
-
-  $("brand-title").addEventListener("click", countTitleTap);
-  $("brand-title").addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      countTitleTap();
-    }
-  });
+  $("open-community").addEventListener("click", openStats);
   $("stats-close").addEventListener("click", closeStats);
   $("stats-modal").addEventListener("click", (e) => {
     if (e.target.id === "stats-modal") closeStats();
