@@ -34,10 +34,15 @@
 
     html, body {
       height: 100%;
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;                 /* never scroll sideways on mobile */
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
       -webkit-font-smoothing: antialiased;
+      -webkit-text-size-adjust: 100%;     /* stop iOS from inflating text width */
+      text-size-adjust: 100%;
       text-rendering: optimizeLegibility;
     }
 
@@ -48,6 +53,8 @@
       align-items: center;
       padding: 1.25rem 1rem calc(1.5rem + env(safe-area-inset-bottom));
     }
+
+    .wrap { overflow-x: clip; }           /* contain any stray child width */
 
     .wrap {
       width: 100%;
@@ -71,6 +78,14 @@
       font-size: 1.5rem;
       font-weight: 800;
       letter-spacing: -0.02em;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .brand-title:focus-visible {
+      outline: 2px solid var(--text);
+      outline-offset: 4px;
+      border-radius: 6px;
     }
     .brand-sub {
       font-size: 0.6rem;
@@ -149,7 +164,7 @@
     /* ── Grid ── */
     .grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(4, minmax(0, 1fr)); /* columns can't be widened by long words */
       gap: 0.5rem;
       margin-bottom: 1.25rem;
     }
@@ -160,6 +175,8 @@
       border: 1px solid var(--tile-border);
       border-radius: 12px;
       aspect-ratio: 1 / 1;
+      min-width: 0;      /* allow the tile to shrink within its column */
+      overflow: hidden;  /* long words clip until the font-fit shrinks them */
       display: grid;
       place-items: center;
       text-align: center;
@@ -266,7 +283,11 @@
     .share-grid {
       font-size: 1.4rem;
       line-height: 1.35;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.12em;
+      white-space: pre;      /* keep each guess on its own row */
+      text-align: center;
+      max-width: 100%;
+      overflow-x: auto;      /* just in case, scroll inside itself — never the page */
     }
     .end-actions { display: flex; gap: 0.6rem; width: 100%; }
 
@@ -477,7 +498,7 @@
   <div class="wrap">
     <header>
       <div class="brand">
-        <div class="brand-title">Connections</div>
+        <div class="brand-title" id="brand-title" role="button" tabindex="0" aria-label="Connections title. Press five times to open stats.">Connections</div>
         <div class="brand-sub">Anatomy Edition</div>
       </div>
       <a class="back-link" href="../">← Games</a>
@@ -539,7 +560,7 @@
             <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
           </svg>Share to story
         </button>
-        <a class="btn" id="cam-download" download>Save photo</a>
+        <button class="btn" id="cam-download">Save photo</button>
       </div>
       <button class="cam-close" id="cam-preview-close">Done</button>
       <div class="cam-hint" id="cam-preview-hint">Tap “Share to story”, then choose Instagram → Stories.</div>
@@ -561,8 +582,40 @@
     </div>
   </div>
 
+  <div class="stats-modal" id="stats-modal" aria-hidden="true">
+    <div class="stats-card" role="dialog" aria-modal="true" aria-labelledby="stats-title">
+      <div class="stats-top">
+        <div class="stats-title" id="stats-title">Your Stats</div>
+        <button class="stats-close" id="stats-close" aria-label="Close stats">✕</button>
+      </div>
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-num" id="st-played">0</div><div class="stat-cap">Played</div></div>
+        <div class="stat"><div class="stat-num" id="st-winrate">0%</div><div class="stat-cap">Win %</div></div>
+        <div class="stat"><div class="stat-num" id="st-streak">0</div><div class="stat-cap">Streak</div></div>
+        <div class="stat"><div class="stat-num" id="st-maxstreak">0</div><div class="stat-cap">Best streak</div></div>
+      </div>
+      <div class="stats-grid stats-grid-3">
+        <div class="stat"><div class="stat-num" id="st-avgtime">–</div><div class="stat-cap">Avg time</div></div>
+        <div class="stat"><div class="stat-num" id="st-besttime">–</div><div class="stat-cap">Best time</div></div>
+        <div class="stat"><div class="stat-num" id="st-avgmiss">–</div><div class="stat-cap">Avg mistakes</div></div>
+      </div>
+      <div class="stats-dist">
+        <div class="stats-dist-title">Mistakes when solved</div>
+        <div id="stats-dist-rows"></div>
+      </div>
+      <div class="stats-dist">
+        <div class="stats-dist-title">Community · all players</div>
+        <div class="stats-grid" style="grid-template-columns:1fr 1fr;margin-bottom:0;">
+          <div class="stat"><div class="stat-num" id="g-players">—</div><div class="stat-cap">Played this</div></div>
+          <div class="stat"><div class="stat-num" id="g-solved">—</div><div class="stat-cap">Solved this</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
+  <script src="../stats.js"></script>
   <script>
   /* ==========================================================================
      PUZZLES — anatomy themed.
@@ -827,6 +880,7 @@
     } catch (e) {}
     $("day-num").textContent = "No. " + puzzleNumber;
 
+    if (window.VashStats) VashStats.countVisit("connections");
     render();
   }
 
@@ -1219,9 +1273,6 @@
     // Emit
     const dataUrl = canvas.toDataURL("image/png");
     $("cam-img").src = dataUrl;
-    const dl = $("cam-download");
-    dl.href = dataUrl;
-    dl.download = "anatomy-connections-" + puzzleNumber + ".png";
     canvas.toBlob((b) => { _lastBlob = b; }, "image/png");
 
     closeCam();
@@ -1240,9 +1291,50 @@
     }
     // Fallback (no file-share support): save the photo, then open the
     // Instagram Stories camera so they can add the just-saved image.
-    $("cam-download").click();
-    toast("Saved — opening Instagram…");
+    await saveImage();
     setTimeout(openInstagramStory, 500);
+  }
+
+  function dataURLtoBlob(dataUrl) {
+    const parts = dataUrl.split(",");
+    const mime = (parts[0].match(/:(.*?);/) || [])[1] || "image/png";
+    const bin = atob(parts[1]);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  }
+
+  // Save the result photo to the device. On phones a plain download won't reach
+  // the camera roll, so use the share sheet ("Save Image" / "Add to Photos");
+  // on desktop, download the file directly.
+  async function saveImage() {
+    if (!_lastBlob) {
+      const src = $("cam-img").src;
+      if (src && src.indexOf("data:") === 0) {
+        try { _lastBlob = dataURLtoBlob(src); } catch (e) {}
+      }
+    }
+    if (!_lastBlob) { toast("Preparing photo — try again"); return; }
+
+    const filename = "anatomy-connections-" + puzzleNumber + ".png";
+    const file = new File([_lastBlob], filename, { type: "image/png" });
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+      (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
+
+    if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file] }); return; }
+      catch (e) { if (e && e.name === "AbortError") return; }
+    }
+
+    const url = URL.createObjectURL(_lastBlob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast("Photo saved");
   }
 
   function openInstagramStory() {
@@ -1317,6 +1409,7 @@
   $("cam-shutter").addEventListener("click", capture);
   $("cam-close").addEventListener("click", closeCam);
   $("cam-share-img").addEventListener("click", shareImage);
+  $("cam-download").addEventListener("click", saveImage);
   $("cam-preview-close").addEventListener("click", closePreview);
 
   initState();

@@ -1309,7 +1309,9 @@
 <!-- Confetti canvas -->
 <canvas id="confetti-canvas"></canvas>
 
+<script src="../stats.js"></script>
 <script>
+  if (window.VashStats) VashStats.countVisit("unscramble");
   // ── Word bank ──────────────────────────────────────────────
   const WORDS = [
     { word: "coracoid",           hint1: "Bone",      hint2: "Upper limb bone process" },
@@ -1663,6 +1665,7 @@
       speedEl.style.display = 'none';
     }
 
+    if (window.VashStats) VashStats.countCompletion('unscramble');
     showScreen('result-screen');
   }
 

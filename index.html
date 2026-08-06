@@ -155,6 +155,31 @@
     }
     .game-card:hover .game-arrow { color: var(--text); transform: translateX(3px); }
 
+    /* ── Community global stats ── */
+    .community {
+      margin-top: 1.75rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1.4rem 1.4rem 1.25rem;
+    }
+    .community-title {
+      font-size: 0.6rem; letter-spacing: 0.28em; text-transform: uppercase;
+      color: var(--muted); text-align: center; margin-bottom: 1rem;
+    }
+    .community-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .cstat {
+      background: #101010; border: 1px solid var(--border); border-radius: 14px;
+      padding: 0.9rem 0.5rem; text-align: center;
+    }
+    .cnum { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+    .ccap { color: var(--muted); font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase; margin-top: 0.4rem; }
+    .community-note {
+      margin-top: 0.9rem; text-align: center; color: var(--muted);
+      font-size: 0.66rem; letter-spacing: 0.05em; line-height: 1.6;
+    }
+    .community-note b { color: var(--text); font-weight: 700; }
+
     footer {
       margin-top: 2.75rem;
       text-align: center;
@@ -200,9 +225,57 @@
         </div>
         <div class="game-arrow">→</div>
       </a>
+
+      <a class="game-card" href="./Hangman/">
+        <div class="game-icon icon-hangman">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="color:#c8c0b4">
+            <path d="M4 21 H12"/><path d="M6 21 V4"/><path d="M6 4 H16"/><path d="M16 4 V7"/>
+            <circle cx="16" cy="9.5" r="2.2"/><path d="M16 11.7 V16"/><path d="M16 13 L13.5 15"/><path d="M16 13 L18.5 15"/>
+          </svg>
+        </div>
+        <div class="game-body">
+          <div class="game-name">Anatomy Hangman</div>
+          <div class="game-desc">Guess the hidden term one letter at a time. A new puzzle every day.</div>
+        </div>
+        <div class="game-arrow">→</div>
+      </a>
+    </div>
+
+    <div class="community" id="community">
+      <div class="community-title">Community</div>
+      <div class="community-grid">
+        <div class="cstat"><div class="cnum" id="c-players">—</div><div class="ccap">Players</div></div>
+        <div class="cstat"><div class="cnum" id="c-completed">—</div><div class="ccap">Puzzles solved</div></div>
+      </div>
+      <div class="community-note" id="c-breakdown">Loading community stats…</div>
     </div>
 
     <footer>vashtag · social games</footer>
   </div>
+
+  <script src="./stats.js"></script>
+  <script>
+    (function () {
+      var fmt = function (n) { return (n == null ? "—" : Number(n).toLocaleString()); };
+      var labels = { unscramble: "Unscramble", wordle: "Wordle", connections: "Connections", hangman: "Hangman" };
+
+      VashStats.getSite().then(function (s) {
+        document.getElementById("c-players").textContent = fmt(s.users);
+        document.getElementById("c-completed").textContent = fmt(s.completions);
+      });
+
+      Promise.all(VashStats.APPS.map(function (a) {
+        return VashStats.getApp(a).then(function (r) { return { a: a, r: r }; });
+      })).then(function (list) {
+        var parts = list
+          .filter(function (x) { return x.r.users != null; })
+          .map(function (x) { return labels[x.a] + " <b>" + fmt(x.r.users) + "</b>"; });
+        var note = document.getElementById("c-breakdown");
+        note.innerHTML = parts.length
+          ? "Players by game — " + parts.join("&nbsp; · &nbsp;")
+          : "Global stats appear here once players start — check back soon.";
+      });
+    })();
+  </script>
 </body>
 </html>

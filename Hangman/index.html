@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Anatomy Hangman</title>
+  <meta name="description" content="Guess the hidden anatomy term before the figure is complete. A new puzzle every day." />
+  <meta property="og:title" content="Anatomy Hangman" />
+  <meta property="og:description" content="Guess the hidden anatomy term one letter at a time. A new puzzle every day." />
+  <meta property="og:type" content="website" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      color-scheme: dark;
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --surface-2: #1d1d1d;
+      --border: #2a2a2a;
+      --text: #f0ece4;
+      --muted: #777;
+      --absent: #333333;
+      --correct: #4a934a;
+      --danger: #c95454;
+    }
+    html, body {
+      min-height: 100%;
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      text-rendering: optimizeLegibility;
+    }
+    body {
+      min-height: 100dvh;
+      display: flex;
+      justify-content: center;
+      padding: 1.25rem 1rem calc(1.5rem + env(safe-area-inset-bottom));
+      touch-action: manipulation;
+    }
+    .wrap { width: 100%; max-width: 520px; display: flex; flex-direction: column; min-height: calc(100dvh - 2.75rem); }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.25rem 0.1rem 1.1rem;
+      border-bottom: 1px solid var(--border); margin-bottom: 1rem;
+    }
+    .brand { display: flex; flex-direction: column; gap: 0.25rem; }
+    .brand-title { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; }
+    .brand-sub { font-size: 0.6rem; letter-spacing: 0.32em; text-transform: uppercase; color: var(--muted); }
+    .back-link {
+      font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted);
+      text-decoration: none; border: 1px solid var(--border); border-radius: 999px;
+      padding: 0.5rem 0.9rem; transition: all 0.15s; white-space: nowrap;
+    }
+    .back-link:hover { color: var(--text); border-color: #3a3a3a; }
+
+    .daystrip { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 0.6rem; }
+    .day-label, .day-num { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+    .day-num { color: var(--text); font-weight: 700; cursor: pointer; user-select: none; -webkit-user-select: none; }
+
+    .hint {
+      text-align: center; color: var(--muted); font-size: 0.84rem; line-height: 1.4;
+      margin-bottom: 0.6rem; min-height: 1.2rem;
+    }
+    .hint b { color: var(--text); font-weight: 700; }
+
+    /* ── Gallows figure ── */
+    .figure-wrap { display: flex; justify-content: center; margin: 0.2rem 0 0.6rem; }
+    .figure { width: 168px; max-width: 55vw; height: auto; }
+    .gallows { stroke: var(--muted); stroke-width: 5; stroke-linecap: round; fill: none; }
+    .part { stroke: var(--text); stroke-width: 5; stroke-linecap: round; fill: none; }
+    .part.head { fill: none; }
+    body.lost .part { stroke: var(--danger); }
+
+    /* ── Word ── */
+    .word { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.35rem 0.5rem; margin: 0.3rem 0 0.9rem; }
+    .slot {
+      min-width: 24px; width: 1.15em;
+      font-size: clamp(1.3rem, 7vw, 2rem); font-weight: 800; text-transform: uppercase;
+      text-align: center; line-height: 1.25; border-bottom: 3px solid var(--border);
+    }
+    .slot.filled { border-bottom-color: var(--correct); }
+    .slot.missing { border-bottom-color: var(--danger); color: var(--danger); }
+
+    .misses { text-align: center; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.9rem; }
+    .misses b { color: var(--text); }
+
+    /* ── Keyboard ── */
+    .keyboard { display: flex; flex-direction: column; gap: 0.42rem; margin-top: auto; }
+    .key-row { display: flex; justify-content: center; gap: 0.32rem; }
+    .key {
+      min-width: 0; flex: 1; max-width: 44px; height: 50px;
+      border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2);
+      color: var(--text); font-size: 0.95rem; font-weight: 800; cursor: pointer; text-transform: uppercase;
+      touch-action: manipulation; user-select: none; -webkit-user-select: none;
+    }
+    .key.correct { background: var(--correct); border-color: var(--correct); color: #0d0d0d; }
+    .key.absent { background: var(--absent); border-color: var(--absent); color: var(--muted); }
+    .key:disabled { cursor: default; }
+    .keyboard.hidden { display: none; }
+
+    /* ── End panel ── */
+    .end { display: none; flex-direction: column; align-items: center; gap: 0.75rem; text-align: center; margin-top: 1rem; }
+    .end.show { display: flex; }
+    .end-title { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.01em; }
+    .end-sub { color: var(--muted); font-size: 0.9rem; line-height: 1.4; }
+    .end-sub b { color: var(--text); }
+    .end-actions { display: flex; gap: 0.6rem; width: 100%; }
+    .btn {
+      flex: 1; background: transparent; color: var(--text); border: 1px solid #3a3a3a; border-radius: 999px;
+      padding: 0.85rem 0.5rem; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; cursor: pointer; transition: all 0.15s;
+    }
+    .btn:hover:not(:disabled) { background: rgba(255,255,255,0.06); }
+    .btn:active:not(:disabled) { transform: scale(0.98); }
+    .btn-submit { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .btn-submit:hover { background: #fff; }
+    .text-share {
+      background: none; border: none; color: var(--muted); font-size: 0.72rem; letter-spacing: 0.05em;
+      text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 0.2rem;
+    }
+    .text-share:hover { color: var(--text); }
+
+    .toast {
+      position: fixed; left: 50%; bottom: 2rem; transform: translateX(-50%) translateY(20px);
+      background: var(--text); color: var(--bg); padding: 0.7rem 1.2rem; border-radius: 999px;
+      font-size: 0.8rem; font-weight: 700; opacity: 0; pointer-events: none; transition: all 0.25s;
+      z-index: 50; white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── Selfie camera + preview (same structure as the other games) ── */
+    .cam-modal, .cam-preview {
+      position: fixed; inset: 0; z-index: 100; background: #000;
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .cam-modal.show, .cam-preview.show { display: flex; }
+    #cam-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; transform: scaleX(-1); }
+    .cam-ui {
+      position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
+      justify-content: flex-end; gap: 1.1rem; padding: 1.5rem 1.25rem calc(2.2rem + env(safe-area-inset-bottom));
+    }
+    .cam-hint { max-width: 320px; text-align: center; color: rgba(255,255,255,0.82); font-size: 0.78rem; line-height: 1.4; text-shadow: 0 1px 6px rgba(0,0,0,0.6); }
+    .cam-shutter { width: 74px; height: 74px; border-radius: 50%; background: #fff; border: 5px solid rgba(255,255,255,0.45); cursor: pointer; transition: transform 0.1s; }
+    .cam-shutter:active { transform: scale(0.92); }
+    .cam-close {
+      background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.25); color: #fff; border-radius: 999px;
+      padding: 0.55rem 1.4rem; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer;
+    }
+    .cam-preview { gap: 1rem; padding: 1.25rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom)); justify-content: center; }
+    #cam-img { max-width: 100%; max-height: 68vh; border-radius: 16px; border: 1px solid rgba(255,255,255,0.12); }
+    .cam-preview-actions { display: flex; gap: 0.6rem; width: 100%; max-width: 420px; }
+    .cam-preview-actions .btn { flex: 1; display: grid; place-items: center; text-decoration: none; }
+
+    footer { margin-top: 1.2rem; text-align: center; font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: #333; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="brand-title">Hangman</div>
+        <div class="brand-sub">Anatomy Edition</div>
+      </div>
+      <a class="back-link" href="../">← Games</a>
+    </header>
+
+    <div class="daystrip">
+      <span class="day-label" id="day-date">Puzzle of the day</span>
+      <span class="day-num" id="day-num"></span>
+    </div>
+
+    <div class="hint" id="hint"></div>
+
+    <div class="figure-wrap">
+      <svg class="figure" viewBox="0 0 200 220" aria-label="Hangman figure">
+        <!-- gallows -->
+        <path class="gallows" d="M20 210 H110" />
+        <path class="gallows" d="M45 210 V20" />
+        <path class="gallows" d="M45 20 H140" />
+        <path class="gallows" d="M140 20 V45" />
+        <!-- body parts (revealed on wrong guesses) -->
+        <circle class="part head" id="hm-head" cx="140" cy="63" r="18" />
+        <path class="part" id="hm-body" d="M140 81 V140" />
+        <path class="part" id="hm-armL" d="M140 95 L112 118" />
+        <path class="part" id="hm-armR" d="M140 95 L168 118" />
+        <path class="part" id="hm-legL" d="M140 140 L116 178" />
+        <path class="part" id="hm-legR" d="M140 140 L164 178" />
+      </svg>
+    </div>
+
+    <div class="word" id="word"></div>
+    <div class="misses" id="misses"></div>
+
+    <div class="keyboard" id="keyboard" aria-label="Keyboard"></div>
+
+    <div class="end" id="end">
+      <div class="end-title" id="end-title"></div>
+      <div class="end-sub" id="end-sub"></div>
+      <div class="end-sub" id="end-global" style="font-size:0.78rem;"></div>
+      <div class="end-actions">
+        <button class="btn btn-submit" id="share">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;margin-right:0.4rem;">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>Share result
+        </button>
+        <a class="btn" id="home-link" href="../" style="display:grid;place-items:center;text-decoration:none;">More games</a>
+      </div>
+      <button class="text-share" id="copy-text">or copy text result</button>
+    </div>
+
+    <footer>vashtag · social games</footer>
+  </div>
+
+  <!-- Selfie camera -->
+  <div class="cam-modal" id="cam-modal">
+    <video id="cam-video" autoplay playsinline muted></video>
+    <div class="cam-ui">
+      <div class="cam-hint">Line up your selfie — your result gets added to the photo.</div>
+      <button class="cam-shutter" id="cam-shutter" aria-label="Take photo"></button>
+      <button class="cam-close" id="cam-close">Cancel</button>
+    </div>
+  </div>
+
+  <div class="cam-preview" id="cam-preview">
+    <img id="cam-img" alt="Your Hangman result" />
+    <div class="cam-preview-actions">
+      <button class="btn btn-submit" id="cam-share-img">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;margin-right:0.35rem;">
+          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+        </svg>Share to story
+      </button>
+      <button class="btn" id="cam-download">Save photo</button>
+    </div>
+    <button class="cam-close" id="cam-preview-close">Done</button>
+    <div class="cam-hint">Tap “Share to story”, then choose Instagram → Stories.</div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="../stats.js"></script>
+  <script>
+  /* ==========================================================================
+     ANATOMY HANGMAN — daily word + hint. Guess letters before the figure is
+     complete (6 misses). Same share flow as the other games.
+     ========================================================================== */
+  const WORDS = [
+    { w: "femur", h: "The thigh bone — longest in the body" },
+    { w: "cranium", h: "The bony case that protects the brain" },
+    { w: "patella", h: "The kneecap" },
+    { w: "sternum", h: "The breastbone" },
+    { w: "clavicle", h: "The collarbone" },
+    { w: "scapula", h: "The shoulder blade" },
+    { w: "mandible", h: "The lower jawbone" },
+    { w: "vertebra", h: "A single bone of the spine" },
+    { w: "humerus", h: "Bone of the upper arm" },
+    { w: "pelvis", h: "The hip-bone girdle" },
+    { w: "tendon", h: "Connects muscle to bone" },
+    { w: "ligament", h: "Connects bone to bone" },
+    { w: "cartilage", h: "Flexible tissue in joints, nose and ears" },
+    { w: "diaphragm", h: "The main muscle of breathing" },
+    { w: "alveoli", h: "Tiny air sacs in the lungs" },
+    { w: "trachea", h: "The windpipe" },
+    { w: "bronchus", h: "Airway branching into a lung" },
+    { w: "esophagus", h: "Tube from throat to stomach" },
+    { w: "pancreas", h: "Gland making insulin and digestive enzymes" },
+    { w: "intestine", h: "Long tube that absorbs nutrients" },
+    { w: "kidney", h: "Filters blood to make urine" },
+    { w: "bladder", h: "Stores urine" },
+    { w: "cerebellum", h: "Brain part for balance and coordination" },
+    { w: "neuron", h: "A nerve cell" },
+    { w: "synapse", h: "The gap between two neurons" },
+    { w: "cornea", h: "Clear front window of the eye" },
+    { w: "retina", h: "Light-sensing layer at the back of the eye" },
+    { w: "cochlea", h: "Spiral hearing organ of the inner ear" },
+    { w: "larynx", h: "The voice box" },
+    { w: "pharynx", h: "The throat" },
+    { w: "thyroid", h: "Neck gland that sets metabolism" },
+    { w: "adrenal", h: "Gland atop the kidney (stress hormones)" },
+    { w: "capillary", h: "The smallest blood vessel" },
+    { w: "artery", h: "Vessel carrying blood away from the heart" },
+    { w: "ventricle", h: "A pumping chamber of the heart" },
+    { w: "hemoglobin", h: "Oxygen-carrying protein in red blood cells" },
+    { w: "platelet", h: "Cell fragment that helps blood clot" },
+    { w: "spleen", h: "Organ that filters blood and aids immunity" },
+    { w: "marrow", h: "Soft tissue in bones that makes blood cells" },
+    { w: "epidermis", h: "The outer layer of the skin" },
+    { w: "melanin", h: "Pigment that colours skin and hair" },
+    { w: "biceps", h: "Muscle that flexes the elbow" },
+    { w: "achilles", h: "Tendon at the back of the heel" },
+    { w: "hyoid", h: "A floating bone in the neck" },
+    { w: "gallbladder", h: "Stores bile from the liver" },
+    { w: "eardrum", h: "Membrane that vibrates with sound" },
+    { w: "nostril", h: "Opening of the nose" },
+    { w: "knuckle", h: "A finger joint" },
+    { w: "eyelid", h: "Skin fold that protects the eye" },
+    { w: "molar", h: "A flat grinding back tooth" },
+  ];
+  const MAX_WRONG = 6;
+  const PARTS = ["hm-head", "hm-body", "hm-armL", "hm-armR", "hm-legL", "hm-legR"];
+
+  const $ = (id) => document.getElementById(id);
+  const now = new Date();
+  const dayNumber = Math.floor(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86400000);
+  const EPOCH_DAY = Math.floor(Date.UTC(2026, 7, 5) / 86400000);
+  const dayIndex = Math.max(0, dayNumber - EPOCH_DAY);
+  const puzzleNumber = dayIndex + 1;
+  const dateKey = now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate();
+
+  // Deterministic, non-sequential daily order (same for everyone).
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function seededShuffle(list, seed) {
+    const a = list.slice(); const rnd = mulberry32(seed);
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  const ORDER = seededShuffle(WORDS, 20260805);
+  const entry = ORDER[dayIndex % ORDER.length];
+  const answer = entry.w.toUpperCase();
+  const hint = entry.h;
+
+  let state = { guessed: [], wrong: 0, finished: false, won: false };
+
+  function gameKey() { return "anatomy-hangman-v1-" + dateKey; }
+
+  function load() {
+    try {
+      const s = JSON.parse(localStorage.getItem(gameKey()) || "null");
+      if (s && Array.isArray(s.guessed)) state = s;
+    } catch (e) {}
+  }
+  function save() {
+    try { localStorage.setItem(gameKey(), JSON.stringify(state)); } catch (e) {}
+  }
+
+  const KEYS = [["Q","W","E","R","T","Y","U","I","O","P"],["A","S","D","F","G","H","J","K","L"],["Z","X","C","V","B","N","M"]];
+  function buildKeyboard() {
+    const kb = $("keyboard"); kb.innerHTML = "";
+    KEYS.forEach((row) => {
+      const div = document.createElement("div"); div.className = "key-row";
+      row.forEach((k) => {
+        const btn = document.createElement("button");
+        btn.className = "key"; btn.textContent = k; btn.dataset.key = k;
+        btn.addEventListener("click", () => handleKey(k));
+        div.appendChild(btn);
+      });
+      kb.appendChild(div);
+    });
+  }
+
+  function render() {
+    // Hint
+    $("hint").innerHTML = "<b>Hint:</b> " + hint;
+
+    // Figure parts
+    PARTS.forEach((id, i) => { $(id).style.display = i < state.wrong ? "" : "none"; });
+    document.body.classList.toggle("lost", state.finished && !state.won);
+
+    // Word
+    const wordEl = $("word");
+    wordEl.innerHTML = answer.split("").map((ch) => {
+      const shown = state.guessed.indexOf(ch) !== -1;
+      if (shown) return '<span class="slot filled">' + ch + "</span>";
+      if (state.finished) return '<span class="slot missing">' + ch + "</span>"; // reveal on loss
+      return '<span class="slot"></span>';
+    }).join("");
+
+    // Misses
+    $("misses").innerHTML = "Misses <b>" + state.wrong + "</b> / " + MAX_WRONG;
+
+    // Keyboard states
+    document.querySelectorAll(".key").forEach((key) => {
+      const k = key.dataset.key;
+      key.classList.remove("correct", "absent");
+      const guessed = state.guessed.indexOf(k) !== -1;
+      key.disabled = guessed || state.finished;
+      if (guessed) key.classList.add(answer.indexOf(k) !== -1 ? "correct" : "absent");
+    });
+
+    if (state.finished) showEnd();
+    else { $("end").classList.remove("show"); $("keyboard").classList.remove("hidden"); }
+  }
+
+  function handleKey(key) {
+    if (state.finished) return;
+    const k = (key || "").toUpperCase();
+    if (!/^[A-Z]$/.test(k)) return;
+    if (state.guessed.indexOf(k) !== -1) return;
+    state.guessed.push(k);
+    if (answer.indexOf(k) === -1) state.wrong++;
+    // win = every letter of the answer has been guessed
+    const won = answer.split("").every((ch) => state.guessed.indexOf(ch) !== -1);
+    if (won) finish(true);
+    else if (state.wrong >= MAX_WRONG) finish(false);
+    else { save(); render(); }
+  }
+
+  function finish(won) {
+    state.finished = true;
+    state.won = won;
+    save();
+    if (won && window.VashStats) VashStats.countCompletion("hangman");
+    render();
+  }
+
+  function showEnd() {
+    $("keyboard").classList.add("hidden");
+    const end = $("end"); end.classList.add("show");
+    $("end-title").textContent = state.won ? "Solved it!" : "Game over";
+    $("end-sub").innerHTML = state.won
+      ? "Nice work — " + state.wrong + (state.wrong === 1 ? " miss" : " misses")
+      : "The word was <b>" + answer + "</b>";
+    const gEl = $("end-global");
+    gEl.textContent = "";
+    if (window.VashStats) {
+      VashStats.getApp("hangman").then((g) => {
+        if (g.users == null) return;
+        gEl.innerHTML = "🌍 <b>" + Number(g.users).toLocaleString() + "</b> players · <b>" +
+          Number(g.completions || 0).toLocaleString() + "</b> solved";
+      });
+    }
+  }
+
+  function lifeBoxes() {
+    let s = "";
+    for (let i = 0; i < MAX_WRONG; i++) s += i < state.wrong ? "🟥" : "⬜";
+    return s;
+  }
+  function buildShareText() {
+    const header = "Anatomy Hangman No. " + puzzleNumber +
+      (state.won ? " — solved with " + state.wrong + "/" + MAX_WRONG + " misses" : " — stumped");
+    return header + "\n" + lifeBoxes() + "\n" + location.origin + location.pathname;
+  }
+  async function shareText() {
+    const text = buildShareText();
+    if (navigator.share) { try { await navigator.share({ text }); return; } catch (e) {} }
+    try { await navigator.clipboard.writeText(text); toast("Copied to clipboard!"); }
+    catch (e) { toast("Copy failed"); }
+  }
+
+  /* ── Selfie + share to story ── */
+  let _camStream = null;
+  let _lastBlob = null;
+  const QR_SIZE = 33;
+  const QR_DATA = "111111100010000111111101001111111100000101000011010100111001000001101110101100001011011000101011101101110100101100000001010101011101101110100111111011001000101011101100000100000001101011010001000001111111101010101010101010101111111000000000010111001001010100000000011101100111100111011101100000110111010000000000000111001001101101100101111010110001001011001111001111111010010101110110000000101001110010110001100100110011110111011100000011011100000100000100100110101110111001001111100100101111100011001000001100110011110111111100011100100100101100011101011010000111000010100011011101011101011011111001111001010000000100011110110111011001111001110100010001010011100101101001101000011100010001111101000010100111100100001001000101001011110111111011000111011110111011011000100111110010010011011010101110100110101010001011111110001000000001010101100010100100011000111111100001010101111101101010000100000101111010111000101100011101101110100111111010011001111110110101110101011111000111011000101111101110101010010101010010101101000100000101101101110010011010110001111111100011011000100101001010100";
+
+  function stopCam() { if (_camStream) { _camStream.getTracks().forEach((t) => t.stop()); _camStream = null; } }
+  async function openCam() {
+    try {
+      _camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+      $("cam-video").srcObject = _camStream;
+      $("cam-modal").classList.add("show");
+    } catch (e) { toast("Camera unavailable — copying text"); shareText(); }
+  }
+  function closeCam() { $("cam-modal").classList.remove("show"); stopCam(); }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+  function drawQR(ctx, boxX, boxY, box) {
+    const quiet = 4, total = QR_SIZE + quiet * 2, m = box / total;
+    roundRect(ctx, boxX, boxY, box, box, m * 2);
+    ctx.fillStyle = "#f0ece4"; ctx.fill();
+    ctx.fillStyle = "#0d0d0d";
+    for (let r = 0; r < QR_SIZE; r++) {
+      for (let c = 0; c < QR_SIZE; c++) {
+        if (QR_DATA[r * QR_SIZE + c] === "1") {
+          ctx.fillRect(boxX + (quiet + c) * m, boxY + (quiet + r) * m, Math.ceil(m) + 0.6, Math.ceil(m) + 0.6);
+        }
+      }
+    }
+  }
+
+  function capture() {
+    const video = $("cam-video");
+    const W = 1080, H = 1920;
+    const canvas = document.createElement("canvas");
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "#0d0d0d"; ctx.fillRect(0, 0, W, H);
+
+    const vw = video.videoWidth || 1080, vh = video.videoHeight || 1920;
+    const regionH = Math.round(H * 0.6);
+    const scale = Math.min(W / vw, regionH / vh);
+    const dw = vw * scale, dh = vh * scale;
+    const dx = (W - dw) / 2, dy = (regionH - dh) / 2;
+    ctx.save(); ctx.translate(W, 0); ctx.scale(-1, 1); ctx.drawImage(video, dx, dy, dw, dh); ctx.restore();
+
+    const grad = ctx.createLinearGradient(0, regionH - 120, 0, regionH + 20);
+    grad.addColorStop(0, "rgba(13,13,13,0)"); grad.addColorStop(1, "rgba(13,13,13,1)");
+    ctx.fillStyle = grad; ctx.fillRect(0, regionH - 120, W, 140);
+
+    const cx = W / 2, panelTop = regionH;
+    ctx.textAlign = "center";
+
+    ctx.fillStyle = "rgba(240,236,228,0.6)";
+    ctx.font = "600 " + Math.round(W * 0.031) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText("A N A T O M Y   H A N G M A N", cx, panelTop + 78);
+
+    ctx.fillStyle = "#f0ece4";
+    ctx.font = "800 " + Math.round(W * 0.1) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText(state.won ? "SOLVED" : "GAME OVER", cx, panelTop + 172);
+
+    ctx.fillStyle = "rgba(240,236,228,0.65)";
+    ctx.font = "600 " + Math.round(W * 0.036) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText("No. " + puzzleNumber + "  ·  " + state.wrong + " / " + MAX_WRONG + " misses", cx, panelTop + 226);
+
+    // Misses dots
+    const dotR = Math.round(W * 0.02), dotGap = Math.round(W * 0.03);
+    const totalW = MAX_WRONG * (dotR * 2) + (MAX_WRONG - 1) * dotGap;
+    let dx0 = cx - totalW / 2 + dotR;
+    const dotY = panelTop + 292;
+    for (let i = 0; i < MAX_WRONG; i++) {
+      ctx.beginPath(); ctx.arc(dx0 + i * (dotR * 2 + dotGap), dotY, dotR, 0, Math.PI * 2);
+      if (i < state.wrong) { ctx.fillStyle = "#c95454"; ctx.fill(); }
+      else { ctx.strokeStyle = "rgba(240,236,228,0.4)"; ctx.lineWidth = 3; ctx.stroke(); }
+    }
+
+    // QR
+    const qrBox = Math.round(W * 0.17);
+    const qrX = cx - qrBox / 2;
+    const qrTop = H - 72 - qrBox;
+    drawQR(ctx, qrX, qrTop, qrBox);
+    ctx.fillStyle = "rgba(240,236,228,0.55)";
+    ctx.font = "600 " + Math.round(W * 0.023) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText("S C A N   T O   P L A Y", cx, qrTop + qrBox + 36);
+
+    const dataUrl = canvas.toDataURL("image/png");
+    $("cam-img").src = dataUrl;
+    canvas.toBlob((b) => { _lastBlob = b; }, "image/png");
+
+    closeCam();
+    $("cam-preview").classList.add("show");
+  }
+
+  async function shareImage() {
+    if (_lastBlob && navigator.canShare) {
+      const file = new File([_lastBlob], "anatomy-hangman.png", { type: "image/png" });
+      if (navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ files: [file], title: "Anatomy Hangman" }); return; }
+        catch (e) { if (e && e.name === "AbortError") return; }
+      }
+    }
+    await saveImage();
+    setTimeout(openInstagramStory, 500);
+  }
+
+  function dataURLtoBlob(dataUrl) {
+    const parts = dataUrl.split(",");
+    const mime = (parts[0].match(/:(.*?);/) || [])[1] || "image/png";
+    const bin = atob(parts[1]);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  }
+
+  async function saveImage() {
+    if (!_lastBlob) {
+      const src = $("cam-img").src;
+      if (src && src.indexOf("data:") === 0) { try { _lastBlob = dataURLtoBlob(src); } catch (e) {} }
+    }
+    if (!_lastBlob) { toast("Preparing photo — try again"); return; }
+    const filename = "anatomy-hangman-" + puzzleNumber + ".png";
+    const file = new File([_lastBlob], filename, { type: "image/png" });
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+      (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
+    if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file] }); return; }
+      catch (e) { if (e && e.name === "AbortError") return; }
+    }
+    const url = URL.createObjectURL(_lastBlob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast("Photo saved");
+  }
+
+  function openInstagramStory() {
+    const started = Date.now();
+    window.location.href = "instagram://story-camera";
+    setTimeout(() => {
+      if (Date.now() - started < 1800 && !document.hidden) window.location.href = "https://www.instagram.com/";
+    }, 1200);
+  }
+  function closePreview() { $("cam-preview").classList.remove("show"); }
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $("toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 1600);
+  }
+
+  /* ── Events ── */
+  document.addEventListener("keydown", (e) => { if (!e.metaKey && !e.ctrlKey) handleKey(e.key); });
+  $("share").addEventListener("click", openCam);
+  $("copy-text").addEventListener("click", shareText);
+  $("cam-shutter").addEventListener("click", capture);
+  $("cam-close").addEventListener("click", closeCam);
+  $("cam-share-img").addEventListener("click", shareImage);
+  $("cam-download").addEventListener("click", saveImage);
+  $("cam-preview-close").addEventListener("click", closePreview);
+
+  // Hidden reset: tap the "No. X" label 3 times to replay today's puzzle.
+  let _tapCount = 0, _tapTimer = null;
+  $("day-num").addEventListener("click", () => {
+    _tapCount++; clearTimeout(_tapTimer);
+    _tapTimer = setTimeout(() => { _tapCount = 0; }, 1200);
+    if (_tapCount >= 5) {
+      _tapCount = 0; clearTimeout(_tapTimer);
+      try { localStorage.removeItem(gameKey()); } catch (e) {}
+      state = { guessed: [], wrong: 0, finished: false, won: false };
+      render(); toast("Puzzle reset");
+    }
+  });
+
+  try {
+    $("day-date").textContent = now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+  } catch (e) {}
+  $("day-num").textContent = "No. " + puzzleNumber;
+
+  buildKeyboard();
+  load();
+  if (window.VashStats) VashStats.countVisit("hangman");
+  render();
+  </script>
+</body>
+</html>
