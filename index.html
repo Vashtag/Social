@@ -118,6 +118,15 @@
       text-shadow: none;
     }
 
+    /* Hangman icon — mini gallows */
+    .icon-hangman {
+      background: linear-gradient(135deg, #1f1f1f, #2b2b2b);
+      border: 1px solid #333;
+      display: grid;
+      place-items: center;
+    }
+    .icon-hangman svg { width: 34px; height: 34px; }
+
     /* Connections icon — 2x2 colour grid */
     .icon-connections {
       display: grid;
@@ -197,6 +206,20 @@
         <div class="game-body">
           <div class="game-name">Anatomy Connections</div>
           <div class="game-desc">Find the four hidden groups. A new puzzle every day.</div>
+        </div>
+        <div class="game-arrow">→</div>
+      </a>
+
+      <a class="game-card" href="./Hangman/">
+        <div class="game-icon icon-hangman">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="color:#c8c0b4">
+            <path d="M4 21 H12"/><path d="M6 21 V4"/><path d="M6 4 H16"/><path d="M16 4 V7"/>
+            <circle cx="16" cy="9.5" r="2.2"/><path d="M16 11.7 V16"/><path d="M16 13 L13.5 15"/><path d="M16 13 L18.5 15"/>
+          </svg>
+        </div>
+        <div class="game-body">
+          <div class="game-name">Anatomy Hangman</div>
+          <div class="game-desc">Guess the hidden term one letter at a time. A new puzzle every day.</div>
         </div>
         <div class="game-arrow">→</div>
       </a>
