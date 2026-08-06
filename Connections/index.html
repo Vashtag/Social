@@ -612,11 +612,19 @@
         <div class="stats-dist-title">Mistakes when solved</div>
         <div id="stats-dist-rows"></div>
       </div>
+      <div class="stats-dist">
+        <div class="stats-dist-title">Community · all players</div>
+        <div class="stats-grid" style="grid-template-columns:1fr 1fr;margin-bottom:0;">
+          <div class="stat"><div class="stat-num" id="g-players">—</div><div class="stat-cap">Played this</div></div>
+          <div class="stat"><div class="stat-num" id="g-solved">—</div><div class="stat-cap">Solved this</div></div>
+        </div>
+      </div>
     </div>
   </div>
 
   <div class="toast" id="toast"></div>
 
+  <script src="../stats.js"></script>
   <script>
   /* ==========================================================================
      PUZZLES — anatomy themed.
@@ -986,6 +994,13 @@
           '<span class="dist-bar-wrap"><span class="dist-bar" style="width:' + pct + '%">' + count + '</span></span></div>';
       }).join("");
     }
+    if (window.VashStats) {
+      VashStats.getApp("connections").then((g) => {
+        const fmt = (n) => (n == null ? "—" : Number(n).toLocaleString());
+        $("g-players").textContent = fmt(g.users);
+        $("g-solved").textContent = fmt(g.completions);
+      });
+    }
     $("stats-modal").classList.add("show");
     $("stats-modal").setAttribute("aria-hidden", "false");
   }
@@ -1040,6 +1055,7 @@
     } catch (e) {}
     $("day-num").textContent = "No. " + puzzleNumber;
 
+    if (window.VashStats) VashStats.countVisit("connections");
     render();
   }
 
@@ -1204,6 +1220,7 @@
     state.selected = [];
     persist();
     recordResult(won);
+    if (won && window.VashStats) VashStats.countCompletion("connections");
     render();
   }
 
