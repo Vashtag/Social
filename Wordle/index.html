@@ -309,6 +309,13 @@
         <div class="stat"><div class="stat-num" id="stat-completed">0</div><div class="stat-label">Completed</div></div>
       </div>
       <div class="dist" id="distribution"></div>
+      <div style="border-top:1px solid var(--border);padding-top:1rem;">
+        <div style="color:var(--muted);font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;margin-bottom:0.6rem;">Community · all players</div>
+        <div class="stat-grid" style="grid-template-columns:1fr 1fr;margin-bottom:0;">
+          <div class="stat"><div class="stat-num" id="g-players">—</div><div class="stat-label">Played this</div></div>
+          <div class="stat"><div class="stat-num" id="g-solved">—</div><div class="stat-label">Solved this</div></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -337,6 +344,7 @@
 
   <div class="toast" id="toast"></div>
 
+  <script src="../stats.js"></script>
   <script>
   const WORDS = [
     "aorta", "ankle", "atria", "axons", "blood", "bowel", "brain", "canal", "carpi", "cecum",
@@ -416,6 +424,7 @@
       $("day-date").textContent = now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
     } catch (e) {}
     $("day-num").textContent = "No. " + puzzleNumber;
+    if (window.VashStats) VashStats.countVisit("wordle");
     render();
   }
 
@@ -529,6 +538,7 @@
     state.won = won;
     saveGame();
     updateStats(won);
+    if (won && window.VashStats) VashStats.countCompletion("wordle");
     render();
   }
 
@@ -707,6 +717,13 @@
     $("stat-completed").textContent = stats.wins || 0;
     const max = Math.max(1, ...stats.distribution);
     $("distribution").innerHTML = stats.distribution.map((n, i) => '<div class="dist-row"><span>' + (i + 1) + '</span><div class="bar"><span style="width:' + Math.max(8, Math.round((n / max) * 100)) + '%"></span></div><span>' + n + '</span></div>').join("");
+    if (window.VashStats) {
+      VashStats.getApp("wordle").then((g) => {
+        const fmt = (v) => (v == null ? "—" : Number(v).toLocaleString());
+        $("g-players").textContent = fmt(g.users);
+        $("g-solved").textContent = fmt(g.completions);
+      });
+    }
     $("stats-modal").classList.add("show");
     $("stats-modal").setAttribute("aria-hidden", "false");
   }
