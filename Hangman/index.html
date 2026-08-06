@@ -202,7 +202,6 @@
     <div class="end" id="end">
       <div class="end-title" id="end-title"></div>
       <div class="end-sub" id="end-sub"></div>
-      <div class="end-sub" id="end-global" style="font-size:0.78rem;"></div>
       <div class="end-actions">
         <button class="btn btn-submit" id="share">
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;margin-right:0.4rem;">
@@ -244,7 +243,6 @@
 
   <div class="toast" id="toast"></div>
 
-  <script src="../stats.js"></script>
   <script>
   /* ==========================================================================
      ANATOMY HANGMAN — daily word + hint. Guess letters before the figure is
@@ -412,7 +410,6 @@
     state.finished = true;
     state.won = won;
     save();
-    if (won && window.VashStats) VashStats.countCompletion("hangman");
     render();
   }
 
@@ -423,15 +420,6 @@
     $("end-sub").innerHTML = state.won
       ? "Nice work — " + state.wrong + (state.wrong === 1 ? " miss" : " misses")
       : "The word was <b>" + answer + "</b>";
-    const gEl = $("end-global");
-    gEl.textContent = "";
-    if (window.VashStats) {
-      VashStats.getApp("hangman").then((g) => {
-        if (g.users == null) return;
-        gEl.innerHTML = "🌍 <b>" + Number(g.users).toLocaleString() + "</b> players · <b>" +
-          Number(g.completions || 0).toLocaleString() + "</b> solved";
-      });
-    }
   }
 
   function lifeBoxes() {
@@ -641,7 +629,6 @@
 
   buildKeyboard();
   load();
-  if (window.VashStats) VashStats.countVisit("hangman");
   render();
   </script>
 </body>
