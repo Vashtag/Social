@@ -823,6 +823,26 @@
     }
     .btn-settings:hover { color: var(--text); border-color: #444; }
 
+    .btn-home {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      color: var(--muted);
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.5rem 0.7rem;
+      line-height: 1;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .btn-home:hover { color: var(--text); border-color: #444; }
+
     /* ── Settings modal ── */
     .settings-modal {
       position: fixed;
@@ -1103,6 +1123,7 @@
 <!-- ── Setup Screen ── -->
 <div class="screen active" id="setup-screen">
   <div class="setup-inner">
+    <a class="btn-home" href="../" title="Back to games">← Games</a>
     <button class="btn-settings" onclick="openSettings()" title="Settings">⚙</button>
     <div class="logo">
       <div class="logo-title">Unscramble</div>
