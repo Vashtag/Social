@@ -101,12 +101,21 @@
       display: flex; align-items: center; justify-content: center;
       background: var(--surface-2); border: 1px solid var(--border); border-radius: 13px;
       padding: 0.5rem 0.3rem; cursor: pointer; min-height: 78px;
-      transition: transform 0.1s, border-color 0.15s, opacity 0.15s;
+      transition: transform 0.1s, border-color 0.15s, background 0.15s, color 0.15s;
       user-select: none; -webkit-user-select: none;
     }
     .tile:hover { border-color: #3a3a3a; }
     .tile:active { transform: scale(0.95); }
-    .tile.used { visibility: hidden; }
+    /* Picked — tile stays in the grid but takes on its clue's colour */
+    .tile.picked.c0 { border-color: var(--c0); background: rgba(181,159,59,0.16); color: var(--c0); }
+    .tile.picked.c1 { border-color: var(--c1); background: rgba(74,147,74,0.16);  color: #6cc06c; }
+    .tile.picked.c2 { border-color: var(--c2); background: rgba(74,127,214,0.16); color: #7aa6e6; }
+    .tile.picked.c3 { border-color: var(--c3); background: rgba(154,95,208,0.16); color: #b98fe0; }
+    .tile.locked { color: #0d0d0d; cursor: default; }
+    .tile.locked.c0 { background: var(--c0); border-color: var(--c0); }
+    .tile.locked.c1 { background: var(--c1); border-color: var(--c1); }
+    .tile.locked.c2 { background: var(--c2); border-color: var(--c2); }
+    .tile.locked.c3 { background: var(--c3); border-color: var(--c3); }
     .tile-frag { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.01em; text-align: center; word-break: break-word; }
 
     .status { display: flex; align-items: center; justify-content: center; gap: 0.9rem; margin-bottom: 0.5rem; min-height: 1.4rem; }
@@ -393,11 +402,22 @@
   const TERMS = puzzle.terms;                                   // 4 clues
   const ANSWERS = TERMS.map((t) => t.roots.map((r) => r[0]).join(""));
 
-  // Flatten every root into a tile pool, then shuffle for the grid.
-  const POOL = seededShuffle(
-    TERMS.flatMap((t, ci) => t.roots.map((r) => ({ frag: r[0], mean: r[1], term: ci }))),
-    613 + dayIndex * 17
-  );
+  // QR to the games landing page (https://vashtag.github.io/Social/) — 29×29, ECC-M.
+  const QR_SOCIAL_SIZE = 29;
+  const QR_SOCIAL = "1111111001101111001010111111110000010100100010100001000001101110101011101010110010111011011101010001011010010101110110111010011111110111101011101100000100001011010101010000011111111010101010101010111111100000000100101000000100000000100000101010101101001110011101111100001111010011101011011000111110010110000100000010000110110011001101110000000010001110101000110110101010110000101101100000111100111101110011111000111101111111000101011000100110100011111000001101010111011010111000100000100101100111111011101000100011011101111110111101000111101100101100110100101100100101000011010000101110101011000001011111101110000000011011101011010001100011111110011001111101101011100100000100101110000011000100101011101001111101100111111101110111010011100011011100001101101110100101110111110111111101000001000100010100001000110111111110111110000101011111100";
+
+  // The four terms' roots make the "real" tiles. Pad up to 12 with distractor
+  // roots that don't belong to any answer, so the grid is never trivially small.
+  const REAL = TERMS.flatMap((t, ci) => t.roots.map((r) => ({ frag: r[0], mean: r[1], term: ci })));
+  const usedFrags = new Set(REAL.map((t) => t.frag));
+  const DISTRACTORS = ["thermo","gluco","litho","phago","chondro","costo","entero","hydro","lipo","myelo",
+    "onco","pyelo","rhino","sclero","thoraco","uro","vaso","glosso","masto","recto","salpingo","procto",
+    "adeno","broncho","colo","pyo","kerato","cheilo","dacryo","splen","rrhea","plasty","ptosis","stasis",
+    "trophy","genic","phage","lysis","clast","porosis"];
+  const distractNeed = Math.max(0, 12 - REAL.length);
+  const DISTRACT = seededShuffle(DISTRACTORS.filter((f) => !usedFrags.has(f)), 700 + dayIndex * 13)
+    .slice(0, distractNeed).map((f) => ({ frag: f, mean: "", term: -1, distractor: true }));
+  const POOL = seededShuffle(REAL.concat(DISTRACT), 613 + dayIndex * 17);
 
   // assign[c] = ordered list of POOL indices placed on clue c.
   let state = { assign: [[], [], [], []], solved: [false, false, false, false], mistakes: 0, focus: 0, finished: false };
@@ -409,6 +429,7 @@
   function save() { try { localStorage.setItem(gameKey(), JSON.stringify(state)); } catch (e) {} }
 
   function usedSet() { const u = new Set(); state.assign.forEach((a) => a.forEach((i) => u.add(i))); return u; }
+  function assignedClue(i) { for (let c = 0; c < 4; c++) if (state.assign[c].indexOf(i) !== -1) return c; return -1; }
   function wordFor(c) { return state.assign[c].map((i) => POOL[i].frag).join(""); }
   function firstUnsolved() { for (let c = 0; c < 4; c++) if (!state.solved[c]) return c; return 0; }
 
@@ -446,14 +467,16 @@
       clues.appendChild(el);
     });
 
-    // Grid
-    const used = usedSet();
+    // Grid — tiles stay put; assigned ones take on their clue's colour.
     const grid = $("grid"); grid.innerHTML = "";
     POOL.forEach((tile, i) => {
       const el = document.createElement("div");
-      el.className = "tile" + (used.has(i) ? " used" : "");
+      const c = assignedClue(i);
+      let cls = "tile";
+      if (c !== -1) cls += (state.solved[c] ? " locked" : " picked") + " c" + c;
+      el.className = cls;
       el.innerHTML = '<span class="tile-frag">' + tile.frag + "</span>";
-      if (!used.has(i)) el.addEventListener("click", () => placeTile(i));
+      el.addEventListener("click", () => tileTap(i));
       grid.appendChild(el);
     });
 
@@ -467,6 +490,13 @@
 
     if (state.finished) showEnd();
     else $("end").classList.remove("show");
+  }
+
+  function tileTap(i) {
+    if (state.finished) return;
+    const c = assignedClue(i);
+    if (c !== -1) { if (!state.solved[c]) removeTile(c, i); return; }  // tap again to unassign
+    placeTile(i);
   }
 
   function placeTile(i) {
@@ -579,6 +609,19 @@
     ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
     ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
   }
+  function drawQR(ctx, boxX, boxY, box) {
+    const quiet = 4, total = QR_SOCIAL_SIZE + quiet * 2, m = box / total;
+    roundRect(ctx, boxX, boxY, box, box, m * 2);
+    ctx.fillStyle = "#f0ece4"; ctx.fill();
+    ctx.fillStyle = "#0d0d0d";
+    for (let r = 0; r < QR_SOCIAL_SIZE; r++) {
+      for (let c = 0; c < QR_SOCIAL_SIZE; c++) {
+        if (QR_SOCIAL[r * QR_SOCIAL_SIZE + c] === "1") {
+          ctx.fillRect(boxX + (quiet + c) * m, boxY + (quiet + r) * m, Math.ceil(m) + 0.6, Math.ceil(m) + 0.6);
+        }
+      }
+    }
+  }
 
   function capture() {
     const video = $("cam-video");
@@ -630,9 +673,13 @@
       y += sq + rowGap;
     });
 
-    ctx.fillStyle = "rgba(240,236,228,0.5)";
-    ctx.font = "600 " + Math.round(W * 0.026) + "px -apple-system,'Segoe UI',sans-serif";
-    ctx.fillText("PLAY  ·  " + (location.host || "vashtag social games").toUpperCase(), cx, H - 80);
+    // QR to the social page
+    const qrBox = Math.round(W * 0.17);
+    const qrTop = H - 96 - qrBox;
+    drawQR(ctx, cx - qrBox / 2, qrTop, qrBox);
+    ctx.fillStyle = "rgba(240,236,228,0.55)";
+    ctx.font = "600 " + Math.round(W * 0.023) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText("S C A N   T O   P L A Y", cx, qrTop + qrBox + 36);
 
     const dataUrl = canvas.toDataURL("image/png");
     $("cam-img").src = dataUrl;
