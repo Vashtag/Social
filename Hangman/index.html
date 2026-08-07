@@ -359,9 +359,17 @@
     });
   }
 
+  // The hint stays locked until the player is close to losing (2 misses left).
+  const HINT_AT = MAX_WRONG - 2;
+
   function render() {
-    // Hint
-    $("hint").innerHTML = "<b>Hint:</b> " + hint;
+    // Hint — only revealed once the player is nearly out of guesses (or the game is over)
+    if (state.wrong >= HINT_AT || state.finished) {
+      $("hint").innerHTML = "<b>Hint:</b> " + hint;
+    } else {
+      const left = HINT_AT - state.wrong;
+      $("hint").innerHTML = "Hint unlocks in <b>" + left + "</b> more miss" + (left === 1 ? "" : "es");
+    }
 
     // Figure parts
     PARTS.forEach((id, i) => { $(id).style.display = i < state.wrong ? "" : "none"; });
