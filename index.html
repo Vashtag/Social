@@ -118,6 +118,28 @@
       text-shadow: none;
     }
 
+    /* Rootle icon — stacked root fragments */
+    .icon-rootle {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: center;
+      gap: 4px;
+      padding: 11px 12px;
+      background: linear-gradient(135deg, #1c1626, #241a30);
+      border: 1px solid #3a2c4d;
+    }
+    .icon-rootle i {
+      display: block;
+      height: 9px;
+      border-radius: 4px;
+      background: var(--cat-purple);
+      font-style: normal;
+    }
+    .icon-rootle i:nth-child(1){ width: 70%; opacity: 0.55; }
+    .icon-rootle i:nth-child(2){ width: 100%; }
+    .icon-rootle i:nth-child(3){ width: 45%; opacity: 0.8; }
+
     /* Connections icon — 2x2 colour grid */
     .icon-connections {
       display: grid;
@@ -188,6 +210,15 @@
         <div class="game-body">
           <div class="game-name">Anatomy Wordle</div>
           <div class="game-desc">Guess the five-letter anatomy word. A new puzzle every day.</div>
+        </div>
+        <div class="game-arrow">→</div>
+      </a>
+
+      <a class="game-card" href="./Rootle/">
+        <div class="game-icon icon-rootle"><i></i><i></i><i></i></div>
+        <div class="game-body">
+          <div class="game-name">Anatomy Rootle</div>
+          <div class="game-desc">Build the term from its Greek &amp; Latin roots. A new puzzle every day.</div>
         </div>
         <div class="game-arrow">→</div>
       </a>
