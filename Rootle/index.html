@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Anatomy Rootle</title>
+  <meta name="description" content="Build the anatomy term from its Greek and Latin roots. A new puzzle every day." />
+  <meta property="og:title" content="Anatomy Rootle" />
+  <meta property="og:description" content="Assemble the medical term from its root fragments. Learn the anatomy of words. A new puzzle every day." />
+  <meta property="og:type" content="website" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      color-scheme: dark;
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --surface-2: #1d1d1d;
+      --border: #2a2a2a;
+      --text: #f0ece4;
+      --muted: #777;
+      --root: #9a5fd0;
+      --correct: #4a934a;
+      --danger: #c95454;
+    }
+    html, body {
+      min-height: 100%;
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      text-rendering: optimizeLegibility;
+    }
+    body {
+      min-height: 100dvh;
+      display: flex;
+      justify-content: center;
+      padding: 1.25rem 1rem calc(1.5rem + env(safe-area-inset-bottom));
+      touch-action: manipulation;
+    }
+    .wrap { width: 100%; max-width: 520px; display: flex; flex-direction: column; min-height: calc(100dvh - 2.75rem); }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.25rem 0.1rem 1.1rem;
+      border-bottom: 1px solid var(--border); margin-bottom: 1rem;
+    }
+    .brand { display: flex; flex-direction: column; gap: 0.25rem; }
+    .brand-title { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; }
+    .brand-sub { font-size: 0.6rem; letter-spacing: 0.32em; text-transform: uppercase; color: var(--muted); }
+    .back-link {
+      font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted);
+      text-decoration: none; border: 1px solid var(--border); border-radius: 999px;
+      padding: 0.5rem 0.9rem; transition: all 0.15s; white-space: nowrap;
+    }
+    .back-link:hover { color: var(--text); border-color: #3a3a3a; }
+
+    .daystrip { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 0.9rem; }
+    .day-label, .day-num { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+    .day-num { color: var(--text); font-weight: 700; cursor: pointer; user-select: none; -webkit-user-select: none; }
+
+    /* ── Clue ── */
+    .clue-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 1.1rem 1.2rem; text-align: center; margin-bottom: 1.1rem;
+    }
+    .clue-label { font-size: 0.58rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+    .clue-text { font-size: 1.08rem; line-height: 1.4; font-weight: 600; }
+
+    /* ── Build zone (where the term is assembled) ── */
+    .build {
+      display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+      gap: 0.35rem; min-height: 64px; padding: 0.7rem;
+      border: 1.5px dashed var(--border); border-radius: 14px; margin-bottom: 0.5rem;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .build.empty::before {
+      content: "Tap roots below to build the term"; color: var(--muted);
+      font-size: 0.82rem; letter-spacing: 0.02em;
+    }
+    body.shake .build { animation: shake 0.4s; border-color: var(--danger); }
+    body.won .build { border-color: var(--correct); border-style: solid; }
+    @keyframes shake {
+      10%, 90% { transform: translateX(-2px); } 20%, 80% { transform: translateX(4px); }
+      30%, 50%, 70% { transform: translateX(-7px); } 40%, 60% { transform: translateX(7px); }
+    }
+
+    .assembled { text-align: center; font-size: 0.72rem; letter-spacing: 0.06em; color: var(--muted); min-height: 1rem; margin-bottom: 0.9rem; }
+
+    /* ── Tiles ── */
+    .tray {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .tile {
+      display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
+      background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 0.55rem 0.85rem 0.5rem; cursor: pointer; min-width: 62px;
+      transition: transform 0.1s, border-color 0.15s, background 0.15s, opacity 0.15s;
+      user-select: none; -webkit-user-select: none;
+    }
+    .tile:hover { border-color: #3a3a3a; }
+    .tile:active { transform: scale(0.95); }
+    .tile.used { opacity: 0.28; pointer-events: none; }
+    .tile-frag { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.01em; }
+    .tile-mean { font-size: 0.62rem; letter-spacing: 0.02em; color: var(--muted); text-transform: lowercase; }
+
+    /* placed tile inside build zone */
+    .chip {
+      display: flex; flex-direction: column; align-items: center; gap: 0.12rem;
+      background: rgba(154,95,208,0.14); border: 1px solid var(--root); border-radius: 11px;
+      padding: 0.45rem 0.75rem 0.4rem; cursor: pointer; min-width: 56px;
+      transition: transform 0.1s;
+    }
+    .chip:active { transform: scale(0.95); }
+    body.won .chip { background: rgba(74,147,74,0.16); border-color: var(--correct); cursor: default; }
+    .chip-frag { font-size: 1.1rem; font-weight: 800; }
+    .chip-mean { font-size: 0.58rem; color: var(--muted); text-transform: lowercase; }
+    body.won .chip-mean { color: var(--text); opacity: 0.7; }
+
+    .tries { text-align: center; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
+    .tries b { color: var(--text); }
+
+    .controls { display: flex; justify-content: center; margin-top: auto; }
+    .clear-btn {
+      background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 999px;
+      padding: 0.6rem 1.4rem; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; cursor: pointer; transition: all 0.15s;
+    }
+    .clear-btn:hover { color: var(--text); border-color: #3a3a3a; }
+    .clear-btn.hidden { display: none; }
+
+    /* ── End panel ── */
+    .end { display: none; flex-direction: column; align-items: center; gap: 0.75rem; text-align: center; margin-top: 1rem; }
+    .end.show { display: flex; }
+    .end-title { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.01em; }
+    .end-sub { color: var(--muted); font-size: 0.9rem; line-height: 1.4; }
+    .end-sub b { color: var(--text); }
+    .etym {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+      padding: 0.9rem 1rem; width: 100%; font-size: 0.9rem; line-height: 1.6;
+    }
+    .etym .term { font-weight: 800; font-size: 1.15rem; letter-spacing: -0.01em; margin-bottom: 0.4rem; }
+    .etym .row { color: var(--muted); }
+    .etym .row b { color: var(--root); font-weight: 800; }
+    .end-actions { display: flex; gap: 0.6rem; width: 100%; }
+    .btn {
+      flex: 1; background: transparent; color: var(--text); border: 1px solid #3a3a3a; border-radius: 999px;
+      padding: 0.85rem 0.5rem; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; cursor: pointer; transition: all 0.15s;
+    }
+    .btn:hover:not(:disabled) { background: rgba(255,255,255,0.06); }
+    .btn:active:not(:disabled) { transform: scale(0.98); }
+    .btn-submit { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .btn-submit:hover { background: #fff; }
+    .text-share {
+      background: none; border: none; color: var(--muted); font-size: 0.72rem; letter-spacing: 0.05em;
+      text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 0.2rem;
+    }
+    .text-share:hover { color: var(--text); }
+
+    .toast {
+      position: fixed; left: 50%; bottom: 2rem; transform: translateX(-50%) translateY(20px);
+      background: var(--text); color: var(--bg); padding: 0.7rem 1.2rem; border-radius: 999px;
+      font-size: 0.8rem; font-weight: 700; opacity: 0; pointer-events: none; transition: all 0.25s;
+      z-index: 50; white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── Selfie camera + preview (same structure as the other games) ── */
+    .cam-modal, .cam-preview {
+      position: fixed; inset: 0; z-index: 100; background: #000;
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .cam-modal.show, .cam-preview.show { display: flex; }
+    #cam-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; transform: scaleX(-1); }
+    .cam-ui {
+      position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
+      justify-content: flex-end; gap: 1.1rem; padding: 1.5rem 1.25rem calc(2.2rem + env(safe-area-inset-bottom));
+    }
+    .cam-hint { max-width: 320px; text-align: center; color: rgba(255,255,255,0.82); font-size: 0.78rem; line-height: 1.4; text-shadow: 0 1px 6px rgba(0,0,0,0.6); }
+    .cam-shutter { width: 74px; height: 74px; border-radius: 50%; background: #fff; border: 5px solid rgba(255,255,255,0.45); cursor: pointer; transition: transform 0.1s; }
+    .cam-shutter:active { transform: scale(0.92); }
+    .cam-close {
+      background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.25); color: #fff; border-radius: 999px;
+      padding: 0.55rem 1.4rem; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer;
+    }
+    .cam-preview { gap: 1rem; padding: 1.25rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom)); justify-content: center; }
+    #cam-img { max-width: 100%; max-height: 68vh; border-radius: 16px; border: 1px solid rgba(255,255,255,0.12); }
+    .cam-preview-actions { display: flex; gap: 0.6rem; width: 100%; max-width: 420px; }
+    .cam-preview-actions .btn { flex: 1; display: grid; place-items: center; text-decoration: none; }
+
+    footer { margin-top: 1.2rem; text-align: center; font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: #333; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="brand-title">Rootle</div>
+        <div class="brand-sub">Anatomy Edition</div>
+      </div>
+      <a class="back-link" href="../">← Games</a>
+    </header>
+
+    <div class="daystrip">
+      <span class="day-label" id="day-date">Puzzle of the day</span>
+      <span class="day-num" id="day-num"></span>
+    </div>
+
+    <div class="clue-card">
+      <div class="clue-label">Build the term that means</div>
+      <div class="clue-text" id="clue"></div>
+    </div>
+
+    <div class="build empty" id="build" aria-label="Assembled term"></div>
+    <div class="assembled" id="assembled"></div>
+
+    <div class="tray" id="tray" aria-label="Root fragments"></div>
+
+    <div class="tries" id="tries"></div>
+
+    <div class="controls">
+      <button class="clear-btn" id="clear">Clear</button>
+    </div>
+
+    <div class="end" id="end">
+      <div class="end-title" id="end-title"></div>
+      <div class="end-sub" id="end-sub"></div>
+      <div class="etym" id="etym"></div>
+      <div class="end-actions">
+        <button class="btn btn-submit" id="share">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;margin-right:0.4rem;">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>Share result
+        </button>
+        <a class="btn" id="home-link" href="../" style="display:grid;place-items:center;text-decoration:none;">More games</a>
+      </div>
+      <button class="text-share" id="copy-text">or copy text result</button>
+    </div>
+
+    <footer>vashtag · social games</footer>
+  </div>
+
+  <!-- Selfie camera -->
+  <div class="cam-modal" id="cam-modal">
+    <video id="cam-video" autoplay playsinline muted></video>
+    <div class="cam-ui">
+      <div class="cam-hint">Line up your selfie — your result gets added to the photo.</div>
+      <button class="cam-shutter" id="cam-shutter" aria-label="Take photo"></button>
+      <button class="cam-close" id="cam-close">Cancel</button>
+    </div>
+  </div>
+
+  <div class="cam-preview" id="cam-preview">
+    <img id="cam-img" alt="Your Rootle result" />
+    <div class="cam-preview-actions">
+      <button class="btn btn-submit" id="cam-share-img">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;margin-right:0.35rem;">
+          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+        </svg>Share to story
+      </button>
+      <button class="btn" id="cam-download">Save photo</button>
+    </div>
+    <button class="cam-close" id="cam-preview-close">Done</button>
+    <div class="cam-hint">Tap “Share to story”, then choose Instagram → Stories.</div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+  /* ==========================================================================
+     ANATOMY ROOTLE — assemble the daily medical term from its Greek/Latin root
+     fragments. Each tile shows the root's meaning, so building the word teaches
+     how anatomy vocabulary is constructed. Same daily + share flow as the other
+     games in the collection.
+     ========================================================================== */
+  // Each puzzle: the clue is the plain-English meaning; `parts` are the ordered
+  // root fragments (shown scrambled) with what each fragment means.
+  const PUZZLES = [
+    { def: "Inflammation of the liver", parts: [["hepat","liver"],["itis","inflammation"]] },
+    { def: "Inflammation of a joint", parts: [["arthr","joint"],["itis","inflammation"]] },
+    { def: "Inflammation of the stomach lining", parts: [["gastr","stomach"],["itis","inflammation"]] },
+    { def: "Inflammation of the kidney", parts: [["nephr","kidney"],["itis","inflammation"]] },
+    { def: "Inflammation of the brain", parts: [["encephal","brain"],["itis","inflammation"]] },
+    { def: "Inflammation of the airways in the lungs", parts: [["bronch","windpipe"],["itis","inflammation"]] },
+    { def: "The study of the heart", parts: [["cardio","heart"],["logy","study of"]] },
+    { def: "The study of the nervous system", parts: [["neuro","nerve"],["logy","study of"]] },
+    { def: "The study of the skin", parts: [["dermato","skin"],["logy","study of"]] },
+    { def: "The study of blood", parts: [["hemato","blood"],["logy","study of"]] },
+    { def: "The study of cells", parts: [["cyto","cell"],["logy","study of"]] },
+    { def: "The study of tissues", parts: [["histo","tissue"],["logy","study of"]] },
+    { def: "The study of disease", parts: [["patho","disease"],["logy","study of"]] },
+    { def: "The membrane sac around the heart", parts: [["peri","around"],["cardium","heart"]] },
+    { def: "The muscular wall of the heart", parts: [["myo","muscle"],["cardium","heart"]] },
+    { def: "The outer layer of the skin", parts: [["epi","upon"],["dermis","skin"]] },
+    { def: "Beneath the skin (an injection)", parts: [["hypo","under"],["derm","skin"],["ic","relating to"]] },
+    { def: "Within a vein (a drip)", parts: [["intra","within"],["ven","vein"],["ous","relating to"]] },
+    { def: "Abnormally fast heart rate", parts: [["tachy","fast"],["cardia","heart"]] },
+    { def: "Abnormally slow heart rate", parts: [["brady","slow"],["cardia","heart"]] },
+    { def: "A red blood cell", parts: [["erythro","red"],["cyte","cell"]] },
+    { def: "A white blood cell", parts: [["leuko","white"],["cyte","cell"]] },
+    { def: "A bone-forming cell", parts: [["osteo","bone"],["blast","forming cell"]] },
+    { def: "Enlargement of the liver", parts: [["hepato","liver"],["megaly","enlargement"]] },
+    { def: "Enlargement of the spleen", parts: [["spleno","spleen"],["megaly","enlargement"]] },
+    { def: "Looking inside a joint with a scope", parts: [["arthro","joint"],["scopy","viewing"]] },
+    { def: "Looking inside the colon with a scope", parts: [["colono","colon"],["scopy","viewing"]] },
+    { def: "An X-ray record of the breast", parts: [["mammo","breast"],["gram","record"]] },
+    { def: "A record of the heart's electrical activity", parts: [["electro","electric"],["cardio","heart"],["gram","record"]] },
+    { def: "Surgical removal of the stomach", parts: [["gastr","stomach"],["ectomy","removal"]] },
+    { def: "Surgical removal of the appendix", parts: [["append","appendix"],["ectomy","removal"]] },
+    { def: "Surgical removal of the tonsils", parts: [["tonsill","tonsils"],["ectomy","removal"]] },
+    { def: "Surgical removal of a kidney", parts: [["nephr","kidney"],["ectomy","removal"]] },
+    { def: "Cutting into the skull (brain surgery)", parts: [["cranio","skull"],["tomy","cutting"]] },
+    { def: "Difficult or laboured breathing", parts: [["dys","difficult"],["pnea","breathing"]] },
+    { def: "Temporary absence of breathing", parts: [["a","without"],["pnea","breathing"]] },
+    { def: "Nerve pain", parts: [["neur","nerve"],["algia","pain"]] },
+    { def: "Muscle pain", parts: [["my","muscle"],["algia","pain"]] },
+    { def: "Joint pain", parts: [["arthr","joint"],["algia","pain"]] },
+    { def: "A bluish colour from lack of oxygen", parts: [["cyan","blue"],["osis","condition"]] },
+    { def: "Relating to the heart and blood vessels", parts: [["cardio","heart"],["vascular","vessels"]] },
+    { def: "Located between the ribs", parts: [["inter","between"],["costal","ribs"]] },
+    { def: "Located beneath the tongue", parts: [["sub","under"],["lingual","tongue"]] },
+    { def: "Wear-and-tear inflammation of the joints", parts: [["osteo","bone"],["arthr","joint"],["itis","inflammation"]] },
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const now = new Date();
+  const dayNumber = Math.floor(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86400000);
+  const EPOCH_DAY = Math.floor(Date.UTC(2026, 7, 5) / 86400000);
+  const dayIndex = Math.max(0, dayNumber - EPOCH_DAY);
+  const puzzleNumber = dayIndex + 1;
+  const dateKey = now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate();
+
+  // Deterministic, non-sequential daily order (same for everyone).
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function seededShuffle(list, seed) {
+    const a = list.slice(); const rnd = mulberry32(seed);
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  const ORDER = seededShuffle(PUZZLES, 20260805);
+  const entry = ORDER[dayIndex % ORDER.length];
+  const PARTS = entry.parts;                          // ordered [frag, meaning]
+  const clue = entry.def;
+  const answer = PARTS.map((p) => p[0]).join("");     // the full term, lowercase
+
+  // Fixed tray order: fragments shuffled with a per-puzzle seed so it's stable
+  // across reloads but not simply left-to-right.
+  const TRAY = seededShuffle(PARTS.map((p, i) => ({ frag: p[0], mean: p[1], orig: i })), 91 + dayIndex * 7);
+
+  let state = { placed: [], tries: 0, finished: false, won: false };
+
+  function gameKey() { return "anatomy-rootle-v1-" + dateKey; }
+  function load() {
+    try {
+      const s = JSON.parse(localStorage.getItem(gameKey()) || "null");
+      if (s && Array.isArray(s.placed)) state = s;
+    } catch (e) {}
+  }
+  function save() {
+    try { localStorage.setItem(gameKey(), JSON.stringify(state)); } catch (e) {}
+  }
+
+  function currentWord() { return state.placed.map((ti) => TRAY[ti].frag).join(""); }
+
+  function render() {
+    $("clue").textContent = clue;
+
+    // Build zone
+    const build = $("build");
+    build.classList.toggle("empty", state.placed.length === 0);
+    build.innerHTML = state.placed.map((ti) => {
+      const t = TRAY[ti];
+      return '<div class="chip" data-tray="' + ti + '"><span class="chip-frag">' + t.frag +
+             '</span><span class="chip-mean">' + t.mean + '</span></div>';
+    }).join("");
+    build.querySelectorAll(".chip").forEach((c) => {
+      c.addEventListener("click", () => { if (!state.finished) removeTile(+c.dataset.tray); });
+    });
+
+    // Live "word so far"
+    $("assembled").textContent = state.placed.length ? currentWord() : "";
+
+    // Tray
+    const tray = $("tray");
+    tray.innerHTML = TRAY.map((t, ti) => {
+      const used = state.placed.indexOf(ti) !== -1;
+      return '<div class="tile' + (used ? " used" : "") + '" data-tray="' + ti + '"><span class="tile-frag">' +
+             t.frag + '</span><span class="tile-mean">' + t.mean + '</span></div>';
+    }).join("");
+    tray.querySelectorAll(".tile").forEach((el) => {
+      el.addEventListener("click", () => { if (!state.finished) placeTile(+el.dataset.tray); });
+    });
+
+    $("tries").innerHTML = "Wrong tries <b>" + state.tries + "</b>";
+    $("clear").classList.toggle("hidden", state.finished || state.placed.length === 0);
+
+    document.body.classList.toggle("won", state.finished && state.won);
+    if (state.finished) showEnd();
+    else $("end").classList.remove("show");
+  }
+
+  function placeTile(ti) {
+    if (state.placed.indexOf(ti) !== -1) return;
+    state.placed.push(ti);
+    save();
+    if (state.placed.length === TRAY.length) checkAnswer();
+    else render();
+  }
+
+  function removeTile(ti) {
+    const i = state.placed.indexOf(ti);
+    if (i !== -1) { state.placed.splice(i, 1); save(); render(); }
+  }
+
+  function clearAll() {
+    if (state.finished) return;
+    state.placed = []; save(); render();
+  }
+
+  function checkAnswer() {
+    if (currentWord() === answer) {
+      finish(true);
+    } else {
+      state.tries++;
+      save();
+      render();
+      document.body.classList.add("shake");
+      setTimeout(() => document.body.classList.remove("shake"), 450);
+      toast("Not quite — reorder the roots");
+    }
+  }
+
+  function finish(won) {
+    state.finished = true;
+    state.won = won;
+    save();
+    render();
+  }
+
+  function etymHTML() {
+    const rows = PARTS.map((p) => '<div class="row"><b>' + p[0] + '</b> — ' + p[1] + '</div>').join("");
+    return '<div class="term">' + PARTS.map((p) => p[0]).join("·") + '</div>' + rows;
+  }
+
+  function showEnd() {
+    $("clear").classList.add("hidden");
+    const end = $("end"); end.classList.add("show");
+    $("end-title").textContent = "Solved it!";
+    $("end-sub").innerHTML = state.tries === 0
+      ? "First try — flawless."
+      : "Solved with <b>" + state.tries + "</b> wrong " + (state.tries === 1 ? "try" : "tries") + ".";
+    $("etym").innerHTML = etymHTML();
+  }
+
+  /* ── Share text ── */
+  function buildShareText() {
+    const score = state.tries === 0 ? "first try" : state.tries + " wrong " + (state.tries === 1 ? "try" : "tries");
+    const header = "Anatomy Rootle No. " + puzzleNumber + " — " + PARTS.length + " roots, " + score;
+    const boxes = "🟪".repeat(PARTS.length);
+    return header + "\n" + boxes + "\n" + location.origin + location.pathname;
+  }
+  async function shareText() {
+    const text = buildShareText();
+    if (navigator.share) { try { await navigator.share({ text }); return; } catch (e) {} }
+    try { await navigator.clipboard.writeText(text); toast("Copied to clipboard!"); }
+    catch (e) { toast("Copy failed"); }
+  }
+
+  /* ── Selfie + share to story ── */
+  let _camStream = null;
+  let _lastBlob = null;
+
+  function stopCam() { if (_camStream) { _camStream.getTracks().forEach((t) => t.stop()); _camStream = null; } }
+  async function openCam() {
+    try {
+      _camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+      $("cam-video").srcObject = _camStream;
+      $("cam-modal").classList.add("show");
+    } catch (e) { toast("Camera unavailable — copying text"); shareText(); }
+  }
+  function closeCam() { $("cam-modal").classList.remove("show"); stopCam(); }
+
+  function capture() {
+    const video = $("cam-video");
+    const W = 1080, H = 1920;
+    const canvas = document.createElement("canvas");
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "#0d0d0d"; ctx.fillRect(0, 0, W, H);
+
+    const vw = video.videoWidth || 1080, vh = video.videoHeight || 1920;
+    const regionH = Math.round(H * 0.6);
+    const scale = Math.min(W / vw, regionH / vh);
+    const dw = vw * scale, dh = vh * scale;
+    const dx = (W - dw) / 2, dy = (regionH - dh) / 2;
+    ctx.save(); ctx.translate(W, 0); ctx.scale(-1, 1); ctx.drawImage(video, dx, dy, dw, dh); ctx.restore();
+
+    const grad = ctx.createLinearGradient(0, regionH - 120, 0, regionH + 20);
+    grad.addColorStop(0, "rgba(13,13,13,0)"); grad.addColorStop(1, "rgba(13,13,13,1)");
+    ctx.fillStyle = grad; ctx.fillRect(0, regionH - 120, W, 140);
+
+    const cx = W / 2, panelTop = regionH;
+    ctx.textAlign = "center";
+
+    ctx.fillStyle = "rgba(240,236,228,0.6)";
+    ctx.font = "600 " + Math.round(W * 0.031) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText("A N A T O M Y   R O O T L E", cx, panelTop + 78);
+
+    ctx.fillStyle = "#f0ece4";
+    ctx.font = "800 " + Math.round(W * 0.088) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText(answer.toUpperCase(), cx, panelTop + 176);
+
+    ctx.fillStyle = "rgba(240,236,228,0.65)";
+    ctx.font = "600 " + Math.round(W * 0.036) + "px -apple-system,'Segoe UI',sans-serif";
+    const score = state.tries === 0 ? "first try" : state.tries + " wrong " + (state.tries === 1 ? "try" : "tries");
+    ctx.fillText("No. " + puzzleNumber + "  ·  " + score, cx, panelTop + 232);
+
+    // Root chips
+    const chips = PARTS.map((p) => p[0]);
+    ctx.font = "800 " + Math.round(W * 0.032) + "px -apple-system,'Segoe UI',sans-serif";
+    const padX = Math.round(W * 0.028), gap = Math.round(W * 0.022), chipH = Math.round(W * 0.072);
+    const widths = chips.map((c) => ctx.measureText(c).width + padX * 2);
+    const totalW = widths.reduce((a, b) => a + b, 0) + gap * (chips.length - 1);
+    let x0 = cx - totalW / 2;
+    const chipY = panelTop + 288;
+    chips.forEach((c, i) => {
+      const w = widths[i];
+      ctx.fillStyle = "rgba(154,95,208,0.22)";
+      roundRect(ctx, x0, chipY, w, chipH, chipH / 2.6); ctx.fill();
+      ctx.strokeStyle = "#9a5fd0"; ctx.lineWidth = 2.5;
+      roundRect(ctx, x0, chipY, w, chipH, chipH / 2.6); ctx.stroke();
+      ctx.fillStyle = "#f0ece4";
+      ctx.fillText(c, x0 + w / 2, chipY + chipH / 2 + Math.round(W * 0.012));
+      x0 += w + gap;
+    });
+
+    // Footer URL
+    ctx.fillStyle = "rgba(240,236,228,0.5)";
+    ctx.font = "600 " + Math.round(W * 0.026) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText("PLAY  ·  " + (location.host || "vashtag social games").toUpperCase(), cx, H - 84);
+
+    const dataUrl = canvas.toDataURL("image/png");
+    $("cam-img").src = dataUrl;
+    canvas.toBlob((b) => { _lastBlob = b; }, "image/png");
+
+    closeCam();
+    $("cam-preview").classList.add("show");
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  async function shareImage() {
+    if (_lastBlob && navigator.canShare) {
+      const file = new File([_lastBlob], "anatomy-rootle.png", { type: "image/png" });
+      if (navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ files: [file], title: "Anatomy Rootle" }); return; }
+        catch (e) { if (e && e.name === "AbortError") return; }
+      }
+    }
+    await saveImage();
+    setTimeout(openInstagramStory, 500);
+  }
+
+  function dataURLtoBlob(dataUrl) {
+    const parts = dataUrl.split(",");
+    const mime = (parts[0].match(/:(.*?);/) || [])[1] || "image/png";
+    const bin = atob(parts[1]);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  }
+
+  async function saveImage() {
+    if (!_lastBlob) {
+      const src = $("cam-img").src;
+      if (src && src.indexOf("data:") === 0) { try { _lastBlob = dataURLtoBlob(src); } catch (e) {} }
+    }
+    if (!_lastBlob) { toast("Preparing photo — try again"); return; }
+    const filename = "anatomy-rootle-" + puzzleNumber + ".png";
+    const file = new File([_lastBlob], filename, { type: "image/png" });
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+      (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
+    if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file] }); return; }
+      catch (e) { if (e && e.name === "AbortError") return; }
+    }
+    const url = URL.createObjectURL(_lastBlob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast("Photo saved");
+  }
+
+  function openInstagramStory() {
+    const started = Date.now();
+    window.location.href = "instagram://story-camera";
+    setTimeout(() => {
+      if (Date.now() - started < 1800 && !document.hidden) window.location.href = "https://www.instagram.com/";
+    }, 1200);
+  }
+  function closePreview() { $("cam-preview").classList.remove("show"); }
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $("toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 1600);
+  }
+
+  /* ── Events ── */
+  $("clear").addEventListener("click", clearAll);
+  $("share").addEventListener("click", openCam);
+  $("copy-text").addEventListener("click", shareText);
+  $("cam-shutter").addEventListener("click", capture);
+  $("cam-close").addEventListener("click", closeCam);
+  $("cam-share-img").addEventListener("click", shareImage);
+  $("cam-download").addEventListener("click", saveImage);
+  $("cam-preview-close").addEventListener("click", closePreview);
+
+  // Hidden reset: tap the "No. X" label 5 times to replay today's puzzle.
+  let _tapCount = 0, _tapTimer = null;
+  $("day-num").addEventListener("click", () => {
+    _tapCount++; clearTimeout(_tapTimer);
+    _tapTimer = setTimeout(() => { _tapCount = 0; }, 1200);
+    if (_tapCount >= 5) {
+      _tapCount = 0; clearTimeout(_tapTimer);
+      try { localStorage.removeItem(gameKey()); } catch (e) {}
+      state = { placed: [], tries: 0, finished: false, won: false };
+      render(); toast("Puzzle reset");
+    }
+  });
+
+  try {
+    $("day-date").textContent = now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+  } catch (e) {}
+  $("day-num").textContent = "No. " + puzzleNumber;
+
+  load();
+  render();
+  </script>
+</body>
+</html>
