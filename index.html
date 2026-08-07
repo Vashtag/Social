@@ -206,6 +206,44 @@
       text-transform: uppercase;
       color: #333;
     }
+
+    /* ── Mobile: fill the screen with a 2-column grid of game boxes ── */
+    @media (max-width: 600px) {
+      body {
+        justify-content: flex-start;
+        padding: 1.5rem 0.9rem calc(1.1rem + env(safe-area-inset-bottom));
+      }
+      .wrap {
+        display: flex;
+        flex-direction: column;
+        min-height: calc(100dvh - 2.6rem);
+      }
+      .hero { margin-bottom: 1.5rem; }
+      .hero-title { font-size: clamp(2rem, 8vw, 2.6rem); }
+      .hero-sub { margin-top: 0.6rem; }
+
+      .games {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-auto-rows: 1fr;
+        gap: 0.7rem;
+        flex: 1;
+      }
+      .game-card {
+        flex-direction: column;
+        text-align: center;
+        justify-content: center;
+        gap: 0.6rem;
+        padding: 0.9rem 0.7rem;
+        border-radius: 18px;
+      }
+      .game-card:hover { transform: none; }
+      .game-body { flex: 0 0 auto; }
+      .game-name { font-size: 0.98rem; }
+      .game-desc { display: none; }
+      .game-arrow { display: none; }
+      footer { margin-top: 1.1rem; }
+    }
   </style>
   <script data-goatcounter="https://vashtags.goatcounter.com/count"
           async src="//gc.zgo.at/count.js"></script>
@@ -218,21 +256,34 @@
     </div>
 
     <div class="games">
-      <a class="game-card" href="./Unscramble/">
-        <div class="game-icon icon-unscramble"><span>A</span><span>T</span><span>M</span></div>
+      <a class="game-card" href="./Connections/">
+        <div class="game-icon icon-connections"><i></i><i></i><i></i><i></i></div>
         <div class="game-body">
-          <div class="game-name">Unscramble</div>
-          <div class="game-desc">Race the clock to unscramble anatomy terms.</div>
+          <div class="game-name">Anatomy Connections</div>
+          <div class="game-desc">Find the four hidden groups. A new puzzle every day.</div>
         </div>
         <div class="game-arrow">→</div>
       </a>
-
 
       <a class="game-card" href="./Wordle/">
         <div class="game-icon icon-wordle"><span>W</span></div>
         <div class="game-body">
           <div class="game-name">Anatomy Wordle</div>
           <div class="game-desc">Guess the five-letter anatomy word. A new puzzle every day.</div>
+        </div>
+        <div class="game-arrow">→</div>
+      </a>
+
+      <a class="game-card" href="./Hangman/">
+        <div class="game-icon icon-hangman">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="color:#c8c0b4">
+            <path d="M4 21 H12"/><path d="M6 21 V4"/><path d="M6 4 H16"/><path d="M16 4 V7"/>
+            <circle cx="16" cy="9.5" r="2.2"/><path d="M16 11.7 V16"/><path d="M16 13 L13.5 15"/><path d="M16 13 L18.5 15"/>
+          </svg>
+        </div>
+        <div class="game-body">
+          <div class="game-name">Anatomy Hangman</div>
+          <div class="game-desc">Guess the hidden term one letter at a time. A new puzzle every day.</div>
         </div>
         <div class="game-arrow">→</div>
       </a>
@@ -255,25 +306,11 @@
         <div class="game-arrow">→</div>
       </a>
 
-      <a class="game-card" href="./Connections/">
-        <div class="game-icon icon-connections"><i></i><i></i><i></i><i></i></div>
+      <a class="game-card" href="./Unscramble/">
+        <div class="game-icon icon-unscramble"><span>A</span><span>T</span><span>M</span></div>
         <div class="game-body">
-          <div class="game-name">Anatomy Connections</div>
-          <div class="game-desc">Find the four hidden groups. A new puzzle every day.</div>
-        </div>
-        <div class="game-arrow">→</div>
-      </a>
-
-      <a class="game-card" href="./Hangman/">
-        <div class="game-icon icon-hangman">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="color:#c8c0b4">
-            <path d="M4 21 H12"/><path d="M6 21 V4"/><path d="M6 4 H16"/><path d="M16 4 V7"/>
-            <circle cx="16" cy="9.5" r="2.2"/><path d="M16 11.7 V16"/><path d="M16 13 L13.5 15"/><path d="M16 13 L18.5 15"/>
-          </svg>
-        </div>
-        <div class="game-body">
-          <div class="game-name">Anatomy Hangman</div>
-          <div class="game-desc">Guess the hidden term one letter at a time. A new puzzle every day.</div>
+          <div class="game-name">Unscramble</div>
+          <div class="game-desc">Race the clock to unscramble anatomy terms.</div>
         </div>
         <div class="game-arrow">→</div>
       </a>
