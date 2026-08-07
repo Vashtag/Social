@@ -276,6 +276,78 @@
   // Each daily puzzle = a theme + four terms. `roots` is the ordered list of
   // [fragment, meaning] pairs that spell the term.
   const PUZZLES = [
+    { theme: "Surgical repair (-plasty)", terms: [
+      { def: "Reshaping the nose", roots: [["rhino","nose"],["plasty","surgical repair"]] },
+      { def: "Repair of a blood vessel", roots: [["angio","vessel"],["plasty","surgical repair"]] },
+      { def: "Rebuilding a joint", roots: [["arthro","joint"],["plasty","surgical repair"]] },
+      { def: "Reshaping the breast", roots: [["mammo","breast"],["plasty","surgical repair"]] },
+    ]},
+    { theme: "Flow & discharge (-rrhea)", terms: [
+      { def: "Watery, frequent stools", roots: [["dia","through"],["rrhea","flow"]] },
+      { def: "A runny nose", roots: [["rhino","nose"],["rrhea","flow"]] },
+      { def: "Discharge from the ear", roots: [["oto","ear"],["rrhea","flow"]] },
+      { def: "Discharge of pus", roots: [["pyo","pus"],["rrhea","flow"]] },
+    ]},
+    { theme: "Surgical openings (-stomy)", terms: [
+      { def: "An opening into the colon", roots: [["colo","colon"],["stomy","opening"]] },
+      { def: "An opening into the windpipe", roots: [["tracheo","windpipe"],["stomy","opening"]] },
+      { def: "An opening into the stomach", roots: [["gastro","stomach"],["stomy","opening"]] },
+      { def: "An opening into the bladder", roots: [["cysto","bladder"],["stomy","opening"]] },
+    ]},
+    { theme: "Deficiencies (-penia)", terms: [
+      { def: "Too few white blood cells", roots: [["leuko","white cells"],["penia","deficiency"]] },
+      { def: "Reduced bone density", roots: [["osteo","bone"],["penia","deficiency"]] },
+      { def: "Too few neutrophils", roots: [["neutro","neutrophil"],["penia","deficiency"]] },
+      { def: "Age-related muscle loss", roots: [["sarco","muscle"],["penia","deficiency"]] },
+    ]},
+    { theme: "Blood conditions (-emia)", terms: [
+      { def: "Too few red blood cells", roots: [["an","without"],["emia","blood"]] },
+      { def: "Cancer of the blood", roots: [["leuk","white"],["emia","blood"]] },
+      { def: "Waste products in the blood", roots: [["ur","urine"],["emia","blood"]] },
+      { def: "Restricted blood supply", roots: [["isch","hold back"],["emia","blood"]] },
+    ]},
+    { theme: "Resembling (-oid)", terms: [
+      { def: "Triangular shoulder muscle", roots: [["delt","triangle"],["oid","resembling"]] },
+      { def: "S-shaped part of the colon", roots: [["sigm","S-shape"],["oid","resembling"]] },
+      { def: "Shield-shaped neck gland", roots: [["thyr","shield"],["oid","resembling"]] },
+      { def: "Breast-shaped skull process", roots: [["mast","breast"],["oid","resembling"]] },
+    ]},
+    { theme: "Hernia & swelling (-cele)", terms: [
+      { def: "A fluid-filled scrotal swelling", roots: [["hydro","water"],["cele","swelling"]] },
+      { def: "Bladder bulging into the vagina", roots: [["cysto","bladder"],["cele","hernia"]] },
+      { def: "Rectum bulging into the vagina", roots: [["recto","rectum"],["cele","hernia"]] },
+      { def: "A swelling of scrotal veins", roots: [["varico","varicose vein"],["cele","swelling"]] },
+    ]},
+    { theme: "Growth & wasting (-trophy)", terms: [
+      { def: "Wasting away of tissue", roots: [["a","without"],["trophy","growth"]] },
+      { def: "Overgrowth of a tissue", roots: [["hyper","excessive"],["trophy","growth"]] },
+      { def: "Faulty muscle development", roots: [["dys","faulty"],["trophy","growth"]] },
+      { def: "Underdevelopment of a tissue", roots: [["hypo","under"],["trophy","growth"]] },
+    ]},
+    { theme: "Surgical puncture (-centesis)", terms: [
+      { def: "Draining fluid from the chest", roots: [["thora","chest"],["centesis","puncture"]] },
+      { def: "Tapping fluid from a joint", roots: [["arthro","joint"],["centesis","puncture"]] },
+      { def: "Sampling amniotic fluid", roots: [["amnio","amniotic sac"],["centesis","puncture"]] },
+      { def: "Draining fluid from the abdomen", roots: [["para","beside"],["centesis","puncture"]] },
+    ]},
+    { theme: "Urine conditions (-uria)", terms: [
+      { def: "Blood in the urine", roots: [["hemat","blood"],["uria","urine"]] },
+      { def: "Painful urination", roots: [["dys","painful"],["uria","urine"]] },
+      { def: "Excessive urine output", roots: [["poly","much"],["uria","urine"]] },
+      { def: "Little or no urine", roots: [["an","without"],["uria","urine"]] },
+    ]},
+    { theme: "Eating & swallowing (-phagia)", terms: [
+      { def: "Difficulty swallowing", roots: [["dys","difficult"],["phagia","swallowing"]] },
+      { def: "Inability to swallow", roots: [["a","without"],["phagia","swallowing"]] },
+      { def: "Excessive hunger", roots: [["poly","excessive"],["phagia","eating"]] },
+      { def: "Swallowing of air", roots: [["aero","air"],["phagia","swallowing"]] },
+    ]},
+    { theme: "Disease of an organ (-pathy)", terms: [
+      { def: "Disease of the kidney", roots: [["nephro","kidney"],["pathy","disease"]] },
+      { def: "Disease of a joint", roots: [["arthro","joint"],["pathy","disease"]] },
+      { def: "Disease of the retina", roots: [["retino","retina"],["pathy","disease"]] },
+      { def: "Disease of the spinal cord", roots: [["myelo","spinal cord"],["pathy","disease"]] },
+    ]},
     { theme: "Inflammations (-itis)", terms: [
       { def: "Inflammation of the liver",   roots: [["hepat","liver"],["itis","inflammation"]] },
       { def: "Inflammation of a joint",     roots: [["arthr","joint"],["itis","inflammation"]] },
