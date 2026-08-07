@@ -244,6 +244,15 @@
       .game-arrow { display: none; }
       footer { margin-top: 1.1rem; }
     }
+
+    .game-card { position: relative; }
+    .played-badge {
+      position: absolute; top: 0.55rem; right: 0.6rem;
+      font-size: 0.6rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+      color: #6cc06c; background: rgba(74,147,74,0.14);
+      border: 1px solid rgba(74,147,74,0.42); border-radius: 999px; padding: 0.16rem 0.5rem;
+    }
+    .played-badge.stars { color: #e8c447; background: rgba(232,196,71,0.12); border-color: rgba(232,196,71,0.42); letter-spacing: 0; }
   </style>
   <script data-goatcounter="https://vashtags.goatcounter.com/count"
           async src="//gc.zgo.at/count.js"></script>
@@ -318,5 +327,26 @@
 
     <footer>vashtag · social games</footer>
   </div>
+  <script>
+    (function () {
+      var now = new Date();
+      var dayNumber = Math.floor(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86400000);
+      var EPOCH = Math.floor(Date.UTC(2026, 7, 5) / 86400000);
+      var today = Math.max(0, dayNumber - EPOCH);
+      var map = { Connections: "connections", Wordle: "wordle", Hangman: "hangman", Rootle: "rootle", Waffle: "waffle" };
+      document.querySelectorAll(".game-card").forEach(function (card) {
+        var m = (card.getAttribute("href") || "").match(/\.\/([A-Za-z]+)\//);
+        if (!m || !map[m[1]]) return;
+        var raw; try { raw = JSON.parse(localStorage.getItem("anatomy-daily-" + map[m[1]]) || "null"); } catch (e) {}
+        if (!raw || raw.day !== today) return;
+        var b = document.createElement("div"); b.className = "played-badge";
+        if (map[m[1]] === "waffle" && typeof raw.result === "number") {
+          b.className += " stars"; var st = raw.result;
+          b.textContent = "\u2605".repeat(st) + "\u2606".repeat(5 - st);
+        } else { b.textContent = (raw.won === false ? "Done" : "\u2713 Done"); }
+        card.appendChild(b);
+      });
+    })();
+  </script>
 </body>
 </html>
