@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Anatomy Rootle</title>
-  <meta name="description" content="Build the anatomy term from its Greek and Latin roots. A new puzzle every day." />
+  <meta name="description" content="Use every root tile to build the four medical terms. A new puzzle every day." />
   <meta property="og:title" content="Anatomy Rootle" />
-  <meta property="og:description" content="Assemble the medical term from its root fragments. Learn the anatomy of words. A new puzzle every day." />
+  <meta property="og:description" content="A grid of Greek and Latin roots — use them all to build four anatomy terms. Learn the anatomy of words. A new puzzle every day." />
   <meta property="og:type" content="website" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -19,35 +19,28 @@
       --text: #f0ece4;
       --muted: #777;
       --root: #9a5fd0;
-      --correct: #4a934a;
       --danger: #c95454;
+      --c0: #b59f3b;
+      --c1: #4a934a;
+      --c2: #4a7fd6;
+      --c3: #9a5fd0;
     }
     html, body {
-      min-height: 100%;
-      width: 100%;
-      max-width: 100%;
-      overflow-x: hidden;
-      background: var(--bg);
-      color: var(--text);
+      min-height: 100%; width: 100%; max-width: 100%; overflow-x: hidden;
+      background: var(--bg); color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -webkit-text-size-adjust: 100%;
-      text-size-adjust: 100%;
+      -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;
       text-rendering: optimizeLegibility;
     }
     body {
-      min-height: 100dvh;
-      display: flex;
-      justify-content: center;
-      padding: 1.25rem 1rem calc(1.5rem + env(safe-area-inset-bottom));
-      touch-action: manipulation;
+      min-height: 100dvh; display: flex; justify-content: center;
+      padding: 1.25rem 1rem calc(1.5rem + env(safe-area-inset-bottom)); touch-action: manipulation;
     }
-    .wrap { width: 100%; max-width: 520px; display: flex; flex-direction: column; min-height: calc(100dvh - 2.75rem); }
+    .wrap { width: 100%; max-width: 540px; display: flex; flex-direction: column; min-height: calc(100dvh - 2.75rem); }
 
     header {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0.25rem 0.1rem 1.1rem;
-      border-bottom: 1px solid var(--border); margin-bottom: 1rem;
+      padding: 0.25rem 0.1rem 1.1rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem;
     }
     .brand { display: flex; flex-direction: column; gap: 0.25rem; }
     .brand-title { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; }
@@ -59,94 +52,84 @@
     }
     .back-link:hover { color: var(--text); border-color: #3a3a3a; }
 
-    .daystrip { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 0.9rem; }
+    .daystrip { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 0.7rem; }
     .day-label, .day-num { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
     .day-num { color: var(--text); font-weight: 700; cursor: pointer; user-select: none; -webkit-user-select: none; }
 
-    /* ── Clue ── */
-    .clue-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
-      padding: 1.1rem 1.2rem; text-align: center; margin-bottom: 1.1rem;
-    }
-    .clue-label { font-size: 0.58rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
-    .clue-text { font-size: 1.08rem; line-height: 1.4; font-weight: 600; }
+    .instructions { text-align: center; color: var(--muted); font-size: 0.8rem; line-height: 1.4; margin-bottom: 0.9rem; }
+    .instructions b { color: var(--text); font-weight: 700; }
 
-    /* ── Build zone (where the term is assembled) ── */
-    .build {
-      display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
-      gap: 0.35rem; min-height: 64px; padding: 0.7rem;
-      border: 1.5px dashed var(--border); border-radius: 14px; margin-bottom: 0.5rem;
-      transition: border-color 0.15s, background 0.15s;
+    /* ── Clue rows (the four terms being built) ── */
+    .clues { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
+    .clue {
+      border: 1px solid var(--border); border-radius: 13px; background: var(--surface);
+      padding: 0.7rem 0.85rem; cursor: pointer; transition: border-color 0.15s, background 0.15s;
     }
-    .build.empty::before {
-      content: "Tap roots below to build the term"; color: var(--muted);
-      font-size: 0.82rem; letter-spacing: 0.02em;
-    }
-    body.shake .build { animation: shake 0.4s; border-color: var(--danger); }
-    body.won .build { border-color: var(--correct); border-style: solid; }
+    .clue.focus { border-color: var(--root); background: #191320; }
+    .clue.solved { cursor: default; border-style: solid; }
+    .clue.solved.c0 { background: rgba(181,159,59,0.16); border-color: var(--c0); }
+    .clue.solved.c1 { background: rgba(74,147,74,0.16);  border-color: var(--c1); }
+    .clue.solved.c2 { background: rgba(74,127,214,0.16); border-color: var(--c2); }
+    .clue.solved.c3 { background: rgba(154,95,208,0.16); border-color: var(--c3); }
+    body.shake .clue.focus { animation: shake 0.4s; border-color: var(--danger); }
     @keyframes shake {
-      10%, 90% { transform: translateX(-2px); } 20%, 80% { transform: translateX(4px); }
-      30%, 50%, 70% { transform: translateX(-7px); } 40%, 60% { transform: translateX(7px); }
+      10%, 90% { transform: translateX(-2px); } 20%, 80% { transform: translateX(3px); }
+      30%, 50%, 70% { transform: translateX(-6px); } 40%, 60% { transform: translateX(6px); }
     }
 
-    .assembled { text-align: center; font-size: 0.72rem; letter-spacing: 0.06em; color: var(--muted); min-height: 1rem; margin-bottom: 0.9rem; }
+    .clue-def { font-size: 0.9rem; font-weight: 600; line-height: 1.35; }
+    .clue-slots { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.55rem; align-items: center; }
+    .slot-empty {
+      width: 34px; height: 30px; border: 1.5px dashed var(--border); border-radius: 8px; flex: 0 0 auto;
+    }
+    .placed {
+      display: inline-flex; align-items: center; background: rgba(154,95,208,0.16);
+      border: 1px solid var(--root); border-radius: 8px; padding: 0.28rem 0.55rem;
+      font-size: 0.92rem; font-weight: 800; cursor: pointer;
+    }
+    .clue.solved .placed { background: transparent; border-color: transparent; padding: 0.28rem 0.35rem; cursor: default; }
+    .clue.solved .plus { color: var(--muted); font-weight: 400; font-size: 0.85rem; }
+    .solved-term { font-size: 1.02rem; font-weight: 800; letter-spacing: -0.01em; }
+    .solved-mean { font-size: 0.72rem; color: var(--muted); margin-top: 0.3rem; }
+    .solved-mean b { color: var(--text); }
 
-    /* ── Tiles ── */
-    .tray {
-      display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem;
-      margin-bottom: 1rem;
+    /* ── Tile grid ── */
+    .grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 0.9rem;
     }
     .tile {
-      display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
-      background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px;
-      padding: 0.55rem 0.85rem 0.5rem; cursor: pointer; min-width: 62px;
-      transition: transform 0.1s, border-color 0.15s, background 0.15s, opacity 0.15s;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.1rem;
+      background: var(--surface-2); border: 1px solid var(--border); border-radius: 11px;
+      padding: 0.6rem 0.3rem; cursor: pointer; min-height: 58px;
+      transition: transform 0.1s, border-color 0.15s, opacity 0.15s;
       user-select: none; -webkit-user-select: none;
     }
     .tile:hover { border-color: #3a3a3a; }
     .tile:active { transform: scale(0.95); }
-    .tile.used { opacity: 0.28; pointer-events: none; }
-    .tile-frag { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.01em; }
-    .tile-mean { font-size: 0.62rem; letter-spacing: 0.02em; color: var(--muted); text-transform: lowercase; }
+    .tile.used { visibility: hidden; }
+    .tile-frag { font-size: 1.02rem; font-weight: 800; letter-spacing: -0.01em; }
+    .tile-mean { font-size: 0.58rem; letter-spacing: 0.01em; color: var(--muted); text-align: center; line-height: 1.1; }
 
-    /* placed tile inside build zone */
-    .chip {
-      display: flex; flex-direction: column; align-items: center; gap: 0.12rem;
-      background: rgba(154,95,208,0.14); border: 1px solid var(--root); border-radius: 11px;
-      padding: 0.45rem 0.75rem 0.4rem; cursor: pointer; min-width: 56px;
-      transition: transform 0.1s;
-    }
-    .chip:active { transform: scale(0.95); }
-    body.won .chip { background: rgba(74,147,74,0.16); border-color: var(--correct); cursor: default; }
-    .chip-frag { font-size: 1.1rem; font-weight: 800; }
-    .chip-mean { font-size: 0.58rem; color: var(--muted); text-transform: lowercase; }
-    body.won .chip-mean { color: var(--text); opacity: 0.7; }
+    .status { display: flex; align-items: center; justify-content: center; gap: 0.9rem; margin-bottom: 0.5rem; min-height: 1.4rem; }
+    .mistakes { display: flex; align-items: center; gap: 0.4rem; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--danger); }
+    .dot.spent { background: var(--border); }
 
-    .tries { text-align: center; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
-    .tries b { color: var(--text); }
-
-    .controls { display: flex; justify-content: center; margin-top: auto; }
-    .clear-btn {
+    .controls { display: flex; justify-content: center; gap: 0.6rem; margin-top: auto; }
+    .ghost-btn {
       background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 999px;
-      padding: 0.6rem 1.4rem; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em;
+      padding: 0.55rem 1.2rem; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em;
       text-transform: uppercase; cursor: pointer; transition: all 0.15s;
     }
-    .clear-btn:hover { color: var(--text); border-color: #3a3a3a; }
-    .clear-btn.hidden { display: none; }
+    .ghost-btn:hover { color: var(--text); border-color: #3a3a3a; }
+    .ghost-btn.hidden { display: none; }
 
     /* ── End panel ── */
-    .end { display: none; flex-direction: column; align-items: center; gap: 0.75rem; text-align: center; margin-top: 1rem; }
+    .end { display: none; flex-direction: column; align-items: center; gap: 0.8rem; text-align: center; margin-top: 1rem; }
     .end.show { display: flex; }
     .end-title { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.01em; }
     .end-sub { color: var(--muted); font-size: 0.9rem; line-height: 1.4; }
     .end-sub b { color: var(--text); }
-    .etym {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
-      padding: 0.9rem 1rem; width: 100%; font-size: 0.9rem; line-height: 1.6;
-    }
-    .etym .term { font-weight: 800; font-size: 1.15rem; letter-spacing: -0.01em; margin-bottom: 0.4rem; }
-    .etym .row { color: var(--muted); }
-    .etym .row b { color: var(--root); font-weight: 800; }
     .end-actions { display: flex; gap: 0.6rem; width: 100%; }
     .btn {
       flex: 1; background: transparent; color: var(--text); border: 1px solid #3a3a3a; border-radius: 999px;
@@ -171,7 +154,7 @@
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    /* ── Selfie camera + preview (same structure as the other games) ── */
+    /* ── Selfie camera + preview ── */
     .cam-modal, .cam-preview {
       position: fixed; inset: 0; z-index: 100; background: #000;
       display: none; flex-direction: column; align-items: center; justify-content: center;
@@ -212,26 +195,25 @@
       <span class="day-num" id="day-num"></span>
     </div>
 
-    <div class="clue-card">
-      <div class="clue-label">Build the term that means</div>
-      <div class="clue-text" id="clue"></div>
+    <div class="instructions">
+      Use <b>every</b> root tile to build all four terms. Pick a clue, then tap roots in order.
     </div>
 
-    <div class="build empty" id="build" aria-label="Assembled term"></div>
-    <div class="assembled" id="assembled"></div>
+    <div class="clues" id="clues"></div>
 
-    <div class="tray" id="tray" aria-label="Root fragments"></div>
+    <div class="grid" id="grid" aria-label="Root fragments"></div>
 
-    <div class="tries" id="tries"></div>
+    <div class="status">
+      <div class="mistakes" id="mistakes"></div>
+    </div>
 
     <div class="controls">
-      <button class="clear-btn" id="clear">Clear</button>
+      <button class="ghost-btn" id="clear">Clear clue</button>
     </div>
 
     <div class="end" id="end">
       <div class="end-title" id="end-title"></div>
       <div class="end-sub" id="end-sub"></div>
-      <div class="etym" id="etym"></div>
       <div class="end-actions">
         <button class="btn btn-submit" id="share">
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;margin-right:0.4rem;">
@@ -275,59 +257,115 @@
 
   <script>
   /* ==========================================================================
-     ANATOMY ROOTLE — assemble the daily medical term from its Greek/Latin root
-     fragments. Each tile shows the root's meaning, so building the word teaches
-     how anatomy vocabulary is constructed. Same daily + share flow as the other
-     games in the collection.
+     ANATOMY ROOTLE — a Connections-style root puzzle. Every day you get a grid
+     of Greek/Latin root fragments and four clues. Use ALL the tiles to build
+     the four medical terms — pick a clue, then tap its roots in order. Each tile
+     shows what the root means, so solving teaches how the vocabulary is built.
+     Four wrong groups ends the game (like Connections' four mistakes).
      ========================================================================== */
-  // Each puzzle: the clue is the plain-English meaning; `parts` are the ordered
-  // root fragments (shown scrambled) with what each fragment means.
+  // Each daily puzzle = a theme + four terms. `roots` is the ordered list of
+  // [fragment, meaning] pairs that spell the term.
   const PUZZLES = [
-    { def: "Inflammation of the liver", parts: [["hepat","liver"],["itis","inflammation"]] },
-    { def: "Inflammation of a joint", parts: [["arthr","joint"],["itis","inflammation"]] },
-    { def: "Inflammation of the stomach lining", parts: [["gastr","stomach"],["itis","inflammation"]] },
-    { def: "Inflammation of the kidney", parts: [["nephr","kidney"],["itis","inflammation"]] },
-    { def: "Inflammation of the brain", parts: [["encephal","brain"],["itis","inflammation"]] },
-    { def: "Inflammation of the airways in the lungs", parts: [["bronch","windpipe"],["itis","inflammation"]] },
-    { def: "The study of the heart", parts: [["cardio","heart"],["logy","study of"]] },
-    { def: "The study of the nervous system", parts: [["neuro","nerve"],["logy","study of"]] },
-    { def: "The study of the skin", parts: [["dermato","skin"],["logy","study of"]] },
-    { def: "The study of blood", parts: [["hemato","blood"],["logy","study of"]] },
-    { def: "The study of cells", parts: [["cyto","cell"],["logy","study of"]] },
-    { def: "The study of tissues", parts: [["histo","tissue"],["logy","study of"]] },
-    { def: "The study of disease", parts: [["patho","disease"],["logy","study of"]] },
-    { def: "The membrane sac around the heart", parts: [["peri","around"],["cardium","heart"]] },
-    { def: "The muscular wall of the heart", parts: [["myo","muscle"],["cardium","heart"]] },
-    { def: "The outer layer of the skin", parts: [["epi","upon"],["dermis","skin"]] },
-    { def: "Beneath the skin (an injection)", parts: [["hypo","under"],["derm","skin"],["ic","relating to"]] },
-    { def: "Within a vein (a drip)", parts: [["intra","within"],["ven","vein"],["ous","relating to"]] },
-    { def: "Abnormally fast heart rate", parts: [["tachy","fast"],["cardia","heart"]] },
-    { def: "Abnormally slow heart rate", parts: [["brady","slow"],["cardia","heart"]] },
-    { def: "A red blood cell", parts: [["erythro","red"],["cyte","cell"]] },
-    { def: "A white blood cell", parts: [["leuko","white"],["cyte","cell"]] },
-    { def: "A bone-forming cell", parts: [["osteo","bone"],["blast","forming cell"]] },
-    { def: "Enlargement of the liver", parts: [["hepato","liver"],["megaly","enlargement"]] },
-    { def: "Enlargement of the spleen", parts: [["spleno","spleen"],["megaly","enlargement"]] },
-    { def: "Looking inside a joint with a scope", parts: [["arthro","joint"],["scopy","viewing"]] },
-    { def: "Looking inside the colon with a scope", parts: [["colono","colon"],["scopy","viewing"]] },
-    { def: "An X-ray record of the breast", parts: [["mammo","breast"],["gram","record"]] },
-    { def: "A record of the heart's electrical activity", parts: [["electro","electric"],["cardio","heart"],["gram","record"]] },
-    { def: "Surgical removal of the stomach", parts: [["gastr","stomach"],["ectomy","removal"]] },
-    { def: "Surgical removal of the appendix", parts: [["append","appendix"],["ectomy","removal"]] },
-    { def: "Surgical removal of the tonsils", parts: [["tonsill","tonsils"],["ectomy","removal"]] },
-    { def: "Surgical removal of a kidney", parts: [["nephr","kidney"],["ectomy","removal"]] },
-    { def: "Cutting into the skull (brain surgery)", parts: [["cranio","skull"],["tomy","cutting"]] },
-    { def: "Difficult or laboured breathing", parts: [["dys","difficult"],["pnea","breathing"]] },
-    { def: "Temporary absence of breathing", parts: [["a","without"],["pnea","breathing"]] },
-    { def: "Nerve pain", parts: [["neur","nerve"],["algia","pain"]] },
-    { def: "Muscle pain", parts: [["my","muscle"],["algia","pain"]] },
-    { def: "Joint pain", parts: [["arthr","joint"],["algia","pain"]] },
-    { def: "A bluish colour from lack of oxygen", parts: [["cyan","blue"],["osis","condition"]] },
-    { def: "Relating to the heart and blood vessels", parts: [["cardio","heart"],["vascular","vessels"]] },
-    { def: "Located between the ribs", parts: [["inter","between"],["costal","ribs"]] },
-    { def: "Located beneath the tongue", parts: [["sub","under"],["lingual","tongue"]] },
-    { def: "Wear-and-tear inflammation of the joints", parts: [["osteo","bone"],["arthr","joint"],["itis","inflammation"]] },
+    { theme: "Inflammations (-itis)", terms: [
+      { def: "Inflammation of the liver",   roots: [["hepat","liver"],["itis","inflammation"]] },
+      { def: "Inflammation of a joint",     roots: [["arthr","joint"],["itis","inflammation"]] },
+      { def: "Inflammation of the stomach", roots: [["gastr","stomach"],["itis","inflammation"]] },
+      { def: "Inflammation of the kidney",  roots: [["nephr","kidney"],["itis","inflammation"]] },
+    ]},
+    { theme: "Fields of study (-logy)", terms: [
+      { def: "Study of the heart",  roots: [["cardio","heart"],["logy","study of"]] },
+      { def: "Study of the nerves", roots: [["neuro","nerve"],["logy","study of"]] },
+      { def: "Study of the skin",   roots: [["dermato","skin"],["logy","study of"]] },
+      { def: "Study of blood",      roots: [["hemato","blood"],["logy","study of"]] },
+    ]},
+    { theme: "Surgical removals (-ectomy)", terms: [
+      { def: "Removal of the stomach", roots: [["gastr","stomach"],["ectomy","removal"]] },
+      { def: "Removal of the appendix",roots: [["append","appendix"],["ectomy","removal"]] },
+      { def: "Removal of the tonsils", roots: [["tonsill","tonsils"],["ectomy","removal"]] },
+      { def: "Removal of a kidney",    roots: [["nephr","kidney"],["ectomy","removal"]] },
+    ]},
+    { theme: "All about the heart", terms: [
+      { def: "The sac around the heart",     roots: [["peri","around"],["cardium","heart"]] },
+      { def: "The muscle wall of the heart", roots: [["myo","muscle"],["cardium","heart"]] },
+      { def: "Abnormally fast heart rate",   roots: [["tachy","fast"],["cardia","heart"]] },
+      { def: "Abnormally slow heart rate",   roots: [["brady","slow"],["cardia","heart"]] },
+    ]},
+    { theme: "Cells (-cyte)", terms: [
+      { def: "A red blood cell",   roots: [["erythro","red"],["cyte","cell"]] },
+      { def: "A white blood cell", roots: [["leuko","white"],["cyte","cell"]] },
+      { def: "A bone cell",        roots: [["osteo","bone"],["cyte","cell"]] },
+      { def: "A pigment cell",     roots: [["melano","dark"],["cyte","cell"]] },
+    ]},
+    { theme: "Pains (-algia)", terms: [
+      { def: "Nerve pain",  roots: [["neur","nerve"],["algia","pain"]] },
+      { def: "Muscle pain", roots: [["my","muscle"],["algia","pain"]] },
+      { def: "Joint pain",  roots: [["arthr","joint"],["algia","pain"]] },
+      { def: "Head pain",   roots: [["cephal","head"],["algia","pain"]] },
+    ]},
+    { theme: "Looking & recording", terms: [
+      { def: "Scoping inside a joint", roots: [["arthro","joint"],["scopy","viewing"]] },
+      { def: "Scoping inside the colon", roots: [["colono","colon"],["scopy","viewing"]] },
+      { def: "X-ray record of the breast", roots: [["mammo","breast"],["gram","record"]] },
+      { def: "Record of a blood vessel", roots: [["angio","vessel"],["gram","record"]] },
+    ]},
+    { theme: "Enlargements (-megaly)", terms: [
+      { def: "Enlarged liver",  roots: [["hepato","liver"],["megaly","enlargement"]] },
+      { def: "Enlarged spleen", roots: [["spleno","spleen"],["megaly","enlargement"]] },
+      { def: "Enlarged heart",  roots: [["cardio","heart"],["megaly","enlargement"]] },
+      { def: "Enlarged extremities", roots: [["acro","extremities"],["megaly","enlargement"]] },
+    ]},
+    { theme: "Breathing (-pnea)", terms: [
+      { def: "Difficult breathing", roots: [["dys","difficult"],["pnea","breathing"]] },
+      { def: "Absence of breathing", roots: [["a","without"],["pnea","breathing"]] },
+      { def: "Rapid breathing",     roots: [["tachy","fast"],["pnea","breathing"]] },
+      { def: "Slow breathing",      roots: [["brady","slow"],["pnea","breathing"]] },
+    ]},
+    { theme: "Incisions (-tomy)", terms: [
+      { def: "Cutting into the skull",   roots: [["cranio","skull"],["tomy","cutting"]] },
+      { def: "Cutting into the windpipe",roots: [["tracheo","windpipe"],["tomy","cutting"]] },
+      { def: "Cutting into the abdomen", roots: [["laparo","abdomen"],["tomy","cutting"]] },
+      { def: "Cutting into a vein (draw blood)", roots: [["phlebo","vein"],["tomy","cutting"]] },
+    ]},
+    { theme: "Colours in the body", terms: [
+      { def: "A bluish tinge (low oxygen)", roots: [["cyan","blue"],["osis","condition"]] },
+      { def: "A red blood cell",   roots: [["erythro","red"],["cyte","cell"]] },
+      { def: "A white blood cell", roots: [["leuko","white"],["cyte","cell"]] },
+      { def: "Skin pigment cell",  roots: [["melano","dark"],["cyte","cell"]] },
+    ]},
+    { theme: "Conditions of the blood", terms: [
+      { def: "Bluish discolouration", roots: [["cyan","blue"],["osis","condition"]] },
+      { def: "Tissue death",          roots: [["necr","death"],["osis","condition"]] },
+      { def: "Lack of red blood cells", roots: [["an","without"],["emia","blood"]] },
+      { def: "Cancer of the blood",   roots: [["leuk","white"],["emia","blood"]] },
+    ]},
+    { theme: "Skin terms (derm)", terms: [
+      { def: "The outer skin layer",    roots: [["epi","upon"],["dermis","skin"]] },
+      { def: "Beneath the skin (a needle)", roots: [["hypo","under"],["derm","skin"],["ic","relating to"]] },
+      { def: "The study of skin",       roots: [["dermato","skin"],["logy","study of"]] },
+      { def: "Inflammation of the skin",roots: [["dermat","skin"],["itis","inflammation"]] },
+    ]},
+    { theme: "Three-root terms", terms: [
+      { def: "A tracing of the heart's electrical activity", roots: [["electro","electric"],["cardio","heart"],["gram","record"]] },
+      { def: "Wear-and-tear joint inflammation", roots: [["osteo","bone"],["arthr","joint"],["itis","inflammation"]] },
+      { def: "Study of the stomach and intestines", roots: [["gastro","stomach"],["entero","intestine"],["logy","study of"]] },
+      { def: "Beneath the skin (an injection)", roots: [["hypo","under"],["derm","skin"],["ic","relating to"]] },
+    ]},
+    { theme: "Position prefixes", terms: [
+      { def: "Within a vein (an IV drip)", roots: [["intra","within"],["ven","vein"],["ous","relating to"]] },
+      { def: "Beneath the tongue",  roots: [["sub","under"],["lingual","tongue"]] },
+      { def: "Between the ribs",    roots: [["inter","between"],["costal","ribs"]] },
+      { def: "Upon the skin",       roots: [["epi","upon"],["dermis","skin"]] },
+    ]},
+    { theme: "Tumours & disease", terms: [
+      { def: "A cancerous tumour",   roots: [["carcin","cancer"],["oma","tumour"]] },
+      { def: "A dark skin tumour",   roots: [["melan","dark"],["oma","tumour"]] },
+      { def: "Disease of the nerves",roots: [["neuro","nerve"],["pathy","disease"]] },
+      { def: "Disease of the muscle",roots: [["myo","muscle"],["pathy","disease"]] },
+    ]},
   ];
+
+  const MAX_MISTAKES = 4;
+  const COLORS = ["#b59f3b", "#4a934a", "#4a7fd6", "#9a5fd0"];
 
   const $ = (id) => document.getElementById(id);
   const now = new Date();
@@ -337,7 +375,6 @@
   const puzzleNumber = dayIndex + 1;
   const dateKey = now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate();
 
-  // Deterministic, non-sequential daily order (same for everyone).
   function mulberry32(a) {
     return function () {
       a |= 0; a = (a + 0x6D2B79F5) | 0;
@@ -351,127 +388,174 @@
     for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
     return a;
   }
+
   const ORDER = seededShuffle(PUZZLES, 20260805);
-  const entry = ORDER[dayIndex % ORDER.length];
-  const PARTS = entry.parts;                          // ordered [frag, meaning]
-  const clue = entry.def;
-  const answer = PARTS.map((p) => p[0]).join("");     // the full term, lowercase
+  const puzzle = ORDER[dayIndex % ORDER.length];
+  const TERMS = puzzle.terms;                                   // 4 clues
+  const ANSWERS = TERMS.map((t) => t.roots.map((r) => r[0]).join(""));
 
-  // Fixed tray order: fragments shuffled with a per-puzzle seed so it's stable
-  // across reloads but not simply left-to-right.
-  const TRAY = seededShuffle(PARTS.map((p, i) => ({ frag: p[0], mean: p[1], orig: i })), 91 + dayIndex * 7);
+  // Flatten every root into a tile pool, then shuffle for the grid.
+  const POOL = seededShuffle(
+    TERMS.flatMap((t, ci) => t.roots.map((r) => ({ frag: r[0], mean: r[1], term: ci }))),
+    613 + dayIndex * 17
+  );
 
-  let state = { placed: [], tries: 0, finished: false, won: false };
+  // assign[c] = ordered list of POOL indices placed on clue c.
+  let state = { assign: [[], [], [], []], solved: [false, false, false, false], mistakes: 0, focus: 0, finished: false };
 
-  function gameKey() { return "anatomy-rootle-v1-" + dateKey; }
+  function gameKey() { return "anatomy-rootle-v2-" + dateKey; }
   function load() {
-    try {
-      const s = JSON.parse(localStorage.getItem(gameKey()) || "null");
-      if (s && Array.isArray(s.placed)) state = s;
-    } catch (e) {}
+    try { const s = JSON.parse(localStorage.getItem(gameKey()) || "null"); if (s && s.assign) state = s; } catch (e) {}
   }
-  function save() {
-    try { localStorage.setItem(gameKey(), JSON.stringify(state)); } catch (e) {}
-  }
+  function save() { try { localStorage.setItem(gameKey(), JSON.stringify(state)); } catch (e) {} }
 
-  function currentWord() { return state.placed.map((ti) => TRAY[ti].frag).join(""); }
+  function usedSet() { const u = new Set(); state.assign.forEach((a) => a.forEach((i) => u.add(i))); return u; }
+  function wordFor(c) { return state.assign[c].map((i) => POOL[i].frag).join(""); }
+  function firstUnsolved() { for (let c = 0; c < 4; c++) if (!state.solved[c]) return c; return 0; }
 
   function render() {
-    $("clue").textContent = clue;
+    if (state.finished || !state.solved[state.focus]) { /* keep focus */ }
+    else state.focus = firstUnsolved();
 
-    // Build zone
-    const build = $("build");
-    build.classList.toggle("empty", state.placed.length === 0);
-    build.innerHTML = state.placed.map((ti) => {
-      const t = TRAY[ti];
-      return '<div class="chip" data-tray="' + ti + '"><span class="chip-frag">' + t.frag +
-             '</span><span class="chip-mean">' + t.mean + '</span></div>';
-    }).join("");
-    build.querySelectorAll(".chip").forEach((c) => {
-      c.addEventListener("click", () => { if (!state.finished) removeTile(+c.dataset.tray); });
+    // Clues
+    const clues = $("clues"); clues.innerHTML = "";
+    TERMS.forEach((t, c) => {
+      const el = document.createElement("div");
+      el.className = "clue" + (state.solved[c] ? " solved c" + c : "") + (!state.solved[c] && c === state.focus && !state.finished ? " focus" : "");
+      if (state.solved[c]) {
+        const chips = t.roots.map((r, i) =>
+          (i ? '<span class="plus">+</span>' : "") + '<span class="placed">' + r[0] + "</span>").join("");
+        el.innerHTML =
+          '<div class="solved-term">' + ANSWERS[c] + "</div>" +
+          '<div class="clue-slots">' + chips + "</div>" +
+          '<div class="solved-mean">' + t.def + " · <b>" + t.roots.map((r) => r[1]).join(" + ") + "</b></div>";
+      } else {
+        const need = t.roots.length;
+        const placed = state.assign[c];
+        let slots = "";
+        for (let i = 0; i < need; i++) {
+          if (i < placed.length) slots += '<span class="placed" data-remove="' + placed[i] + '">' + POOL[placed[i]].frag + "</span>";
+          else slots += '<span class="slot-empty"></span>';
+        }
+        el.innerHTML = '<div class="clue-def">' + t.def + "</div>" + '<div class="clue-slots">' + slots + "</div>";
+        el.addEventListener("click", (e) => {
+          const rm = e.target.closest("[data-remove]");
+          if (rm) { removeTile(c, +rm.dataset.remove); return; }
+          state.focus = c; save(); render();
+        });
+      }
+      clues.appendChild(el);
     });
 
-    // Live "word so far"
-    $("assembled").textContent = state.placed.length ? currentWord() : "";
-
-    // Tray
-    const tray = $("tray");
-    tray.innerHTML = TRAY.map((t, ti) => {
-      const used = state.placed.indexOf(ti) !== -1;
-      return '<div class="tile' + (used ? " used" : "") + '" data-tray="' + ti + '"><span class="tile-frag">' +
-             t.frag + '</span><span class="tile-mean">' + t.mean + '</span></div>';
-    }).join("");
-    tray.querySelectorAll(".tile").forEach((el) => {
-      el.addEventListener("click", () => { if (!state.finished) placeTile(+el.dataset.tray); });
+    // Grid
+    const used = usedSet();
+    const grid = $("grid"); grid.innerHTML = "";
+    POOL.forEach((tile, i) => {
+      const el = document.createElement("div");
+      el.className = "tile" + (used.has(i) ? " used" : "");
+      el.innerHTML = '<span class="tile-frag">' + tile.frag + '</span><span class="tile-mean">' + tile.mean + "</span>";
+      if (!used.has(i)) el.addEventListener("click", () => placeTile(i));
+      grid.appendChild(el);
     });
 
-    $("tries").innerHTML = "Wrong tries <b>" + state.tries + "</b>";
-    $("clear").classList.toggle("hidden", state.finished || state.placed.length === 0);
+    // Mistakes
+    let dots = "";
+    for (let i = 0; i < MAX_MISTAKES; i++) dots += '<span class="dot' + (i < state.mistakes ? " spent" : "") + '"></span>';
+    $("mistakes").innerHTML = "Mistakes " + dots;
 
-    document.body.classList.toggle("won", state.finished && state.won);
+    const anyPlaced = state.assign[state.focus] && state.assign[state.focus].length > 0 && !state.solved[state.focus];
+    $("clear").classList.toggle("hidden", state.finished || !anyPlaced);
+
     if (state.finished) showEnd();
     else $("end").classList.remove("show");
   }
 
-  function placeTile(ti) {
-    if (state.placed.indexOf(ti) !== -1) return;
-    state.placed.push(ti);
+  function placeTile(i) {
+    if (state.finished) return;
+    const c = state.focus;
+    if (state.solved[c]) { state.focus = firstUnsolved(); return render(); }
+    if (usedSet().has(i)) return;
+    if (state.assign[c].length >= TERMS[c].roots.length) return;
+    state.assign[c].push(i);
     save();
-    if (state.placed.length === TRAY.length) checkAnswer();
+    if (state.assign[c].length === TERMS[c].roots.length) checkClue(c);
     else render();
   }
 
-  function removeTile(ti) {
-    const i = state.placed.indexOf(ti);
-    if (i !== -1) { state.placed.splice(i, 1); save(); render(); }
+  function removeTile(c, i) {
+    if (state.finished || state.solved[c]) return;
+    const idx = state.assign[c].indexOf(i);
+    if (idx !== -1) { state.assign[c].splice(idx, 1); save(); render(); }
   }
 
-  function clearAll() {
-    if (state.finished) return;
-    state.placed = []; save(); render();
+  function clearClue() {
+    const c = state.focus;
+    if (state.finished || state.solved[c]) return;
+    state.assign[c] = []; save(); render();
   }
 
-  function checkAnswer() {
-    if (currentWord() === answer) {
-      finish(true);
+  function checkClue(c) {
+    if (wordFor(c) === ANSWERS[c]) {
+      state.solved[c] = true;
+      save();
+      if (state.solved.every(Boolean)) finish(true);
+      else { state.focus = firstUnsolved(); render(); }
     } else {
-      state.tries++;
+      state.mistakes++;
+      state.assign[c] = [];
       save();
       render();
       document.body.classList.add("shake");
-      setTimeout(() => document.body.classList.remove("shake"), 450);
-      toast("Not quite — reorder the roots");
+      setTimeout(() => document.body.classList.remove("shake"), 430);
+      if (state.mistakes >= MAX_MISTAKES) finish(false);
+      else toast("Not a match — try again");
     }
   }
 
   function finish(won) {
     state.finished = true;
     state.won = won;
+    // Reveal any unsolved clues with their correct roots.
+    TERMS.forEach((t, c) => {
+      if (!state.solved[c]) {
+        // find pool indices for this term's roots that are still free
+        const used = usedSet();
+        const picks = [];
+        t.roots.forEach((r) => {
+          for (let i = 0; i < POOL.length; i++) {
+            if (used.has(i) || picks.indexOf(i) !== -1) continue;
+            if (POOL[i].frag === r[0]) { picks.push(i); break; }
+          }
+        });
+        state.assign[c] = picks;
+        state.solved[c] = true;
+      }
+    });
     save();
     render();
-  }
-
-  function etymHTML() {
-    const rows = PARTS.map((p) => '<div class="row"><b>' + p[0] + '</b> — ' + p[1] + '</div>').join("");
-    return '<div class="term">' + PARTS.map((p) => p[0]).join("·") + '</div>' + rows;
   }
 
   function showEnd() {
     $("clear").classList.add("hidden");
     const end = $("end"); end.classList.add("show");
-    $("end-title").textContent = "Solved it!";
-    $("end-sub").innerHTML = state.tries === 0
-      ? "First try — flawless."
-      : "Solved with <b>" + state.tries + "</b> wrong " + (state.tries === 1 ? "try" : "tries") + ".";
-    $("etym").innerHTML = etymHTML();
+    if (state.won) {
+      $("end-title").textContent = state.mistakes === 0 ? "Perfect!" : "Solved it!";
+      $("end-sub").innerHTML = state.mistakes === 0
+        ? "All four terms, no mistakes."
+        : "All four terms with <b>" + state.mistakes + "</b> mistake" + (state.mistakes === 1 ? "" : "s") + ".";
+    } else {
+      $("end-title").textContent = "Out of tries";
+      $("end-sub").innerHTML = "Here's how the roots fit together.";
+    }
   }
 
-  /* ── Share text ── */
+  /* ── Share text (Connections-style colour grid) ── */
   function buildShareText() {
-    const score = state.tries === 0 ? "first try" : state.tries + " wrong " + (state.tries === 1 ? "try" : "tries");
-    const header = "Anatomy Rootle No. " + puzzleNumber + " — " + PARTS.length + " roots, " + score;
-    const boxes = "🟪".repeat(PARTS.length);
-    return header + "\n" + boxes + "\n" + location.origin + location.pathname;
+    const sq = ["🟨", "🟩", "🟦", "🟪"];
+    const rows = TERMS.map((t, c) => sq[c].repeat(t.roots.length)).join("\n");
+    const head = "Anatomy Rootle No. " + puzzleNumber +
+      (state.won ? " — " + (state.mistakes === 0 ? "perfect" : state.mistakes + " mistake" + (state.mistakes === 1 ? "" : "s")) : " — stumped");
+    return head + "\n" + rows + "\n" + location.origin + location.pathname;
   }
   async function shareText() {
     const text = buildShareText();
@@ -481,18 +565,21 @@
   }
 
   /* ── Selfie + share to story ── */
-  let _camStream = null;
-  let _lastBlob = null;
-
+  let _camStream = null, _lastBlob = null;
   function stopCam() { if (_camStream) { _camStream.getTracks().forEach((t) => t.stop()); _camStream = null; } }
   async function openCam() {
     try {
       _camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
-      $("cam-video").srcObject = _camStream;
-      $("cam-modal").classList.add("show");
+      $("cam-video").srcObject = _camStream; $("cam-modal").classList.add("show");
     } catch (e) { toast("Camera unavailable — copying text"); shareText(); }
   }
   function closeCam() { $("cam-modal").classList.remove("show"); stopCam(); }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
 
   function capture() {
     const video = $("cam-video");
@@ -500,11 +587,10 @@
     const canvas = document.createElement("canvas");
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext("2d");
-
     ctx.fillStyle = "#0d0d0d"; ctx.fillRect(0, 0, W, H);
 
     const vw = video.videoWidth || 1080, vh = video.videoHeight || 1920;
-    const regionH = Math.round(H * 0.6);
+    const regionH = Math.round(H * 0.56);
     const scale = Math.min(W / vw, regionH / vh);
     const dw = vw * scale, dh = vh * scale;
     const dx = (W - dw) / 2, dy = (regionH - dh) / 2;
@@ -518,58 +604,42 @@
     ctx.textAlign = "center";
 
     ctx.fillStyle = "rgba(240,236,228,0.6)";
-    ctx.font = "600 " + Math.round(W * 0.031) + "px -apple-system,'Segoe UI',sans-serif";
-    ctx.fillText("A N A T O M Y   R O O T L E", cx, panelTop + 78);
+    ctx.font = "600 " + Math.round(W * 0.03) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText("A N A T O M Y   R O O T L E", cx, panelTop + 70);
 
     ctx.fillStyle = "#f0ece4";
     ctx.font = "800 " + Math.round(W * 0.088) + "px -apple-system,'Segoe UI',sans-serif";
-    ctx.fillText(answer.toUpperCase(), cx, panelTop + 176);
+    ctx.fillText(state.won ? "SOLVED" : "STUMPED", cx, panelTop + 166);
 
     ctx.fillStyle = "rgba(240,236,228,0.65)";
-    ctx.font = "600 " + Math.round(W * 0.036) + "px -apple-system,'Segoe UI',sans-serif";
-    const score = state.tries === 0 ? "first try" : state.tries + " wrong " + (state.tries === 1 ? "try" : "tries");
-    ctx.fillText("No. " + puzzleNumber + "  ·  " + score, cx, panelTop + 232);
+    ctx.font = "600 " + Math.round(W * 0.034) + "px -apple-system,'Segoe UI',sans-serif";
+    const scoreTxt = state.won ? (state.mistakes === 0 ? "no mistakes" : state.mistakes + " mistake" + (state.mistakes === 1 ? "" : "s")) : "the roots revealed";
+    ctx.fillText("No. " + puzzleNumber + "  ·  " + scoreTxt, cx, panelTop + 220);
 
-    // Root chips
-    const chips = PARTS.map((p) => p[0]);
-    ctx.font = "800 " + Math.round(W * 0.032) + "px -apple-system,'Segoe UI',sans-serif";
-    const padX = Math.round(W * 0.028), gap = Math.round(W * 0.022), chipH = Math.round(W * 0.072);
-    const widths = chips.map((c) => ctx.measureText(c).width + padX * 2);
-    const totalW = widths.reduce((a, b) => a + b, 0) + gap * (chips.length - 1);
-    let x0 = cx - totalW / 2;
-    const chipY = panelTop + 288;
-    chips.forEach((c, i) => {
-      const w = widths[i];
-      ctx.fillStyle = "rgba(154,95,208,0.22)";
-      roundRect(ctx, x0, chipY, w, chipH, chipH / 2.6); ctx.fill();
-      ctx.strokeStyle = "#9a5fd0"; ctx.lineWidth = 2.5;
-      roundRect(ctx, x0, chipY, w, chipH, chipH / 2.6); ctx.stroke();
-      ctx.fillStyle = "#f0ece4";
-      ctx.fillText(c, x0 + w / 2, chipY + chipH / 2 + Math.round(W * 0.012));
-      x0 += w + gap;
+    // Four rows: coloured squares per term
+    const sq = Math.round(W * 0.05), gap = Math.round(W * 0.018), rowGap = Math.round(W * 0.02);
+    let y = panelTop + 270;
+    TERMS.forEach((t, c) => {
+      const n = t.roots.length;
+      const rowW = n * sq + (n - 1) * gap;
+      let x = cx - rowW / 2;
+      for (let i = 0; i < n; i++) {
+        ctx.fillStyle = COLORS[c];
+        roundRect(ctx, x, y, sq, sq, sq * 0.28); ctx.fill();
+        x += sq + gap;
+      }
+      y += sq + rowGap;
     });
 
-    // Footer URL
     ctx.fillStyle = "rgba(240,236,228,0.5)";
     ctx.font = "600 " + Math.round(W * 0.026) + "px -apple-system,'Segoe UI',sans-serif";
-    ctx.fillText("PLAY  ·  " + (location.host || "vashtag social games").toUpperCase(), cx, H - 84);
+    ctx.fillText("PLAY  ·  " + (location.host || "vashtag social games").toUpperCase(), cx, H - 80);
 
     const dataUrl = canvas.toDataURL("image/png");
     $("cam-img").src = dataUrl;
     canvas.toBlob((b) => { _lastBlob = b; }, "image/png");
-
     closeCam();
     $("cam-preview").classList.add("show");
-  }
-
-  function roundRect(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
   }
 
   async function shareImage() {
@@ -587,8 +657,7 @@
   function dataURLtoBlob(dataUrl) {
     const parts = dataUrl.split(",");
     const mime = (parts[0].match(/:(.*?);/) || [])[1] || "image/png";
-    const bin = atob(parts[1]);
-    const arr = new Uint8Array(bin.length);
+    const bin = atob(parts[1]); const arr = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
     return new Blob([arr], { type: mime });
   }
@@ -608,8 +677,7 @@
       catch (e) { if (e && e.name === "AbortError") return; }
     }
     const url = URL.createObjectURL(_lastBlob);
-    const a = document.createElement("a");
-    a.href = url; a.download = filename;
+    const a = document.createElement("a"); a.href = url; a.download = filename;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
     toast("Photo saved");
@@ -631,7 +699,7 @@
   }
 
   /* ── Events ── */
-  $("clear").addEventListener("click", clearAll);
+  $("clear").addEventListener("click", clearClue);
   $("share").addEventListener("click", openCam);
   $("copy-text").addEventListener("click", shareText);
   $("cam-shutter").addEventListener("click", capture);
@@ -648,7 +716,7 @@
     if (_tapCount >= 5) {
       _tapCount = 0; clearTimeout(_tapTimer);
       try { localStorage.removeItem(gameKey()); } catch (e) {}
-      state = { placed: [], tries: 0, finished: false, won: false };
+      state = { assign: [[], [], [], []], solved: [false, false, false, false], mistakes: 0, focus: 0, finished: false };
       render(); toast("Puzzle reset");
     }
   });
