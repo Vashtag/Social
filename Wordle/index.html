@@ -584,6 +584,23 @@
     ctx.closePath();
   }
 
+  // QR to the games landing page (https://vashtag.github.io/Social/) — 29×29, ECC-M.
+  const QR_SOCIAL_SIZE = 29;
+  const QR_SOCIAL = "1111111001101111001010111111110000010100100010100001000001101110101011101010110010111011011101010001011010010101110110111010011111110111101011101100000100001011010101010000011111111010101010101010111111100000000100101000000100000000100000101010101101001110011101111100001111010011101011011000111110010110000100000010000110110011001101110000000010001110101000110110101010110000101101100000111100111101110011111000111101111111000101011000100110100011111000001101010111011010111000100000100101100111111011101000100011011101111110111101000111101100101100110100101100100101000011010000101110101011000001011111101110000000011011101011010001100011111110011001111101101011100100000100101110000011000100101011101001111101100111111101110111010011100011011100001101101110100101110111110111111101000001000100010100001000110111111110111110000101011111100";
+  function drawQR(ctx, boxX, boxY, box) {
+    const quiet = 4, total = QR_SOCIAL_SIZE + quiet * 2, m = box / total;
+    roundRect(ctx, boxX, boxY, box, box, m * 2);
+    ctx.fillStyle = "#f0ece4"; ctx.fill();
+    ctx.fillStyle = "#0d0d0d";
+    for (let r = 0; r < QR_SOCIAL_SIZE; r++) {
+      for (let c = 0; c < QR_SOCIAL_SIZE; c++) {
+        if (QR_SOCIAL[r * QR_SOCIAL_SIZE + c] === "1") {
+          ctx.fillRect(boxX + (quiet + c) * m, boxY + (quiet + r) * m, Math.ceil(m) + 0.6, Math.ceil(m) + 0.6);
+        }
+      }
+    }
+  }
+
   function captureCamera() {
     const video = $("camera-video");
     const W = 1080, H = 1920;
@@ -623,13 +640,18 @@
     ctx.font = "600 " + Math.round(W * 0.036) + "px -apple-system,'Segoe UI',sans-serif";
     ctx.fillText("No. " + puzzleNumber + "  ·  " + (state.won ? state.guesses.length : "X") + "/6", cx, panelTop + 226);
 
+    // Result grid: green / yellow / black boxes only (no letters), with the QR beside it.
     const colors = { correct: "#4a934a", present: "#b59f3b", absent: "#333333" };
     const rows = state.guesses.length || 1;
     const gap = Math.round(W * 0.014);
-    const sq = Math.min(Math.round(W * 0.075), Math.floor((H - panelTop - 360 - (rows - 1) * gap) / rows));
+    const sq = Math.min(Math.round(W * 0.062), Math.floor((H - panelTop - 400 - (rows - 1) * gap) / rows));
     const gridW = LEN * sq + (LEN - 1) * gap;
-    const gridTop = panelTop + 288;
-    const gx0 = cx - gridW / 2;
+    const gridH = rows * sq + (rows - 1) * gap;
+    const qrBox = Math.round(W * 0.2);
+    const groupGap = Math.round(W * 0.055);
+    const groupW = gridW + groupGap + qrBox;
+    const gridTop = panelTop + 300;
+    const gx0 = cx - groupW / 2;
     state.guesses.forEach((guess, r) => {
       const score = scoreGuess(guess);
       for (let c = 0; c < LEN; c++) {
@@ -638,15 +660,16 @@
         roundRect(ctx, x, y, sq, sq, sq * 0.18);
         ctx.fillStyle = colors[score[c]];
         ctx.fill();
-        ctx.fillStyle = score[c] === "absent" ? "#f0ece4" : "#0d0d0d";
-        ctx.font = "800 " + Math.round(sq * 0.52) + "px -apple-system,'Segoe UI',sans-serif";
-        ctx.fillText(guess[c], x + sq / 2, y + sq * 0.68);
       }
     });
 
+    // QR to the social page, vertically centred against the grid
+    const qrX = gx0 + gridW + groupGap;
+    const qrY = gridTop + Math.max(0, (gridH - qrBox) / 2);
+    drawQR(ctx, qrX, qrY, qrBox);
     ctx.fillStyle = "rgba(240,236,228,0.55)";
-    ctx.font = "600 " + Math.round(W * 0.028) + "px -apple-system,'Segoe UI',sans-serif";
-    ctx.fillText("vashtag.github.io/Social/Wordle", cx, H - 90);
+    ctx.font = "600 " + Math.round(W * 0.02) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText("SCAN TO PLAY", qrX + qrBox / 2, qrY + qrBox + 30);
 
     const dataUrl = canvas.toDataURL("image/png");
     $("camera-img").src = dataUrl;
