@@ -140,6 +140,27 @@
     .icon-rootle i:nth-child(2){ width: 100%; }
     .icon-rootle i:nth-child(3){ width: 45%; opacity: 0.8; }
 
+    /* Waffle icon — waffle grid with holes */
+    .icon-waffle {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 3px;
+      padding: 9px;
+      background: #121212;
+      border: 1px solid #333;
+    }
+    .icon-waffle i { border-radius: 3px; display: block; width: 100%; height: 100%; }
+    .icon-waffle i:nth-child(1){ background: var(--cat-green); }
+    .icon-waffle i:nth-child(2){ background: var(--cat-yellow); }
+    .icon-waffle i:nth-child(3){ background: var(--cat-green); }
+    .icon-waffle i:nth-child(4){ background: var(--cat-yellow); }
+    .icon-waffle i:nth-child(5){ background: #2a2a2a; }
+    .icon-waffle i:nth-child(6){ background: var(--cat-yellow); }
+    .icon-waffle i:nth-child(7){ background: var(--cat-green); }
+    .icon-waffle i:nth-child(8){ background: var(--cat-yellow); }
+    .icon-waffle i:nth-child(9){ background: var(--cat-green); }
+
     /* Connections icon — 2x2 colour grid */
     .icon-connections {
       display: grid;
@@ -221,6 +242,15 @@
         <div class="game-body">
           <div class="game-name">Anatomy Rootle</div>
           <div class="game-desc">Use every root tile to build four anatomy terms. A new puzzle every day.</div>
+        </div>
+        <div class="game-arrow">→</div>
+      </a>
+
+      <a class="game-card" href="./Waffle/">
+        <div class="game-icon icon-waffle"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="game-body">
+          <div class="game-name">Anatomy Waffle</div>
+          <div class="game-desc">Swap tiles to solve six crossing anatomy words. A new puzzle every day.</div>
         </div>
         <div class="game-arrow">→</div>
       </a>

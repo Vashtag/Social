@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Anatomy Waffle</title>
+  <meta name="description" content="Swap the tiles to solve six crossing anatomy words. A new puzzle every day." />
+  <meta property="og:title" content="Anatomy Waffle" />
+  <meta property="og:description" content="Swap letters to fix six crossing words — three across, three down. A new puzzle every day." />
+  <meta property="og:type" content="website" />
+  <script data-goatcounter="https://vashtags.goatcounter.com/count"
+          async src="//gc.zgo.at/count.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      color-scheme: dark;
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --surface-2: #1d1d1d;
+      --border: #2a2a2a;
+      --text: #f0ece4;
+      --muted: #777;
+      --correct: #4a934a;
+      --present: #b59f3b;
+      --absent: #333333;
+      --danger: #c95454;
+      --star: #e8c447;
+    }
+    html, body {
+      min-height: 100%; width: 100%; max-width: 100%; overflow-x: hidden;
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;
+      text-rendering: optimizeLegibility;
+    }
+    body {
+      min-height: 100dvh; display: flex; justify-content: center;
+      padding: 1.25rem 1rem calc(1.5rem + env(safe-area-inset-bottom)); touch-action: manipulation;
+    }
+    .wrap { width: 100%; max-width: 480px; display: flex; flex-direction: column; min-height: calc(100dvh - 2.75rem); }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.25rem 0.1rem 1.1rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem;
+    }
+    .brand { display: flex; flex-direction: column; gap: 0.25rem; }
+    .brand-title { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; }
+    .brand-sub { font-size: 0.6rem; letter-spacing: 0.32em; text-transform: uppercase; color: var(--muted); }
+    .back-link {
+      font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted);
+      text-decoration: none; border: 1px solid var(--border); border-radius: 999px;
+      padding: 0.5rem 0.9rem; transition: all 0.15s; white-space: nowrap;
+    }
+    .back-link:hover { color: var(--text); border-color: #3a3a3a; }
+
+    .daystrip { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 0.7rem; }
+    .day-label, .day-num { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+    .day-num { color: var(--text); font-weight: 700; cursor: pointer; user-select: none; -webkit-user-select: none; }
+
+    .instructions { text-align: center; color: var(--muted); font-size: 0.76rem; line-height: 1.4; margin-bottom: 1rem; }
+    .instructions b { color: var(--text); font-weight: 700; }
+
+    /* ── Waffle grid ── */
+    .wgrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.42rem; width: min(100%, 360px); margin: 0 auto 1rem; }
+    .cell {
+      aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+      border-radius: 11px; font-size: clamp(1.3rem, 7vw, 1.9rem); font-weight: 800; text-transform: uppercase;
+      user-select: none; -webkit-user-select: none;
+    }
+    .cell.hole { visibility: hidden; }
+    .cell.tile { cursor: pointer; border: 2px solid transparent; transition: transform 0.08s, box-shadow 0.1s; }
+    .cell.green  { background: var(--correct); color: #0d0d0d; }
+    .cell.yellow { background: var(--present);  color: #0d0d0d; }
+    .cell.gray   { background: var(--absent);   color: var(--text); }
+    .cell.sel { outline: 3px solid var(--text); outline-offset: 2px; transform: scale(1.06); z-index: 2; }
+    body.done .cell.tile { cursor: default; }
+
+    .meter { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1rem; font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+    .meter b { color: var(--text); font-weight: 800; }
+    .meter.low b { color: var(--danger); }
+
+    .controls { display: flex; justify-content: center; margin-top: auto; }
+    .ghost-btn {
+      background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 999px;
+      padding: 0.55rem 1.3rem; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; cursor: pointer; transition: all 0.15s;
+    }
+    .ghost-btn:hover { color: var(--text); border-color: #3a3a3a; }
+    .ghost-btn.hidden { display: none; }
+
+    /* ── End panel ── */
+    .end { display: none; flex-direction: column; align-items: center; gap: 0.8rem; text-align: center; margin-top: 1rem; }
+    .end.show { display: flex; }
+    .end-title { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.01em; }
+    .stars { font-size: 1.9rem; letter-spacing: 0.15em; color: var(--star); }
+    .end-sub { color: var(--muted); font-size: 0.9rem; line-height: 1.4; }
+    .end-sub b { color: var(--text); }
+    .anat-line { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+    .anat-line b { color: var(--correct); font-weight: 800; }
+    .end-actions { display: flex; gap: 0.6rem; width: 100%; }
+    .btn {
+      flex: 1; background: transparent; color: var(--text); border: 1px solid #3a3a3a; border-radius: 999px;
+      padding: 0.85rem 0.5rem; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; cursor: pointer; transition: all 0.15s;
+    }
+    .btn:hover:not(:disabled) { background: rgba(255,255,255,0.06); }
+    .btn:active:not(:disabled) { transform: scale(0.98); }
+    .btn-submit { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .btn-submit:hover { background: #fff; }
+    .text-share {
+      background: none; border: none; color: var(--muted); font-size: 0.72rem; letter-spacing: 0.05em;
+      text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 0.2rem;
+    }
+    .text-share:hover { color: var(--text); }
+
+    .toast {
+      position: fixed; left: 50%; bottom: 2rem; transform: translateX(-50%) translateY(20px);
+      background: var(--text); color: var(--bg); padding: 0.7rem 1.2rem; border-radius: 999px;
+      font-size: 0.8rem; font-weight: 700; opacity: 0; pointer-events: none; transition: all 0.25s;
+      z-index: 50; white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── Selfie camera + preview ── */
+    .cam-modal, .cam-preview {
+      position: fixed; inset: 0; z-index: 100; background: #000;
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .cam-modal.show, .cam-preview.show { display: flex; }
+    #cam-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; transform: scaleX(-1); }
+    .cam-ui {
+      position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
+      justify-content: flex-end; gap: 1.1rem; padding: 1.5rem 1.25rem calc(2.2rem + env(safe-area-inset-bottom));
+    }
+    .cam-hint { max-width: 320px; text-align: center; color: rgba(255,255,255,0.82); font-size: 0.78rem; line-height: 1.4; text-shadow: 0 1px 6px rgba(0,0,0,0.6); }
+    .cam-shutter { width: 74px; height: 74px; border-radius: 50%; background: #fff; border: 5px solid rgba(255,255,255,0.45); cursor: pointer; transition: transform 0.1s; }
+    .cam-shutter:active { transform: scale(0.92); }
+    .cam-close {
+      background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.25); color: #fff; border-radius: 999px;
+      padding: 0.55rem 1.4rem; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer;
+    }
+    .cam-preview { gap: 1rem; padding: 1.25rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom)); justify-content: center; }
+    #cam-img { max-width: 100%; max-height: 68vh; border-radius: 16px; border: 1px solid rgba(255,255,255,0.12); }
+    .cam-preview-actions { display: flex; gap: 0.6rem; width: 100%; max-width: 420px; }
+    .cam-preview-actions .btn { flex: 1; display: grid; place-items: center; text-decoration: none; }
+
+    footer { margin-top: 1.2rem; text-align: center; font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: #333; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="brand-title">Waffle</div>
+        <div class="brand-sub">Anatomy Edition</div>
+      </div>
+      <a class="back-link" href="../">← Games</a>
+    </header>
+
+    <div class="daystrip">
+      <span class="day-label" id="day-date">Puzzle of the day</span>
+      <span class="day-num" id="day-num"></span>
+    </div>
+
+    <div class="instructions">
+      Swap tiles to solve all six words — <b>three across, three down</b>. Green = right spot; yellow = right word, wrong spot.
+    </div>
+
+    <div class="wgrid" id="grid" aria-label="Waffle grid"></div>
+
+    <div class="meter" id="meter"></div>
+
+    <div class="controls">
+      <button class="ghost-btn" id="deselect">Deselect</button>
+    </div>
+
+    <div class="end" id="end">
+      <div class="end-title" id="end-title"></div>
+      <div class="stars" id="stars"></div>
+      <div class="end-sub" id="end-sub"></div>
+      <div class="anat-line" id="anat-line"></div>
+      <div class="end-actions">
+        <button class="btn btn-submit" id="share">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;margin-right:0.4rem;">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>Share result
+        </button>
+        <a class="btn" id="home-link" href="../" style="display:grid;place-items:center;text-decoration:none;">More games</a>
+      </div>
+      <button class="text-share" id="copy-text">or copy text result</button>
+    </div>
+
+    <footer>vashtag · social games</footer>
+  </div>
+
+  <!-- Selfie camera -->
+  <div class="cam-modal" id="cam-modal">
+    <video id="cam-video" autoplay playsinline muted></video>
+    <div class="cam-ui">
+      <div class="cam-hint">Line up your selfie — your result gets added to the photo.</div>
+      <button class="cam-shutter" id="cam-shutter" aria-label="Take photo"></button>
+      <button class="cam-close" id="cam-close">Cancel</button>
+    </div>
+  </div>
+
+  <div class="cam-preview" id="cam-preview">
+    <img id="cam-img" alt="Your Waffle result" />
+    <div class="cam-preview-actions">
+      <button class="btn btn-submit" id="cam-share-img">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;margin-right:0.35rem;">
+          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+        </svg>Share to story
+      </button>
+      <button class="btn" id="cam-download">Save photo</button>
+    </div>
+    <button class="cam-close" id="cam-preview-close">Done</button>
+    <div class="cam-hint">Tap “Share to story”, then choose Instagram → Stories.</div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+  /* ==========================================================================
+     ANATOMY WAFFLE — a 5×5 grid of six crossing words (three across, three
+     down), letters scrambled. Swap two tiles at a time to put every letter in
+     place. Green = correct spot; yellow = right word, wrong spot. You get 15
+     swaps; solving with swaps to spare earns stars (5 = solved in 10). Same
+     daily + share flow as the rest of the collection.
+     ========================================================================== */
+  const PUZZLES = [
+    { sol: ["bones","r.a.i","alien","i.l.u","noses"], scr: ["uaisl","i.e.n","isnol","e.n.b","rsoae"], anat: ["bones","brain","nails","sinus"] },
+    { sol: ["femur","o.o.e","salon","s.a.a","aural"], scr: ["oaaru","r.u.l","alaea","o.n.f","mosse"], anat: ["femur","fossa","molar","renal"] },
+    { sol: ["ilium","l.n.o","excel","u.u.a","miser"], scr: ["masni","r.u.e","luecx","i.m.e","luiol"], anat: ["ilium","ileum","incus","molar"] },
+    { sol: ["cells","o.u.i","lemon","o.e.u","nines"], scr: ["eiioe","l.m.l","sounu","n.s.n","eeocl"], anat: ["cells","colon","lumen","sinus"] },
+    { sol: ["lymph","i.o.e","valor","e.a.o","rerun"], scr: ["rlrlo","r.v.y","onehm","o.u.e","epiaa"], anat: ["lymph","liver","molar"] },
+    { sol: ["brain","o.o.a","norms","e.t.a","small"], scr: ["maltr","s.e.o","imnon","a.s.r","oblaa"], anat: ["brain","bones","aorta"] },
+    { sol: ["organ","v.r.i","acorn","r.i.e","yanks"], scr: ["nnine","i.g.r","soryr","c.v.a","rkoaa"], anat: ["organ","ovary","groin"] },
+    { sol: ["chest","e.l.i","label","l.o.e","sewed"], scr: ["sltce","s.a.d","olele","e.e.l","ewbhi"], anat: ["chest","cells","elbow"] },
+    { sol: ["thumb","o.l.u","owner","t.a.s","hurst"], scr: ["hrtro","w.u.n","boulh","s.s.a","tmetu"], anat: ["thumb","tooth","ulnar"] },
+    { sol: ["atria","n.a.m","kiddo","l.i.r","elite"], scr: ["tndli","a.l.e","rdroi","i.a.i","maket"], anat: ["atria","ankle","radii"] },
+    { sol: ["villi","a.u.d","lance","v.g.a","easel"], scr: ["dveul","v.l.i","sgail","a.a.e","anlce"], anat: ["villi","valve","lungs"] },
+    { sol: ["ileum","l.l.i","inbox","u.o.e","mowed"], scr: ["ooxml","m.e.w","duele","l.i.u","nbioi"], anat: ["ileum","ilium","elbow"] },
+    { sol: ["groin","l.v.a","award","n.r.i","dryer"], scr: ["ynarr","r.a.d","lvwdr","e.i.r","aogni"], anat: ["groin","gland","ovary"] },
+    { sol: ["cecum","e.r.u","leeks","l.s.e","sites"], scr: ["steki","s.e.e","crssl","e.e.c","umeul"], anat: ["cecum","cells","crest"] },
+    { sol: ["scalp","e.o.l","porta","t.t.n","apart"], scr: ["tletr","a.t.r","ntaal","o.s.p","cappo"], anat: ["scalp","septa","aorta"] },
+    { sol: ["lungs","o.a.u","brill","e.l.l","sassy"], scr: ["osilb","l.s.l","syrua","s.e.g","llaun"], anat: ["lungs","lobes","nails"] },
+    { sol: ["facet","e.r.a","meets","u.s.k","rates"], scr: ["eteaa","s.s.e","ufcst","m.e.t","ekrar"], anat: ["facet","femur","crest"] },
+    { sol: ["sacra","p.r.l","ideal","n.s.i","eaten"], scr: ["anetl","s.s.i","enira","p.r.l","ceaad"], anat: ["sacra","spine","crest"] },
+  ];
+
+  const MAX_SWAPS = 15;
+
+  // QR to the games landing page (https://vashtag.github.io/Social/) — 29×29, ECC-M.
+  const QR_SOCIAL_SIZE = 29;
+  const QR_SOCIAL = "1111111001101111001010111111110000010100100010100001000001101110101011101010110010111011011101010001011010010101110110111010011111110111101011101100000100001011010101010000011111111010101010101010111111100000000100101000000100000000100000101010101101001110011101111100001111010011101011011000111110010110000100000010000110110011001101110000000010001110101000110110101010110000101101100000111100111101110011111000111101111111000101011000100110100011111000001101010111011010111000100000100101100111111011101000100011011101111110111101000111101100101100110100101100100101000011010000101110101011000001011111101110000000011011101011010001100011111110011001111101101011100100000100101110000011000100101011101001111101100111111101110111010011100011011100001101101110100101110111110111111101000001000100010100001000110111111110111110000101011111100";
+
+  const $ = (id) => document.getElementById(id);
+  const now = new Date();
+  const dayNumber = Math.floor(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86400000);
+  const EPOCH_DAY = Math.floor(Date.UTC(2026, 7, 5) / 86400000);
+  const dayIndex = Math.max(0, dayNumber - EPOCH_DAY);
+  const puzzleNumber = dayIndex + 1;
+  const dateKey = now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate();
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function seededShuffle(list, seed) {
+    const a = list.slice(); const rnd = mulberry32(seed);
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  const ORDER = seededShuffle(PUZZLES, 20260805);
+  const P = ORDER[dayIndex % ORDER.length];
+  const SOL = P.sol.map((r) => r.split(""));
+  const ANAT = new Set(P.anat);
+  const isHole = (r, c) => (r % 2 === 1 && c % 2 === 1);
+
+  let state = fresh();
+  function fresh() { return { cur: P.scr.slice(), swaps: 0, finished: false, won: false, sel: null }; }
+
+  function gameKey() { return "anatomy-waffle-v1-" + dateKey; }
+  function load() {
+    try { const s = JSON.parse(localStorage.getItem(gameKey()) || "null"); if (s && Array.isArray(s.cur)) state = s; } catch (e) {}
+  }
+  function save() { try { localStorage.setItem(gameKey(), JSON.stringify(state)); } catch (e) {} }
+
+  function gridArr() { return state.cur.map((r) => r.split("")); }
+  function displayGrid() { return (state.finished && !state.won) ? SOL.map((r) => r.slice()) : gridArr(); }
+  function solved(g) { for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) if (!isHole(r, c) && g[r][c] !== SOL[r][c]) return false; return true; }
+  function stars() { return Math.max(0, Math.min(5, MAX_SWAPS - state.swaps)); }
+
+  // Wordle-style colouring for one word (5 cells), respecting duplicates.
+  function scoreWord(cells, g) {
+    const res = {}, need = {};
+    cells.forEach(([r, c]) => { const s = SOL[r][c]; if (g[r][c] === s) res[r + "," + c] = "green"; else need[s] = (need[s] || 0) + 1; });
+    cells.forEach(([r, c]) => { const k = r + "," + c; if (res[k]) return; const l = g[r][c]; if (need[l] > 0) { res[k] = "yellow"; need[l]--; } else res[k] = "gray"; });
+    return res;
+  }
+  function colorMap(g) {
+    const maps = [];
+    [0, 2, 4].forEach((r) => maps.push(scoreWord([0, 1, 2, 3, 4].map((c) => [r, c]), g)));   // across
+    [0, 2, 4].forEach((c) => maps.push(scoreWord([0, 1, 2, 3, 4].map((r) => [r, c]), g)));   // down
+    const out = {};
+    for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) {
+      if (isHole(r, c)) continue;
+      const k = r + "," + c;
+      if (g[r][c] === SOL[r][c]) { out[k] = "green"; continue; }
+      let col = "gray";
+      maps.forEach((m) => { if (m[k] === "yellow") col = "yellow"; });
+      out[k] = col;
+    }
+    return out;
+  }
+
+  function render() {
+    const g = displayGrid();
+    const cols = colorMap(g);
+    const grid = $("grid"); grid.innerHTML = "";
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        const el = document.createElement("div");
+        if (isHole(r, c)) { el.className = "cell hole"; grid.appendChild(el); continue; }
+        const k = r + "," + c;
+        el.className = "cell tile " + cols[k] + (state.sel && state.sel[0] === r && state.sel[1] === c ? " sel" : "");
+        el.textContent = g[r][c];
+        el.addEventListener("click", () => tap(r, c));
+        grid.appendChild(el);
+      }
+    }
+
+    const left = MAX_SWAPS - state.swaps;
+    const meter = $("meter");
+    meter.classList.toggle("low", left <= 3 && !state.finished);
+    meter.innerHTML = state.finished
+      ? "Swaps used <b>" + state.swaps + "</b>"
+      : "Swaps left <b>" + left + "</b> · used " + state.swaps;
+
+    $("deselect").classList.toggle("hidden", state.finished || !state.sel);
+    document.body.classList.toggle("done", state.finished);
+
+    if (state.finished) showEnd();
+    else $("end").classList.remove("show");
+  }
+
+  function tap(r, c) {
+    if (state.finished) return;
+    if (!state.sel) { state.sel = [r, c]; return render(); }
+    const [sr, sc] = state.sel;
+    if (sr === r && sc === c) { state.sel = null; return render(); }
+    const g = gridArr();
+    const tmp = g[sr][sc]; g[sr][sc] = g[r][c]; g[r][c] = tmp;
+    state.cur = g.map((row) => row.join(""));
+    state.sel = null;
+    state.swaps++;
+    save();
+    if (solved(g)) finish(true);
+    else if (state.swaps >= MAX_SWAPS) finish(false);
+    else render();
+  }
+
+  function deselect() { state.sel = null; render(); }
+
+  function finish(won) { state.finished = true; state.won = won; save(); render(); }
+
+  function showEnd() {
+    $("deselect").classList.add("hidden");
+    const end = $("end"); end.classList.add("show");
+    const st = stars();
+    if (state.won) {
+      $("end-title").textContent = "Solved!";
+      $("stars").textContent = "★".repeat(st) + "☆".repeat(5 - st);
+      $("end-sub").innerHTML = "Solved in <b>" + state.swaps + "</b> swap" + (state.swaps === 1 ? "" : "s") + ".";
+    } else {
+      $("end-title").textContent = "Out of swaps";
+      $("stars").textContent = "";
+      $("end-sub").innerHTML = "Here's the finished waffle.";
+    }
+    const anat = P.anat;
+    $("anat-line").innerHTML = anat.length
+      ? "Anatomy words: " + anat.map((w) => "<b>" + w + "</b>").join(" · ")
+      : "";
+  }
+
+  /* ── Share ── */
+  const EMO = { green: "🟩", yellow: "🟨", gray: "⬛" };
+  function emojiGrid() {
+    const g = displayGrid();
+    const cols = colorMap(g);
+    let out = "";
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) out += isHole(r, c) ? "⬜" : EMO[cols[r + "," + c]];
+      out += "\n";
+    }
+    return out.trim();
+  }
+  function buildShareText() {
+    const st = stars();
+    const head = "Anatomy Waffle No. " + puzzleNumber +
+      (state.won ? "  " + "★".repeat(st) + "☆".repeat(5 - st) + " (" + state.swaps + " swaps)" : " — stumped");
+    return head + "\n" + emojiGrid() + "\n" + location.origin + location.pathname;
+  }
+  async function shareText() {
+    const text = buildShareText();
+    if (navigator.share) { try { await navigator.share({ text }); return; } catch (e) {} }
+    try { await navigator.clipboard.writeText(text); toast("Copied to clipboard!"); }
+    catch (e) { toast("Copy failed"); }
+  }
+
+  /* ── Selfie + share to story ── */
+  let _camStream = null, _lastBlob = null;
+  function stopCam() { if (_camStream) { _camStream.getTracks().forEach((t) => t.stop()); _camStream = null; } }
+  async function openCam() {
+    try {
+      _camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+      $("cam-video").srcObject = _camStream; $("cam-modal").classList.add("show");
+    } catch (e) { toast("Camera unavailable — copying text"); shareText(); }
+  }
+  function closeCam() { $("cam-modal").classList.remove("show"); stopCam(); }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+  function drawQR(ctx, boxX, boxY, box) {
+    const quiet = 4, total = QR_SOCIAL_SIZE + quiet * 2, m = box / total;
+    roundRect(ctx, boxX, boxY, box, box, m * 2);
+    ctx.fillStyle = "#f0ece4"; ctx.fill();
+    ctx.fillStyle = "#0d0d0d";
+    for (let r = 0; r < QR_SOCIAL_SIZE; r++) {
+      for (let c = 0; c < QR_SOCIAL_SIZE; c++) {
+        if (QR_SOCIAL[r * QR_SOCIAL_SIZE + c] === "1") {
+          ctx.fillRect(boxX + (quiet + c) * m, boxY + (quiet + r) * m, Math.ceil(m) + 0.6, Math.ceil(m) + 0.6);
+        }
+      }
+    }
+  }
+
+  function capture() {
+    const video = $("cam-video");
+    const W = 1080, H = 1920;
+    const canvas = document.createElement("canvas");
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#0d0d0d"; ctx.fillRect(0, 0, W, H);
+
+    const vw = video.videoWidth || 1080, vh = video.videoHeight || 1920;
+    const regionH = Math.round(H * 0.5);
+    const scale = Math.min(W / vw, regionH / vh);
+    const dw = vw * scale, dh = vh * scale;
+    const dx = (W - dw) / 2, dy = (regionH - dh) / 2;
+    ctx.save(); ctx.translate(W, 0); ctx.scale(-1, 1); ctx.drawImage(video, dx, dy, dw, dh); ctx.restore();
+
+    const grad = ctx.createLinearGradient(0, regionH - 120, 0, regionH + 20);
+    grad.addColorStop(0, "rgba(13,13,13,0)"); grad.addColorStop(1, "rgba(13,13,13,1)");
+    ctx.fillStyle = grad; ctx.fillRect(0, regionH - 120, W, 140);
+
+    const cx = W / 2, panelTop = regionH;
+    ctx.textAlign = "center";
+
+    ctx.fillStyle = "rgba(240,236,228,0.6)";
+    ctx.font = "600 " + Math.round(W * 0.03) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText("A N A T O M Y   W A F F L E", cx, panelTop + 66);
+
+    ctx.fillStyle = "#f0ece4";
+    ctx.font = "800 " + Math.round(W * 0.086) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText(state.won ? "SOLVED" : "STUMPED", cx, panelTop + 158);
+
+    const st = stars();
+    if (state.won) {
+      ctx.fillStyle = "#e8c447";
+      ctx.font = "800 " + Math.round(W * 0.05) + "px -apple-system,'Segoe UI',sans-serif";
+      ctx.fillText("★".repeat(st) + "☆".repeat(5 - st), cx, panelTop + 220);
+    }
+    ctx.fillStyle = "rgba(240,236,228,0.65)";
+    ctx.font = "600 " + Math.round(W * 0.032) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText("No. " + puzzleNumber + "  ·  " + state.swaps + " swaps", cx, panelTop + 264);
+
+    // Colour grid
+    const g = displayGrid(), cols = colorMap(g);
+    const CMAP = { green: "#4a934a", yellow: "#b59f3b", gray: "#333333" };
+    const sq = Math.round(W * 0.086), gap = Math.round(W * 0.016);
+    const gridW = 5 * sq + 4 * gap;
+    let gy = panelTop + 300;
+    const gx0 = cx - gridW / 2;
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        if (isHole(r, c)) continue;
+        const x = gx0 + c * (sq + gap), y = gy + r * (sq + gap);
+        roundRect(ctx, x, y, sq, sq, sq * 0.2);
+        ctx.fillStyle = CMAP[cols[r + "," + c]]; ctx.fill();
+      }
+    }
+
+    // QR
+    const qrBox = Math.round(W * 0.16);
+    const qrTop = H - 92 - qrBox;
+    drawQR(ctx, cx - qrBox / 2, qrTop, qrBox);
+    ctx.fillStyle = "rgba(240,236,228,0.55)";
+    ctx.font = "600 " + Math.round(W * 0.022) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText("S C A N   T O   P L A Y", cx, qrTop + qrBox + 34);
+
+    const dataUrl = canvas.toDataURL("image/png");
+    $("cam-img").src = dataUrl;
+    canvas.toBlob((b) => { _lastBlob = b; }, "image/png");
+    closeCam();
+    $("cam-preview").classList.add("show");
+  }
+
+  async function shareImage() {
+    if (_lastBlob && navigator.canShare) {
+      const file = new File([_lastBlob], "anatomy-waffle.png", { type: "image/png" });
+      if (navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ files: [file], title: "Anatomy Waffle" }); return; }
+        catch (e) { if (e && e.name === "AbortError") return; }
+      }
+    }
+    await saveImage();
+    setTimeout(openInstagramStory, 500);
+  }
+  function dataURLtoBlob(dataUrl) {
+    const parts = dataUrl.split(",");
+    const mime = (parts[0].match(/:(.*?);/) || [])[1] || "image/png";
+    const bin = atob(parts[1]); const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  }
+  async function saveImage() {
+    if (!_lastBlob) {
+      const src = $("cam-img").src;
+      if (src && src.indexOf("data:") === 0) { try { _lastBlob = dataURLtoBlob(src); } catch (e) {} }
+    }
+    if (!_lastBlob) { toast("Preparing photo — try again"); return; }
+    const filename = "anatomy-waffle-" + puzzleNumber + ".png";
+    const file = new File([_lastBlob], filename, { type: "image/png" });
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+      (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
+    if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file] }); return; }
+      catch (e) { if (e && e.name === "AbortError") return; }
+    }
+    const url = URL.createObjectURL(_lastBlob);
+    const a = document.createElement("a"); a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast("Photo saved");
+  }
+  function openInstagramStory() {
+    const started = Date.now();
+    window.location.href = "instagram://story-camera";
+    setTimeout(() => { if (Date.now() - started < 1800 && !document.hidden) window.location.href = "https://www.instagram.com/"; }, 1200);
+  }
+  function closePreview() { $("cam-preview").classList.remove("show"); }
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $("toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 1600);
+  }
+
+  /* ── Events ── */
+  $("deselect").addEventListener("click", deselect);
+  $("share").addEventListener("click", openCam);
+  $("copy-text").addEventListener("click", shareText);
+  $("cam-shutter").addEventListener("click", capture);
+  $("cam-close").addEventListener("click", closeCam);
+  $("cam-share-img").addEventListener("click", shareImage);
+  $("cam-download").addEventListener("click", saveImage);
+  $("cam-preview-close").addEventListener("click", closePreview);
+
+  // Hidden reset: tap the "No. X" label 5 times to replay today's puzzle.
+  let _tapCount = 0, _tapTimer = null;
+  $("day-num").addEventListener("click", () => {
+    _tapCount++; clearTimeout(_tapTimer);
+    _tapTimer = setTimeout(() => { _tapCount = 0; }, 1200);
+    if (_tapCount >= 5) {
+      _tapCount = 0; clearTimeout(_tapTimer);
+      try { localStorage.removeItem(gameKey()); } catch (e) {}
+      state = fresh(); render(); toast("Puzzle reset");
+    }
+  });
+
+  try {
+    $("day-date").textContent = now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+  } catch (e) {}
+  $("day-num").textContent = "No. " + puzzleNumber;
+
+  load();
+  render();
+  </script>
+</body>
+</html>
