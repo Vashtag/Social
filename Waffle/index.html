@@ -145,6 +145,14 @@
     .cam-preview-actions .btn { flex: 1; display: grid; place-items: center; text-decoration: none; }
 
     footer { margin-top: 1.2rem; text-align: center; font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: #333; }
+
+    /* -- Daily stats, streak, countdown & definition -- */
+    .daily-stats { font-size: 0.72rem; letter-spacing: 0.02em; color: var(--muted); }
+    .daily-stats b { color: var(--text); font-weight: 800; }
+    .countdown { font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+    .countdown b { color: var(--text); font-weight: 800; letter-spacing: 0.1em; font-variant-numeric: tabular-nums; }
+    .def-line { font-size: 0.8rem; line-height: 1.5; color: var(--muted); max-width: 34ch; }
+    .def-line b { color: var(--text); font-weight: 800; }
   </style>
 </head>
 <body>
@@ -178,6 +186,9 @@
       <div class="end-title" id="end-title"></div>
       <div class="stars" id="stars"></div>
       <div class="end-sub" id="end-sub"></div>
+      <div class="def-line" id="def-line"></div>
+      <div class="daily-stats" id="daily-stats"></div>
+      <div class="countdown" id="countdown"></div>
       <div class="anat-line" id="anat-line"></div>
       <div class="end-actions">
         <button class="btn btn-submit" id="share">
@@ -369,7 +380,46 @@
 
   function finish(won) { state.finished = true; state.won = won; save(); render(); }
 
+  const GLOSSARY = {"ankle": "the joint connecting the foot to the leg", "aorta": "the body's largest artery, leaving the heart", "atria": "the two upper receiving chambers of the heart", "aural": "relating to the ear or hearing", "axial": "relating to the head, neck and trunk (the body's axis)", "axons": "nerve fibres that carry signals away from the cell body", "basal": "relating to the base of a structure", "blood": "the fluid that carries oxygen and nutrients through the body", "bolus": "a chewed ball of food ready to be swallowed", "bowel": "the intestine", "brain": "the organ of thought and control, housed in the skull", "canal": "a tubular passage or channel in the body", "carpi": "the wrist bones (plural of carpus)", "cauda": "a tail-like structure, as in the cauda equina", "cecal": "relating to the cecum", "cecum": "the pouch at the start of the large intestine", "cells": "the basic living building blocks of the body", "cheek": "the fleshy side of the face", "chyle": "milky fluid that carries digested fat into the lymph", "chyme": "the semi-liquid food that leaves the stomach", "colic": "relating to the colon; also spasmodic abdominal pain", "colon": "the main part of the large intestine", "conus": "a cone-shaped structure, as in the conus medullaris", "costa": "a rib", "crest": "a ridge or raised border on a bone", "crura": "paired leg-like structures (plural of crus)", "digit": "a finger or a toe", "dural": "relating to the dura mater, the outer brain membrane", "elbow": "the joint between the upper arm and forearm", "facet": "a small, smooth joint surface on a bone", "femur": "the thigh bone, the longest bone in the body", "fetus": "an unborn baby from about eight weeks onward", "flank": "the side of the body between the ribs and the hip", "fossa": "a shallow hollow or depression in a bone", "fovea": "the tiny pit in the retina for sharpest vision", "gland": "an organ that makes and releases hormones or fluids", "glans": "the rounded head of the penis or clitoris", "groin": "the crease where the abdomen meets the thigh", "gyral": "relating to the ridges (gyri) of the brain", "gyrus": "a ridge on the folded surface of the brain", "heart": "the muscular organ that pumps blood", "heels": "the rounded backs of the feet", "hilar": "relating to a hilum", "hilum": "the notch where vessels and nerves enter an organ", "hilus": "a variant of hilum \u2014 where vessels enter an organ", "hyoid": "the U-shaped bone in the neck that anchors the tongue", "ileum": "the final part of the small intestine", "iliac": "relating to the ilium of the pelvis", "ilium": "the broad, wing-shaped upper part of the hip bone", "incus": "the anvil, one of the three tiny middle-ear bones", "islet": "a cluster of hormone-making cells in the pancreas", "joint": "the place where two bones meet", "knees": "the joints between the thigh and lower leg", "labia": "the folds of skin of the vulva", "labra": "rings of cartilage around joint sockets (plural of labrum)", "liver": "the large organ that filters blood and makes bile", "lobar": "relating to a lobe of an organ", "lobes": "the rounded divisions of an organ", "lumen": "the hollow inside of a tube or vessel", "lungs": "the paired organs of breathing", "lymph": "clear fluid of the immune and drainage system", "malar": "relating to the cheek", "manus": "the hand", "molar": "a broad grinding tooth at the back of the mouth", "mucus": "the slippery protective secretion of membranes", "nails": "the hard plates protecting fingers and toes", "nares": "the nostrils", "nasal": "relating to the nose", "navel": "the belly button", "nerve": "a bundle of fibres that carries signals", "nodal": "relating to a node", "nodes": "small rounded masses of tissue, such as lymph nodes", "notch": "an indentation in the edge of a bone or organ", "optic": "relating to the eye or to vision", "orbit": "the bony socket that holds the eye", "organ": "a body structure with a specific function", "ovary": "the female gland that produces eggs", "palms": "the inner, gripping surfaces of the hands", "penis": "the male external reproductive organ", "pinna": "the visible outer flap of the ear", "psoas": "a deep muscle that flexes the hip", "pubic": "relating to the pubis at the front of the pelvis", "pubis": "the front part of the hip bone", "pulse": "the throb of an artery as the heart beats", "ramus": "a branch of a bone or nerve", "recti": "straight muscles (plural of rectus)", "renal": "relating to the kidney", "ridge": "a long raised part of a bone", "rugae": "folds in the lining of the stomach or other organs", "sacra": "relating to the sacrum at the base of the spine", "scala": "a spiral canal of the inner ear, such as the scala tympani", "scalp": "the skin covering the top of the head", "septa": "dividing walls between chambers (plural of septum)", "sella": "the saddle-shaped hollow that cradles the pituitary gland", "serum": "the clear liquid part of blood after it clots", "shins": "the bony fronts of the lower legs", "sinus": "an air-filled cavity in the bones of the skull", "skull": "the bony framework of the head", "soles": "the undersides of the feet", "spine": "the backbone, or vertebral column", "sural": "relating to the calf of the leg", "talus": "the ankle bone that meets the leg bones", "tarsi": "the ankle and rear-foot bones (plural of tarsus)", "teeth": "the hard structures used to bite and chew", "teres": "a rounded muscle, such as the teres major of the shoulder", "thumb": "the short, thick first digit of the hand", "tibia": "the shin bone", "tooth": "a hard structure used to bite and chew", "torso": "the trunk of the body", "trunk": "the central body, without the head and limbs", "ulnar": "relating to the ulna, the inner forearm bone", "uteri": "wombs (plural of uterus)", "uvula": "the fleshy lobe hanging at the back of the throat", "vagus": "the long cranial nerve that reaches the internal organs", "valve": "a flap that keeps fluid flowing one way", "veins": "vessels that carry blood back to the heart", "villi": "tiny projections that absorb nutrients in the intestine", "vomer": "the thin bone that divides the nasal cavity", "vulva": "the external female genitals", "waist": "the narrow part of the trunk above the hips", "wrist": "the joint between the hand and the forearm"};
+  /* -- Daily stats, streak & countdown (shared) -- */
+  const DSTATS_KEY = "anatomy-waffle-stats-v1";
+  const DAILY_KEY = "anatomy-daily-waffle";
+  function dReadStats() { try { const s = JSON.parse(localStorage.getItem(DSTATS_KEY) || "null"); if (s && typeof s.played === "number") return s; } catch (e) {} return { played: 0, wins: 0, streak: 0, maxStreak: 0, lastDay: -1, lastWinDay: -2 }; }
+  function dRecord(won, result) {
+    try {
+      const s = dReadStats();
+      if (s.lastDay !== dayIndex) {
+        s.played++;
+        if (won) { s.streak = (s.lastWinDay === dayIndex - 1) ? s.streak + 1 : 1; s.lastWinDay = dayIndex; s.wins++; s.maxStreak = Math.max(s.maxStreak, s.streak); }
+        else { s.streak = 0; }
+        s.lastDay = dayIndex;
+        localStorage.setItem(DSTATS_KEY, JSON.stringify(s));
+      }
+      localStorage.setItem(DAILY_KEY, JSON.stringify({ day: dayIndex, won: won, result: (result === undefined ? null : result) }));
+    } catch (e) {}
+  }
+  let _dCd = null;
+  function dCountdown() {
+    const el = document.getElementById("countdown"); if (!el) return;
+    function tick() {
+      const n = new Date(), nx = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
+      let d = Math.max(0, nx - n);
+      const p = (x) => String(x).padStart(2, "0");
+      el.innerHTML = "Next puzzle in <b>" + p(Math.floor(d / 3.6e6)) + ":" + p(Math.floor(d % 3.6e6 / 6e4)) + ":" + p(Math.floor(d % 6e4 / 1e3)) + "</b>";
+    }
+    tick(); clearInterval(_dCd); _dCd = setInterval(tick, 1000);
+  }
+  function dRenderPanel(won, result) {
+    dRecord(won, result);
+    const s = dReadStats();
+    const pct = s.played ? Math.round(s.wins / s.played * 100) : 0;
+    const el = document.getElementById("daily-stats");
+    if (el) el.innerHTML = "Played <b>" + s.played + "</b> · Win <b>" + pct + "%</b> · Streak <b>" + s.streak + "</b> · Best <b>" + s.maxStreak + "</b>";
+    dCountdown();
+  }
   function showEnd() {
+    dRenderPanel(state.won, state.won ? stars() : 0);
+    if ($("def-line")) { var _w = [SOL[0].join(""), SOL[2].join(""), SOL[4].join(""), [0,1,2,3,4].map(function(r){return SOL[r][0];}).join(""), [0,1,2,3,4].map(function(r){return SOL[r][2];}).join(""), [0,1,2,3,4].map(function(r){return SOL[r][4];}).join("")]; var _seen = {}; $("def-line").innerHTML = _w.filter(function(w){ if(_seen[w])return false; _seen[w]=1; return true; }).map(function(w){ return "<b>" + w + "</b> " + (GLOSSARY[w] || ""); }).join("<br>"); }
     $("deselect").classList.add("hidden");
     const end = $("end"); end.classList.add("show");
     const st = stars();
@@ -382,10 +432,8 @@
       $("stars").textContent = "";
       $("end-sub").innerHTML = "Here's the finished waffle.";
     }
-    const anat = P.anat;
-    $("anat-line").innerHTML = anat.length
-      ? "Anatomy words: " + anat.map((w) => "<b>" + w + "</b>").join(" · ")
-      : "";
+    // The six words + definitions are shown in #def-line; keep this row empty.
+    $("anat-line").innerHTML = "";
   }
 
   /* ── Share ── */

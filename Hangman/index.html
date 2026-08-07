@@ -158,6 +158,14 @@
     .cam-preview-actions .btn { flex: 1; display: grid; place-items: center; text-decoration: none; }
 
     footer { margin-top: 1.2rem; text-align: center; font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: #333; }
+
+    /* -- Daily stats, streak, countdown & definition -- */
+    .daily-stats { font-size: 0.72rem; letter-spacing: 0.02em; color: var(--muted); }
+    .daily-stats b { color: var(--text); font-weight: 800; }
+    .countdown { font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+    .countdown b { color: var(--text); font-weight: 800; letter-spacing: 0.1em; font-variant-numeric: tabular-nums; }
+    .def-line { font-size: 0.8rem; line-height: 1.5; color: var(--muted); max-width: 34ch; }
+    .def-line b { color: var(--text); font-weight: 800; }
   </style>
   <script data-goatcounter="https://vashtags.goatcounter.com/count"
           async src="//gc.zgo.at/count.js"></script>
@@ -204,6 +212,9 @@
     <div class="end" id="end">
       <div class="end-title" id="end-title"></div>
       <div class="end-sub" id="end-sub"></div>
+      <div class="def-line" id="def-line"></div>
+      <div class="daily-stats" id="daily-stats"></div>
+      <div class="countdown" id="countdown"></div>
       <div class="end-actions">
         <button class="btn btn-submit" id="share">
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;margin-right:0.4rem;">
@@ -472,7 +483,45 @@
     render();
   }
 
+  /* -- Daily stats, streak & countdown (shared) -- */
+  const DSTATS_KEY = "anatomy-hangman-stats-v1";
+  const DAILY_KEY = "anatomy-daily-hangman";
+  function dReadStats() { try { const s = JSON.parse(localStorage.getItem(DSTATS_KEY) || "null"); if (s && typeof s.played === "number") return s; } catch (e) {} return { played: 0, wins: 0, streak: 0, maxStreak: 0, lastDay: -1, lastWinDay: -2 }; }
+  function dRecord(won, result) {
+    try {
+      const s = dReadStats();
+      if (s.lastDay !== dayIndex) {
+        s.played++;
+        if (won) { s.streak = (s.lastWinDay === dayIndex - 1) ? s.streak + 1 : 1; s.lastWinDay = dayIndex; s.wins++; s.maxStreak = Math.max(s.maxStreak, s.streak); }
+        else { s.streak = 0; }
+        s.lastDay = dayIndex;
+        localStorage.setItem(DSTATS_KEY, JSON.stringify(s));
+      }
+      localStorage.setItem(DAILY_KEY, JSON.stringify({ day: dayIndex, won: won, result: (result === undefined ? null : result) }));
+    } catch (e) {}
+  }
+  let _dCd = null;
+  function dCountdown() {
+    const el = document.getElementById("countdown"); if (!el) return;
+    function tick() {
+      const n = new Date(), nx = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
+      let d = Math.max(0, nx - n);
+      const p = (x) => String(x).padStart(2, "0");
+      el.innerHTML = "Next puzzle in <b>" + p(Math.floor(d / 3.6e6)) + ":" + p(Math.floor(d % 3.6e6 / 6e4)) + ":" + p(Math.floor(d % 6e4 / 1e3)) + "</b>";
+    }
+    tick(); clearInterval(_dCd); _dCd = setInterval(tick, 1000);
+  }
+  function dRenderPanel(won, result) {
+    dRecord(won, result);
+    const s = dReadStats();
+    const pct = s.played ? Math.round(s.wins / s.played * 100) : 0;
+    const el = document.getElementById("daily-stats");
+    if (el) el.innerHTML = "Played <b>" + s.played + "</b> · Win <b>" + pct + "%</b> · Streak <b>" + s.streak + "</b> · Best <b>" + s.maxStreak + "</b>";
+    dCountdown();
+  }
   function showEnd() {
+    dRenderPanel(state.won, null);
+    if ($("def-line")) $("def-line").innerHTML = "<b>" + answer + "</b> — " + hint;
     $("keyboard").classList.add("hidden");
     const end = $("end"); end.classList.add("show");
     $("end-title").textContent = state.won ? "Solved it!" : "Game over";
