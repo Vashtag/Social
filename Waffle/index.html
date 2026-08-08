@@ -153,6 +153,26 @@
     .countdown b { color: var(--text); font-weight: 800; letter-spacing: 0.1em; font-variant-numeric: tabular-nums; }
     .def-line { font-size: 0.8rem; line-height: 1.5; color: var(--muted); max-width: 34ch; }
     .def-line b { color: var(--text); font-weight: 800; }
+
+    /* -- Help / how-to-play modal -- */
+    .head-actions { display: flex; align-items: center; gap: 0.5rem; }
+    .help-btn {
+      width: 30px; height: 30px; border-radius: 50%; flex: 0 0 auto;
+      border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+      font-size: 0.9rem; font-weight: 800; cursor: pointer; line-height: 1; transition: color .15s, border-color .15s;
+    }
+    .help-btn:hover { color: var(--text); border-color: #3a3a3a; }
+    .help-modal { position: fixed; inset: 0; z-index: 200; display: none; align-items: center; justify-content: center; padding: 1.25rem; background: rgba(0,0,0,0.72); }
+    .help-modal.show { display: flex; }
+    .help-card { width: 100%; max-width: 420px; max-height: 82vh; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 1.4rem; color: var(--text); }
+    .help-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .help-title { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.01em; }
+    .help-x { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface-2); color: var(--muted); cursor: pointer; font-size: 0.8rem; }
+    .help-x:hover { color: var(--text); }
+    .help-body { font-size: 0.9rem; line-height: 1.6; color: #cdc7bd; }
+    .help-body p { margin-bottom: 0.7rem; }
+    .help-body b { color: var(--text); }
+    .help-swatch { display: inline-block; width: 0.9em; height: 0.9em; border-radius: 3px; vertical-align: -1px; margin: 0 0.15em; }
   </style>
 </head>
 <body>
@@ -162,7 +182,7 @@
         <div class="brand-title">Waffle</div>
         <div class="brand-sub">Anatomy Edition</div>
       </div>
-      <a class="back-link" href="../">← Games</a>
+      <div class="head-actions"><button class="help-btn" id="help-btn" type="button" aria-label="How to play" title="How to play">?</button><a class="back-link" href="../">← Games</a></div>
     </header>
 
     <div class="daystrip">
@@ -171,7 +191,7 @@
     </div>
 
     <div class="instructions">
-      Swap tiles to solve all six words — <b>three across, three down</b>. Green = right spot; yellow = right word, wrong spot.
+      Swap tiles to solve all six words — <b>three across, three down</b>. Green = right spot; yellow = right word, wrong spot. Fewer swaps = more stars.
     </div>
 
     <div class="wgrid" id="grid" aria-label="Waffle grid"></div>
@@ -231,6 +251,15 @@
 
   <div class="toast" id="toast"></div>
 
+  <div class="help-modal" id="help-modal" role="dialog" aria-modal="true" aria-label="How to play">
+    <div class="help-card">
+      <div class="help-head">
+        <div class="help-title">How to play</div>
+        <button class="help-x" id="help-close" aria-label="Close">✕</button>
+      </div>
+      <div class="help-body">__RULES__</div>
+    </div>
+  </div>
   <script>
   /* ==========================================================================
      ANATOMY WAFFLE — a 5×5 grid of six crossing words (three across, three
@@ -260,7 +289,8 @@
     { sol: ["soles","e.o.c","labra","l.a.l","aorta"], scr: ["rstla","o.e.o","aball","a.r.a","scoel"], anat: ["soles","labra","aorta","sella","lobar","scala"] },
   ];
 
-  const MAX_SWAPS = 15;
+  // Swaps are unlimited — the score is how few you needed. Star thresholds:
+  const STAR_CUTOFFS = [11, 14, 18, 24]; // ≤11→5★, ≤14→4★, ≤18→3★, ≤24→2★, else 1★
 
   // QR to the games landing page (https://vashtag.github.io/Social/) — 29×29, ECC-M.
   const QR_SOCIAL_SIZE = 29;
@@ -305,7 +335,14 @@
   function gridArr() { return state.cur.map((r) => r.split("")); }
   function displayGrid() { return (state.finished && !state.won) ? SOL.map((r) => r.slice()) : gridArr(); }
   function solved(g) { for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) if (!isHole(r, c) && g[r][c] !== SOL[r][c]) return false; return true; }
-  function stars() { return Math.max(0, Math.min(5, MAX_SWAPS - state.swaps)); }
+  function stars() {
+    const n = state.swaps;
+    if (n <= STAR_CUTOFFS[0]) return 5;
+    if (n <= STAR_CUTOFFS[1]) return 4;
+    if (n <= STAR_CUTOFFS[2]) return 3;
+    if (n <= STAR_CUTOFFS[3]) return 2;
+    return 1;
+  }
 
   // Wordle-style colouring for one word (5 cells), respecting duplicates.
   function scoreWord(cells, g) {
@@ -346,12 +383,8 @@
       }
     }
 
-    const left = MAX_SWAPS - state.swaps;
     const meter = $("meter");
-    meter.classList.toggle("low", left <= 3 && !state.finished);
-    meter.innerHTML = state.finished
-      ? "Swaps used <b>" + state.swaps + "</b>"
-      : "Swaps left <b>" + left + "</b> · used " + state.swaps;
+    meter.innerHTML = "Swaps <b>" + state.swaps + "</b>";
 
     $("deselect").classList.toggle("hidden", state.finished || !state.sel);
     document.body.classList.toggle("done", state.finished);
@@ -371,8 +404,8 @@
     state.sel = null;
     state.swaps++;
     save();
-    if (solved(g)) finish(true);
-    else if (state.swaps >= MAX_SWAPS) finish(false);
+    haptic(10);
+    if (solved(g)) { haptic([30, 40, 30]); finish(true); }
     else render();
   }
 
@@ -423,15 +456,9 @@
     $("deselect").classList.add("hidden");
     const end = $("end"); end.classList.add("show");
     const st = stars();
-    if (state.won) {
-      $("end-title").textContent = "Solved!";
-      $("stars").textContent = "★".repeat(st) + "☆".repeat(5 - st);
-      $("end-sub").innerHTML = "Solved in <b>" + state.swaps + "</b> swap" + (state.swaps === 1 ? "" : "s") + ".";
-    } else {
-      $("end-title").textContent = "Out of swaps";
-      $("stars").textContent = "";
-      $("end-sub").innerHTML = "Here's the finished waffle.";
-    }
+    $("end-title").textContent = st === 5 ? "Brilliant!" : "Solved!";
+    $("stars").textContent = "★".repeat(st) + "☆".repeat(5 - st);
+    $("end-sub").innerHTML = "Solved in <b>" + state.swaps + "</b> swap" + (state.swaps === 1 ? "" : "s") + ".";
     // The six words + definitions are shown in #def-line; keep this row empty.
     $("anat-line").innerHTML = "";
   }
@@ -642,6 +669,16 @@
 
   load();
   render();
+  
+  function haptic(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+  (function () {
+    var b = document.getElementById("help-btn"), m = document.getElementById("help-modal"), x = document.getElementById("help-close");
+    if (!b || !m) return;
+    b.addEventListener("click", function () { m.classList.add("show"); });
+    if (x) x.addEventListener("click", function () { m.classList.remove("show"); });
+    m.addEventListener("click", function (e) { if (e.target === m) m.classList.remove("show"); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") m.classList.remove("show"); });
+  })();
   </script>
 </body>
 </html>
