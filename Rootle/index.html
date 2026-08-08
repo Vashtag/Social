@@ -194,6 +194,26 @@
     .countdown b { color: var(--text); font-weight: 800; letter-spacing: 0.1em; font-variant-numeric: tabular-nums; }
     .def-line { font-size: 0.8rem; line-height: 1.5; color: var(--muted); max-width: 34ch; }
     .def-line b { color: var(--text); font-weight: 800; }
+
+    /* -- Help / how-to-play modal -- */
+    .head-actions { display: flex; align-items: center; gap: 0.5rem; }
+    .help-btn {
+      width: 30px; height: 30px; border-radius: 50%; flex: 0 0 auto;
+      border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+      font-size: 0.9rem; font-weight: 800; cursor: pointer; line-height: 1; transition: color .15s, border-color .15s;
+    }
+    .help-btn:hover { color: var(--text); border-color: #3a3a3a; }
+    .help-modal { position: fixed; inset: 0; z-index: 200; display: none; align-items: center; justify-content: center; padding: 1.25rem; background: rgba(0,0,0,0.72); }
+    .help-modal.show { display: flex; }
+    .help-card { width: 100%; max-width: 420px; max-height: 82vh; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 1.4rem; color: var(--text); }
+    .help-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .help-title { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.01em; }
+    .help-x { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface-2); color: var(--muted); cursor: pointer; font-size: 0.8rem; }
+    .help-x:hover { color: var(--text); }
+    .help-body { font-size: 0.9rem; line-height: 1.6; color: #cdc7bd; }
+    .help-body p { margin-bottom: 0.7rem; }
+    .help-body b { color: var(--text); }
+    .help-swatch { display: inline-block; width: 0.9em; height: 0.9em; border-radius: 3px; vertical-align: -1px; margin: 0 0.15em; }
   </style>
   <script data-goatcounter="https://vashtags.goatcounter.com/count"
           async src="//gc.zgo.at/count.js"></script>
@@ -205,7 +225,7 @@
         <div class="brand-title">Rootle</div>
         <div class="brand-sub">Anatomy Edition</div>
       </div>
-      <a class="back-link" href="../">← Games</a>
+      <div class="head-actions"><button class="help-btn" id="help-btn" type="button" aria-label="How to play" title="How to play">?</button><a class="back-link" href="../">← Games</a></div>
     </header>
 
     <div class="daystrip">
@@ -275,6 +295,15 @@
 
   <div class="toast" id="toast"></div>
 
+  <div class="help-modal" id="help-modal" role="dialog" aria-modal="true" aria-label="How to play">
+    <div class="help-card">
+      <div class="help-head">
+        <div class="help-title">How to play</div>
+        <button class="help-x" id="help-close" aria-label="Close">✕</button>
+      </div>
+      <div class="help-body">__RULES__</div>
+    </div>
+  </div>
   <script>
   /* ==========================================================================
      ANATOMY ROOTLE — a Connections-style root puzzle. Every day you get a grid
@@ -615,6 +644,7 @@
       else { state.focus = firstUnsolved(); render(); }
     } else {
       state.mistakes++;
+      haptic(50);
       state.assign[c] = [];
       save();
       render();
@@ -626,6 +656,7 @@
   }
 
   function finish(won) {
+    haptic(won ? [30, 40, 30] : 60);
     state.finished = true;
     state.won = won;
     // Reveal any unsolved clues with their correct roots.
@@ -895,6 +926,16 @@
 
   load();
   render();
+  
+  function haptic(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+  (function () {
+    var b = document.getElementById("help-btn"), m = document.getElementById("help-modal"), x = document.getElementById("help-close");
+    if (!b || !m) return;
+    b.addEventListener("click", function () { m.classList.add("show"); });
+    if (x) x.addEventListener("click", function () { m.classList.remove("show"); });
+    m.addEventListener("click", function (e) { if (e.target === m) m.classList.remove("show"); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") m.classList.remove("show"); });
+  })();
   </script>
 </body>
 </html>

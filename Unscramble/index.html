@@ -1094,6 +1094,25 @@
       z-index: 450;
       display: none;
     }
+
+    /* -- Help / how-to-play modal -- */
+    .setup-inner .help-btn { position: absolute; top: 1rem; right: 3.5rem; }
+    .help-btn {
+      width: 30px; height: 30px; border-radius: 9px; flex: 0 0 auto;
+      border: 1px solid var(--border); background: transparent; color: var(--muted);
+      font-size: 0.95rem; font-weight: 800; cursor: pointer; line-height: 1; transition: color .15s, border-color .15s;
+    }
+    .help-btn:hover { color: var(--text); border-color: #444; }
+    .help-modal { position: fixed; inset: 0; z-index: 500; display: none; align-items: center; justify-content: center; padding: 1.25rem; background: rgba(0,0,0,0.75); }
+    .help-modal.show { display: flex; }
+    .help-card { width: 100%; max-width: 420px; max-height: 82vh; overflow-y: auto; background: var(--surface, #161616); border: 1px solid var(--border, #242424); border-radius: 20px; padding: 1.4rem; color: var(--text); }
+    .help-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .help-title { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.01em; }
+    .help-x { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.8rem; }
+    .help-x:hover { color: var(--text); }
+    .help-body { font-size: 0.9rem; line-height: 1.6; color: #cdc7bd; }
+    .help-body p { margin-bottom: 0.7rem; }
+    .help-body b { color: var(--text); }
   </style>
   <script data-goatcounter="https://vashtags.goatcounter.com/count"
           async src="//gc.zgo.at/count.js"></script>
@@ -1126,6 +1145,7 @@
 <div class="screen active" id="setup-screen">
   <div class="setup-inner">
     <a class="btn-home" href="../" title="Back to games">← Games</a>
+    <button class="help-btn" id="help-btn" type="button" aria-label="How to play" title="How to play">?</button>
     <button class="btn-settings" onclick="openSettings()" title="Settings">⚙</button>
     <div class="logo">
       <div class="logo-title">Unscramble</div>
@@ -1332,6 +1352,15 @@
 <!-- Confetti canvas -->
 <canvas id="confetti-canvas"></canvas>
 
+<div class="help-modal" id="help-modal" role="dialog" aria-modal="true" aria-label="How to play">
+  <div class="help-card">
+    <div class="help-head">
+      <div class="help-title">How to play</div>
+      <button class="help-x" id="help-close" aria-label="Close">✕</button>
+    </div>
+    <div class="help-body"><p>Race to unscramble the jumbled <b>anatomy term</b> before time runs out.</p><p>Choose <b>Solo</b> or head-to-head <b>VS</b>, and how many rounds. Each round shows a scrambled word and a countdown; a hint appears partway through.</p><p>When someone shouts the answer, tap their <b>Got it</b> button to award the point — or <b>Skip</b> if you're both stuck. Most points at the end wins.</p></div>
+  </div>
+</div>
 <script>
   // ── Word bank ──────────────────────────────────────────────
   const WORDS = [
@@ -2543,6 +2572,16 @@
     } catch(e) {}
   }
 
+
+  function haptic(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+  (function () {
+    var b = document.getElementById("help-btn"), m = document.getElementById("help-modal"), x = document.getElementById("help-close");
+    if (!b || !m) return;
+    b.addEventListener("click", function () { m.classList.add("show"); });
+    if (x) x.addEventListener("click", function () { m.classList.remove("show"); });
+    m.addEventListener("click", function (e) { if (e.target === m) m.classList.remove("show"); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") m.classList.remove("show"); });
+  })();
 </script>
 </body>
 </html>
