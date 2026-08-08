@@ -70,6 +70,7 @@
     .cell.hole { visibility: hidden; }
     .cell.tile { cursor: pointer; border: 2px solid transparent; transition: transform 0.08s, box-shadow 0.1s; }
     .cell.green  { background: var(--correct); color: #0d0d0d; }
+    .cell.tile.green { cursor: default; }
     .cell.yellow { background: var(--present);  color: #0d0d0d; }
     .cell.gray   { background: var(--absent);   color: var(--text); }
     .cell.sel { outline: 3px solid var(--text); outline-offset: 2px; transform: scale(1.06); z-index: 2; }
@@ -257,7 +258,7 @@
         <div class="help-title">How to play</div>
         <button class="help-x" id="help-close" aria-label="Close">✕</button>
       </div>
-      <div class="help-body">__RULES__</div>
+      <div class="help-body"><p><b>Goal:</b> unscramble the grid so all six words read correctly — three across and three down.</p><p><b>How:</b> tap one tile, then tap another to swap the two letters. Colours guide you:</p><p><span class='help-swatch' style='background:#4a934a'></span> <b>Green</b> — correct spot (it locks and can't be moved).<br><span class='help-swatch' style='background:#b59f3b'></span> <b>Yellow</b> — belongs in that row or column, but elsewhere.</p><p>Swaps are <b>unlimited</b> so you can always finish — but the fewer you use, the more <b>stars</b> you earn (under 20 swaps = five stars). Every word is an anatomy term. New puzzle daily.</p></div>
     </div>
   </div>
   <script>
@@ -290,7 +291,7 @@
   ];
 
   // Swaps are unlimited — the score is how few you needed. Star thresholds:
-  const STAR_CUTOFFS = [11, 14, 18, 24]; // ≤11→5★, ≤14→4★, ≤18→3★, ≤24→2★, else 1★
+  const STAR_CUTOFFS = [19, 26, 34, 44]; // ≤19→5★, ≤26→4★, ≤34→3★, ≤44→2★, else 1★
 
   // QR to the games landing page (https://vashtag.github.io/Social/) — 29×29, ECC-M.
   const QR_SOCIAL_SIZE = 29;
@@ -395,6 +396,7 @@
 
   function tap(r, c) {
     if (state.finished) return;
+    if (colorMap(gridArr())[r + "," + c] === "green") return; // green tiles are correct and locked
     if (!state.sel) { state.sel = [r, c]; return render(); }
     const [sr, sc] = state.sel;
     if (sr === r && sc === c) { state.sel = null; return render(); }
