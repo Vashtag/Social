@@ -78,7 +78,6 @@
 
     .meter { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1rem; font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
     .meter b { color: var(--text); font-weight: 800; }
-    .meter.low b { color: var(--danger); }
 
     .controls { display: flex; justify-content: center; margin-top: auto; }
     .ghost-btn {
@@ -334,7 +333,7 @@
   function save() { try { localStorage.setItem(gameKey(), JSON.stringify(state)); } catch (e) {} }
 
   function gridArr() { return state.cur.map((r) => r.split("")); }
-  function displayGrid() { return (state.finished && !state.won) ? SOL.map((r) => r.slice()) : gridArr(); }
+  function displayGrid() { return gridArr(); }
   function solved(g) { for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) if (!isHole(r, c) && g[r][c] !== SOL[r][c]) return false; return true; }
   function stars() {
     const n = state.swaps;
@@ -453,7 +452,7 @@
     dCountdown();
   }
   function showEnd() {
-    dRenderPanel(state.won, state.won ? stars() : 0);
+    dRenderPanel(true, stars());
     if ($("def-line")) { var _w = [SOL[0].join(""), SOL[2].join(""), SOL[4].join(""), [0,1,2,3,4].map(function(r){return SOL[r][0];}).join(""), [0,1,2,3,4].map(function(r){return SOL[r][2];}).join(""), [0,1,2,3,4].map(function(r){return SOL[r][4];}).join("")]; var _seen = {}; $("def-line").innerHTML = _w.filter(function(w){ if(_seen[w])return false; _seen[w]=1; return true; }).map(function(w){ return "<b>" + w + "</b> " + (GLOSSARY[w] || ""); }).join("<br>"); }
     $("deselect").classList.add("hidden");
     const end = $("end"); end.classList.add("show");
@@ -479,8 +478,7 @@
   }
   function buildShareText() {
     const st = stars();
-    const head = "Anatomy Waffle No. " + puzzleNumber +
-      (state.won ? "  " + "★".repeat(st) + "☆".repeat(5 - st) + " (" + state.swaps + " swaps)" : " — stumped");
+    const head = "Anatomy Waffle No. " + puzzleNumber + "  " + "★".repeat(st) + "☆".repeat(5 - st) + " (" + state.swaps + " swaps)";
     return head + "\n" + emojiGrid() + "\n" + location.origin + location.pathname;
   }
   async function shareText() {
@@ -548,14 +546,12 @@
 
     ctx.fillStyle = "#f0ece4";
     ctx.font = "800 " + Math.round(W * 0.086) + "px -apple-system,'Segoe UI',sans-serif";
-    ctx.fillText(state.won ? "SOLVED" : "STUMPED", cx, panelTop + 158);
+    ctx.fillText("SOLVED", cx, panelTop + 158);
 
     const st = stars();
-    if (state.won) {
-      ctx.fillStyle = "#e8c447";
-      ctx.font = "800 " + Math.round(W * 0.05) + "px -apple-system,'Segoe UI',sans-serif";
-      ctx.fillText("★".repeat(st) + "☆".repeat(5 - st), cx, panelTop + 220);
-    }
+    ctx.fillStyle = "#e8c447";
+    ctx.font = "800 " + Math.round(W * 0.05) + "px -apple-system,'Segoe UI',sans-serif";
+    ctx.fillText("★".repeat(st) + "☆".repeat(5 - st), cx, panelTop + 220);
     ctx.fillStyle = "rgba(240,236,228,0.65)";
     ctx.font = "600 " + Math.round(W * 0.032) + "px -apple-system,'Segoe UI',sans-serif";
     ctx.fillText("No. " + puzzleNumber + "  ·  " + state.swaps + " swaps", cx, panelTop + 264);
