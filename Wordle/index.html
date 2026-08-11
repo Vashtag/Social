@@ -305,6 +305,12 @@
     .help-body p { margin-bottom: 0.7rem; }
     .help-body b { color: var(--text); }
     .help-swatch { display: inline-block; width: 0.9em; height: 0.9em; border-radius: 3px; vertical-align: -1px; margin: 0 0.15em; }
+
+    /* -- Archive navigation (prev/next day) -- */
+    .day-nav { display: inline-flex; align-items: center; gap: 0.35rem; }
+    .day-arrow { background: transparent; border: none; color: var(--muted); font-size: 1rem; line-height: 1; cursor: pointer; padding: 0.1rem 0.3rem; font-weight: 800; }
+    .day-arrow:hover:not(:disabled) { color: var(--text); }
+    .day-arrow:disabled { opacity: 0.25; cursor: default; }
   </style>
   <script data-goatcounter="https://vashtags.goatcounter.com/count"
           async src="//gc.zgo.at/count.js"></script>
@@ -321,7 +327,7 @@
 
     <div class="daystrip">
       <span class="day-label" id="day-date">Puzzle of the day</span>
-      <span class="day-num" id="day-num"></span>
+      <span class="day-nav"><button class="day-arrow" id="day-prev" type="button" aria-label="Previous puzzle">‹</button><span class="day-num" id="day-num"></span><button class="day-arrow" id="day-next" type="button" aria-label="Next puzzle">›</button></span>
     </div>
     <div class="prompt" id="prompt">Guess the five-letter anatomy word.</div>
     <div class="board" id="board" aria-label="Anatomy Wordle board"></div>
@@ -411,7 +417,10 @@
   const now = new Date();
   const dayNumber = Math.floor(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86400000);
   const EPOCH_DAY = Math.floor(Date.UTC(2026, 7, 5) / 86400000);
-  const dayIndex = Math.max(0, dayNumber - EPOCH_DAY);
+  const todayIndex = Math.max(0, dayNumber - EPOCH_DAY);
+  const _pd = parseInt(new URLSearchParams(location.search).get("d"), 10);
+  const dayIndex = (Number.isFinite(_pd) && _pd >= 1 && _pd - 1 <= todayIndex) ? _pd - 1 : todayIndex;
+  const isToday = dayIndex === todayIndex;
   const puzzleNumber = dayIndex + 1;
   const answer = WORDS[dayIndex % WORDS.length].toUpperCase();
   const dateKey = now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate();
@@ -419,7 +428,7 @@
   const LEN = 5;
   let state = { row: 0, col: 0, guesses: [], current: "", finished: false, won: false };
 
-  function gameKey() { return "anatomy-wordle-v1-" + dateKey; }
+  function gameKey() { return "anatomy-wordle-v1-" + (isToday ? dateKey : "n" + puzzleNumber); }
   function statsKey() { return "anatomy-wordle-stats-v1"; }
   function defaultStats() { return { played: 0, wins: 0, streak: 0, maxStreak: 0, distribution: [0,0,0,0,0,0], lastPlayed: null }; }
   function readStats() {
@@ -561,6 +570,7 @@
   }
 
   function updateStats(won) {
+    if (!isToday) return;
     const stats = readStats();
     if (stats.lastPlayed === dateKey) return;
     stats.played++;
@@ -594,12 +604,12 @@
     tick(); clearInterval(_wCd); _wCd = setInterval(tick, 1000);
   }
   function wRenderDaily() {
-    try { localStorage.setItem(DAILY_KEY, JSON.stringify({ day: dayIndex, won: state.won, result: state.won ? state.guesses.length : null })); } catch (e) {}
+    if (isToday) { try { localStorage.setItem(DAILY_KEY, JSON.stringify({ day: dayIndex, won: state.won, result: state.won ? state.guesses.length : null })); } catch (e) {} }
     const s = readStats();
     const pct = s.played ? Math.round(s.wins / s.played * 100) : 0;
     const el = document.getElementById("daily-stats");
     if (el) el.innerHTML = "Played <b>" + s.played + "</b> · Win <b>" + pct + "%</b> · Streak <b>" + (s.streak || 0) + "</b> · Best <b>" + (s.maxStreak || 0) + "</b>";
-    wCountdown();
+    if (isToday) wCountdown(); else { var _ce = document.getElementById("countdown"); if (_ce) _ce.innerHTML = ""; }
   }
   function showEnd() {
     wRenderDaily();
@@ -838,6 +848,14 @@
     if (x) x.addEventListener("click", function () { m.classList.remove("show"); });
     m.addEventListener("click", function (e) { if (e.target === m) m.classList.remove("show"); });
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") m.classList.remove("show"); });
+  })();
+  
+  (function () {
+    var prev = document.getElementById("day-prev"), next = document.getElementById("day-next");
+    function go(n) { var u = new URL(location.href); if (n >= todayIndex + 1) u.searchParams.delete("d"); else u.searchParams.set("d", n); location.href = u.toString(); }
+    if (prev) { prev.disabled = puzzleNumber <= 1; prev.addEventListener("click", function () { if (puzzleNumber > 1) go(puzzleNumber - 1); }); }
+    if (next) { next.disabled = isToday; next.addEventListener("click", function () { if (!isToday) go(puzzleNumber + 1); }); }
+    if (!isToday) { var dd = document.getElementById("day-date"); if (dd) dd.textContent = "Archive"; }
   })();
   </script>
 </body>
