@@ -109,6 +109,16 @@ function checkConnections() {
     if (new Set(words).size !== 16) { fail("puzzle " + i + " has duplicate words"); issues++; }
   });
   if (!issues) ok(puzzles.length + " puzzles: 4×4 groups, 16 unique words each");
+
+  // Endless mode: banks harvested by tier, then seeded daily generation.
+  const mulberry32 = (a) => () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const banks = [[], [], [], []]; const seen = [new Set(), new Set(), new Set(), new Set()];
+  puzzles.forEach((p) => p.groups.forEach((g, i) => { const k = g.words.slice().sort().join("|"); if (!seen[i].has(k)) { seen[i].add(k); banks[i].push(g); } }));
+  const bad4 = banks.flat().filter((g) => g.words.length !== 4).length;
+  bad4 ? fail(bad4 + " bank categories not 4 words") : ok("tier banks: " + banks.map((b) => b.length).join("/") + " (" + banks.reduce((a, b) => a * b.length, 1).toLocaleString() + " combos)");
+  const gen = (idx) => { const rnd = mulberry32(((idx + 1) * 2654435761) ^ 0x9e3779b9); for (let t = 0; t < 80; t++) { const gs = banks.map((b) => b[Math.floor(rnd() * b.length)]); if (new Set(gs.flatMap((g) => g.words)).size === 16) return gs; } return null; };
+  let fb = 0; for (let idx = puzzles.length; idx < puzzles.length + 5000; idx++) if (!gen(idx)) fb++;
+  fb ? fail(fb + " generated days fell back (couldn't make 16 unique)") : ok("5000 generated days all produce 16-unique puzzles");
 }
 
 /* ── Waffle ── */
